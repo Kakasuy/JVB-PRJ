@@ -44,11 +44,7 @@ export const ExperiencesSearchForm = ({ className, formStyle = 'default' }: Prop
       )}
       action={handleFormSubmit}
     >
-      <LocationInputField 
-        className="hero-search-form__field-after flex-5/12" 
-        fieldStyle={formStyle} 
-        category="experience"
-      />
+      <LocationInputField className="hero-search-form__field-after flex-5/12" fieldStyle={formStyle} />
       <VerticalDividerLine />
       <DateRangeField
         className="hero-search-form__field-before hero-search-form__field-after flex-4/12"

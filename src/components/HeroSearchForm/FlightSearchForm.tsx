@@ -221,7 +221,7 @@ export const FlightSearchForm: FC<Props> = ({ className, formStyle = 'default' }
           description={T['HeroSearchForm']['Where are you flying from?']}
           className="hero-search-form__field-after flex-1"
           fieldStyle={formStyle}
-          category="flight"
+          
         />
         <VerticalDividerLine />
         <LocationInputField
@@ -230,7 +230,7 @@ export const FlightSearchForm: FC<Props> = ({ className, formStyle = 'default' }
           description={T['HeroSearchForm']['Where are you flying to?']}
           className="hero-search-form__field-before hero-search-form__field-after flex-1"
           fieldStyle={formStyle}
-          category="flight"
+          
         />
         <VerticalDividerLine />
         <DateRangeField
