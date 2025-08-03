@@ -13,7 +13,7 @@ interface Props {
   heading: ReactNode
   subHeading?: string
   onChangeTab?: (item: string) => void
-  onTabChange?: (item: string) => void
+
   rightButtonHref?: string
 }
 
@@ -23,14 +23,10 @@ const SectionTabHeader: FC<Props> = ({
   subHeading,
   heading,
   onChangeTab,
-  onTabChange,
+
   rightButtonHref = '/stay-categories/all',
 }) => {
-  const handleTabChange = (index: number) => {
-    const tab = tabs[index]
-    if (onChangeTab) onChangeTab(tab)
-    if (onTabChange) onTabChange(tab)
-  }
+
   return (
     <div className="relative flex flex-col">
       <Heading subheading={subHeading}>{heading}</Heading>
@@ -38,7 +34,7 @@ const SectionTabHeader: FC<Props> = ({
         <div className="max-w-full grow">
           <TabGroup
             defaultIndex={tabs.indexOf(tabActive)}
-            onChange={handleTabChange}
+            onChange={(index) => onChangeTab && onChangeTab(tabs[index])}
             className="hidden-scrollbar relative flex w-full overflow-x-auto text-sm md:text-base"
           >
             <TabList className="flex sm:gap-x-1.5">
