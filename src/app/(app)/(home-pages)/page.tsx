@@ -60,7 +60,7 @@ async function Page() {
         </div>
 
         <SectionOurFeatures className="py-14" />
-        <SectionGridFeaturePlaces stayListings={stayListings} cardType="card2" />
+        <SectionGridFeaturePlaces stayListings={stayListings} cardType="card2" useAmadeusData={true} />
         <Divider />
         <SectionHowItWork />
         <div className="relative py-20">

@@ -13,7 +13,6 @@ import {
   LakeIcon,
   Location01Icon,
   TwinTowerIcon,
-  Plane01Icon,
   Building02Icon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon, IconSvgElement } from '@hugeicons/react'
