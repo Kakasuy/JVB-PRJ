@@ -45,26 +45,26 @@ const SectionGridFeaturePlaces: FC<SectionGridFeaturePlacesProps> = ({
   const tabs = ['New York', 'Tokyo', 'Paris', 'London', 'Barcelona']
 
   useEffect(() => {
-    if (useAmadeusData && activeTab === 'New York') {
+    if (useAmadeusData && cityCodeMap[activeTab]) {
       searchHotels({ cityCode: cityCodeMap[activeTab] })
     }
   }, [useAmadeusData, activeTab, searchHotels])
 
   useEffect(() => {
-    if (useAmadeusData && activeTab === 'New York' && hotels.length > 0) {
+    if (useAmadeusData && cityCodeMap[activeTab] && hotels.length > 0) {
       setDisplayData(hotels.slice(0, 8)) // Limit to 8 hotels
-    } else if (!useAmadeusData || activeTab !== 'New York') {
-      // For other cities or when not using Amadeus, use original data
+    } else if (!useAmadeusData || !cityCodeMap[activeTab]) {
+      // For cities without Amadeus support or when not using Amadeus, use original data
       setDisplayData(stayListings.slice(0, 8))
     }
   }, [hotels, activeTab, stayListings, useAmadeusData])
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
-    if (useAmadeusData && tab === 'New York') {
+    if (useAmadeusData && cityCodeMap[tab]) {
       searchHotels({ cityCode: cityCodeMap[tab] })
     } else {
-      // For other cities, use mock data
+      // For cities without Amadeus support, use mock data
       setDisplayData(stayListings.slice(0, 8))
     }
   }
@@ -87,16 +87,16 @@ const SectionGridFeaturePlaces: FC<SectionGridFeaturePlacesProps> = ({
       />
       
       {/* Loading state */}
-      {loading && activeTab === 'New York' && useAmadeusData && (
+      {loading && cityCodeMap[activeTab] && useAmadeusData && (
         <div className="mt-8 flex justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
       )}
       
       {/* Error state */}
-      {error && activeTab === 'New York' && useAmadeusData && (
+      {error && cityCodeMap[activeTab] && useAmadeusData && (
         <div className="mt-8 text-center">
-          <p className="text-red-500 mb-4">Failed to load hotels from Amadeus API</p>
+          <p className="text-red-500 mb-4">Failed to load hotels from Amadeus API for {activeTab}</p>
           <p className="text-sm text-gray-500">Showing sample data instead</p>
         </div>
       )}

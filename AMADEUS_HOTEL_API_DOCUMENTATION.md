@@ -15,6 +15,19 @@ Amadeus API cung cấp thông tin hotel qua **2 bước (2-step process)**:
 
 ### Thông tin cung cấp cho mỗi hotel:
 
+#### **🏢 Thông tin cơ bản**
+
+```json
+{
+  "hotelId": "ALNYC647", // ID duy nhất của hotel
+  "name": "Aloft Manhattan Downtown Financial District",
+  "chainCode": "AL", // Mã chuỗi khách sạn (AL = Aloft)
+  "masterChainCode": "EM", // Mã chuỗi chính (EM = Marriott)
+  "dupeId": 501447323, // ID trùng lặp
+  "iataCode": "NYC" // Mã IATA của thành phố
+}
+```
+
 #### **📍 Thông tin địa lý**
 
 ```json
@@ -30,36 +43,50 @@ Amadeus API cung cấp thông tin hotel qua **2 bước (2-step process)**:
 }
 ```
 
-#### **📋 Booking Policies (Chính sách đặt phòng)**
+#### **🏠 Địa chỉ đầy đủ**
 
 ```json
 {
-  "policies": {
-    "cancellations": [
-      {
-        "description": {
-          "text": "NON-REFUNDABLE RATE" // Chính sách hủy
-        },
-        "policyType": "CANCELLATION"
-      }
-    ],
-    "paymentType": "deposit", // Loại thanh toán
-    "refundable": {
-      "cancellationRefund": "NON_REFUNDABLE" // Có hoàn tiền không
-    }
+  "address": {
+    "countryCode": "US", // Mã quốc gia
+    "stateCode": "NY", // Mã bang/tỉnh
+    "cityName": "NEW YORK", // Tên thành phố
+    "postalCode": "10038", // Mã bưu điện
+    "lines": ["49 53 ANN STREET"] // Địa chỉ chi tiết
   }
 }
 ```
 
-#### **📅 Booking Details**
+#### **⏰ Metadata**
 
 ```json
 {
-  "id": "YCP3YPPTNP", // ID của offer
-  "checkInDate": "2025-08-15", // Ngày check-in
-  "checkOutDate": "2025-08-17", // Ngày check-out
-  "rateCode": "RAC", // Mã rate
-  "available": true // Còn phòng không
+  "lastUpdate": "2025-07-28T06:02:45" // Thời gian cập nhật cuối
+}
+```
+
+---
+
+## 💰 **BƯỚC 2: Hotel Offers API**
+
+**Endpoint**: `/v3/shopping/hotel-offers`
+
+### Thông tin cung cấp cho mỗi offer:
+
+#### **🏨 Hotel Information (Enhanced)**
+
+```json
+{
+  "hotel": {
+    "type": "hotel",
+    "hotelId": "ALNYC647",
+    "chainCode": "AL",
+    "dupeId": "501447323",
+    "name": "Aloft Manhattan Downtown Financial District",
+    "cityCode": "NYC",
+    "latitude": 40.71041, // Tọa độ trực tiếp
+    "longitude": -74.00666
+  }
 }
 ```
 
