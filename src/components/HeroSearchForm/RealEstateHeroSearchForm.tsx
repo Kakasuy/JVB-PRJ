@@ -91,7 +91,7 @@ export const RealEstateHeroSearchForm: FC<Props> = ({ className, formStyle = 'de
           className="hero-search-form__field-after flex-1"
           description="Location, city, or property name"
           fieldStyle={formStyle}
-          
+          category="real-estate"
         />
         <VerticalDividerLine />
         <PropertyTypeSelectField

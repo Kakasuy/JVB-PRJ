@@ -43,7 +43,11 @@ export const StaySearchForm = ({ className, formStyle = 'default' }: Props) => {
       )}
       action={handleFormSubmit}
     >
-      <LocationInputField className="hero-search-form__field-after flex-5/12" fieldStyle={formStyle} />
+      <LocationInputField 
+        className="hero-search-form__field-after flex-5/12" 
+        fieldStyle={formStyle} 
+        category="stays"
+      />
       <VerticalDividerLine />
       <DateRangeField
         className="hero-search-form__field-before hero-search-form__field-after flex-4/12"
