@@ -24,7 +24,7 @@ import { FilterVerticalIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import Form from 'next/form'
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { PriceRangeSlider } from './PriceRangeSlider'
 
 type CheckboxFilter = {
@@ -64,13 +64,11 @@ const demo_filters_options = [
         name: 'Entire place',
         value: 'entire_place',
         description: 'Have a place to yourself',
-        defaultChecked: true,
       },
       {
         name: 'Private room',
         value: 'private_room',
         description: 'Have your own room and share some common spaces',
-        defaultChecked: true,
       },
       {
         name: 'Hotel room',
@@ -110,13 +108,11 @@ const demo_filters_options = [
         name: 'Kitchen',
         value: 'kitchen',
         description: 'Have a place to yourself',
-        defaultChecked: true,
       },
       {
         name: 'Air conditioning',
         value: 'air_conditioning',
         description: 'Have your own room and share some common spaces',
-        defaultChecked: true,
       },
       {
         name: 'Heating',
@@ -184,7 +180,6 @@ const demo_filters_options = [
       },
       {
         name: 'Apartment',
-        defaultChecked: true,
         value: 'apartment',
         description: 'Have a private or shared room in a boutique hotel, hostel, and more',
       },
@@ -200,13 +195,11 @@ const demo_filters_options = [
       },
       {
         name: 'Chalet',
-        defaultChecked: true,
         value: 'chalet',
         description: 'Have a private or shared room in a boutique hotel, hostel, and more',
       },
       {
         name: 'Condominium',
-        defaultChecked: true,
         value: 'condominium',
         description: 'Have a private or shared room in a boutique hotel, hostel, and more',
       },
@@ -246,13 +239,30 @@ const demo_filters_options = [
   },
 ]
 
-const CheckboxPanel = ({ filterOption, className }: { filterOption: CheckboxFilter; className?: string }) => {
+const CheckboxPanel = ({ 
+  filterOption, 
+  className, 
+  checkedValues = {},
+  onCheckboxChange
+}: { 
+  filterOption: CheckboxFilter; 
+  className?: string;
+  checkedValues?: Record<string, boolean>;
+  onCheckboxChange?: (optionName: string, checked: boolean) => void;
+}) => {
   return (
     <Fieldset>
       <CheckboxGroup className={className}>
         {filterOption.options.map((option) => (
           <CheckboxField key={option.name}>
-            <Checkbox name={`${filterOption.name}[]`} value={option.name} defaultChecked={!!option.defaultChecked} />
+            <Checkbox 
+              name={`${filterOption.name}[]`} 
+              value={option.name} 
+              checked={checkedValues[option.name] || false}
+              onChange={(checked) => {
+                onCheckboxChange?.(option.name, checked)
+              }}
+            />
             <Label>{option.name}</Label>
             {option.description && <Description>{option.description}</Description>}
           </CheckboxField>
@@ -261,16 +271,68 @@ const CheckboxPanel = ({ filterOption, className }: { filterOption: CheckboxFilt
     </Fieldset>
   )
 }
-const PriceRagePanel = ({ filterOption: { min, max, name } }: { filterOption: PriceRangeFilter }) => {
-  const [rangePrices, setRangePrices] = useState([min, max])
+const PriceRagePanel = ({ 
+  filterOption: { min, max, name },
+  currentPriceRange,
+  onPriceChange
+}: { 
+  filterOption: PriceRangeFilter;
+  currentPriceRange?: [number, number] | null;
+  onPriceChange?: (range: [number, number]) => void;
+}) => {
+  const [rangePrices, setRangePrices] = useState<[number, number]>(
+    currentPriceRange && (currentPriceRange[0] !== min || currentPriceRange[1] !== max) 
+      ? currentPriceRange 
+      : [min, max]
+  )
 
-  return <PriceRangeSlider defaultValue={rangePrices} onChange={setRangePrices} min={min} max={max} />
+  // Update local state when currentPriceRange changes
+  React.useEffect(() => {
+    if (currentPriceRange) {
+      setRangePrices(currentPriceRange)
+    }
+  }, [currentPriceRange])
+
+  const handlePriceChange = (newRange: number[]) => {
+    const typedRange: [number, number] = [newRange[0] || min, newRange[1] || max]
+    setRangePrices(typedRange)
+    onPriceChange?.(typedRange)
+  }
+
+  return (
+    <>
+      <PriceRangeSlider 
+        value={rangePrices} 
+        onChange={handlePriceChange} 
+        min={min} 
+        max={max} 
+      />
+      {/* Hidden inputs for form submission */}
+      <input type="hidden" name="price-min" value={rangePrices[0]} />
+      <input type="hidden" name="price-max" value={rangePrices[1]} />
+    </>
+  )
 }
-const NumberSelectPanel = ({ filterOption: { name, options } }: { filterOption: SelectNumberFilter }) => {
+const NumberSelectPanel = ({ 
+  filterOption: { name, options },
+  currentValues = {},
+  onValueChange
+}: { 
+  filterOption: SelectNumberFilter;
+  currentValues?: Record<string, number>;
+  onValueChange?: (fieldName: string, value: number) => void;
+}) => {
   return (
     <div className="relative flex flex-col gap-y-5">
       {options.map((option) => (
-        <NcInputNumber key={option.name} inputName={option.name} label={option.name} max={option.max} />
+        <NcInputNumber 
+          key={option.name} 
+          inputName={option.name} 
+          label={option.name} 
+          max={option.max}
+          defaultValue={currentValues[option.name] || 0}
+          onChange={(value) => onValueChange?.(option.name, value)}
+        />
       ))}
     </div>
   )
@@ -282,11 +344,91 @@ const ListingFilterTabs = ({
   filterOptions?: Partial<typeof demo_filters_options>
 }) => {
   const [showAllFilter, setShowAllFilter] = useState(false)
+  const [checkedFilters, setCheckedFilters] = useState<Record<string, boolean>>({})
+  const [priceRange, setPriceRange] = useState<[number, number] | null>(null)
+  const [roomsBedsCount, setRoomsBedsCount] = useState<Record<string, number>>({})
+
+  const updateFiltersFromForm = (formData: FormData) => {
+    const formDataObject = Object.fromEntries(formData.entries())
+    
+    // Check what type of form this is based on the data
+    const hasCheckboxFilters = Array.from(formData.keys()).some(key => key.includes('[]'))
+    const hasPriceRange = formData.has('price-min') || formData.has('price-max')
+    const hasRoomsBeds = formData.has('Beds') || formData.has('Bedrooms') || formData.has('Bathrooms')
+
+    // Only update checkbox filters if form contains checkbox data
+    if (hasCheckboxFilters) {
+      const newCheckedFilters: Record<string, boolean> = {}
+      for (const [key, value] of formData.entries()) {
+        if (value && value !== '' && key.includes('[]')) {
+          newCheckedFilters[value as string] = true
+        }
+      }
+      setCheckedFilters(newCheckedFilters)
+    }
+
+    // Only update price range if form contains price data
+    if (hasPriceRange) {
+      const minPrice = formData.get('price-min')
+      const maxPrice = formData.get('price-max')
+      if (minPrice && maxPrice) {
+        setPriceRange([Number(minPrice), Number(maxPrice)])
+      }
+    }
+
+    // Only update rooms & beds if form contains rooms/beds data
+    if (hasRoomsBeds) {
+      const newRoomsBedsCount: Record<string, number> = {}
+      for (const [key, value] of formData.entries()) {
+        if ((key === 'Beds' || key === 'Bedrooms' || key === 'Bathrooms') && value) {
+          const count = Number(value)
+          if (count > 0) {
+            newRoomsBedsCount[key] = count
+          }
+        }
+      }
+      setRoomsBedsCount(newRoomsBedsCount)
+    }
+  }
 
   const handleFormSubmit = async (formData: FormData) => {
     const formDataObject = Object.fromEntries(formData.entries())
     console.log('Form submitted with data:', formDataObject)
+    updateFiltersFromForm(formData)
   }
+
+  const handleCheckboxChange = (optionName: string, checked: boolean) => {
+    setCheckedFilters(prev => {
+      const newCheckedFilters = { ...prev }
+      if (checked) {
+        newCheckedFilters[optionName] = true
+      } else {
+        delete newCheckedFilters[optionName]
+      }
+      return newCheckedFilters
+    })
+  }
+
+  const handlePriceChange = (range: [number, number]) => {
+    setPriceRange(range)
+  }
+
+  const handleRoomsBedsChange = (fieldName: string, value: number) => {
+    setRoomsBedsCount(prev => {
+      const newValues = { ...prev }
+      if (value > 0) {
+        newValues[fieldName] = value
+      } else {
+        delete newValues[fieldName]
+      }
+      return newValues
+    })
+  }
+
+  // Count total selected filters (Price Range is not counted as a filter)
+  const selectedFiltersCount = 
+    Object.keys(checkedFilters).length + 
+    Object.keys(roomsBedsCount).length
 
   const renderTabAllFilters = () => {
     return (
@@ -298,9 +440,11 @@ const ListingFilterTabs = ({
         >
           <HugeiconsIcon icon={FilterVerticalIcon} size={16} color="currentColor" strokeWidth={1.5} />
           <span>{T['common']['All filters']}</span>
-          <span className="absolute top-0 -right-0.5 flex size-5 items-center justify-center rounded-full bg-black text-[0.65rem] font-semibold text-white ring-2 ring-white dark:bg-neutral-200 dark:text-neutral-900 dark:ring-neutral-900">
-            4
-          </span>
+          {selectedFiltersCount > 0 && (
+            <span className="absolute top-0 -right-0.5 flex size-5 items-center justify-center rounded-full bg-black text-[0.65rem] font-semibold text-white ring-2 ring-white dark:bg-neutral-200 dark:text-neutral-900 dark:ring-neutral-900">
+              {selectedFiltersCount}
+            </span>
+          )}
         </Button>
 
         <Dialog
@@ -336,13 +480,27 @@ const ListingFilterTabs = ({
                         <h3 className="text-xl font-medium">{filterOption.label}</h3>
                         <div className="relative mt-6">
                           {filterOption.tabUIType === 'checkbox' && (
-                            <CheckboxPanel filterOption={filterOption as CheckboxFilter} />
+                            <CheckboxPanel 
+                              filterOption={filterOption as CheckboxFilter} 
+                              checkedValues={checkedFilters}
+                              onCheckboxChange={handleCheckboxChange}
+                            />
                           )}
                           {filterOption.tabUIType === 'price-range' && (
-                            <PriceRagePanel key={index} filterOption={filterOption as PriceRangeFilter} />
+                            <PriceRagePanel 
+                              key={index} 
+                              filterOption={filterOption as PriceRangeFilter}
+                              currentPriceRange={priceRange}
+                              onPriceChange={handlePriceChange}
+                            />
                           )}
                           {filterOption.tabUIType === 'select-number' && (
-                            <NumberSelectPanel key={index} filterOption={filterOption as SelectNumberFilter} />
+                            <NumberSelectPanel 
+                              key={index} 
+                              filterOption={filterOption as SelectNumberFilter}
+                              currentValues={roomsBedsCount}
+                              onValueChange={handleRoomsBedsChange}
+                            />
                           )}
                         </div>
                       </div>
@@ -352,7 +510,16 @@ const ListingFilterTabs = ({
               </div>
 
               <div className="flex shrink-0 items-center justify-between bg-neutral-50 p-4 sm:px-8 dark:border-t dark:border-neutral-800 dark:bg-neutral-900">
-                <ButtonThird className="-mx-3" onClick={() => setShowAllFilter(false)} type="button">
+                <ButtonThird className="-mx-3" onClick={() => {
+                  setCheckedFilters({})
+                  setRoomsBedsCount({})
+                  // Reset Price Range to default values
+                  const priceRangeFilter = filterOptions.find(f => f?.tabUIType === 'price-range') as PriceRangeFilter
+                  if (priceRangeFilter) {
+                    setPriceRange([priceRangeFilter.min, priceRangeFilter.max])
+                  }
+                  setShowAllFilter(false)
+                }} type="button">
                   {T['common']['Clear All']}
                 </ButtonThird>
                 <ButtonPrimary type="submit" onClick={() => setShowAllFilter(false)}>
@@ -373,7 +540,7 @@ const ListingFilterTabs = ({
   return (
     <div className="flex flex-wrap md:gap-x-4 md:gap-y-2">
       {renderTabAllFilters()}
-      <PopoverGroup className="hidden flex-wrap gap-x-4 gap-y-2 md:flex" as={Form} action={handleFormSubmit}>
+      <PopoverGroup className="hidden flex-wrap gap-x-4 gap-y-2 md:flex">
         <div className="h-auto w-px bg-neutral-200 dark:bg-neutral-700"></div>
         {filterOptions.map((filterOption, index) => {
           // only show 3 filters in the tab. Other filters will be shown in the All-filters-popover
@@ -381,8 +548,24 @@ const ListingFilterTabs = ({
             return null
           }
 
-          const checkedNumber =
-            (filterOption as CheckboxFilter).options?.filter((option) => !!option.defaultChecked)?.length || 0
+          const checkedNumber = (filterOption as CheckboxFilter).options?.filter(option => 
+            checkedFilters[option.name]
+          ).length || 0
+
+          // Get display text and badge for different filter types
+          let displayText = filterOption.label
+          let badgeCount = 0
+          
+          if (filterOption.tabUIType === 'checkbox') {
+            badgeCount = checkedNumber
+          } else if (filterOption.tabUIType === 'price-range') {
+            if (priceRange && (priceRange[0] !== (filterOption as PriceRangeFilter).min || priceRange[1] !== (filterOption as PriceRangeFilter).max)) {
+              displayText = `$${priceRange[0]} - $${priceRange[1]}`
+              badgeCount = 0 // Price range doesn't count as filter but shows value
+            }
+          } else if (filterOption.tabUIType === 'select-number') {
+            badgeCount = Object.keys(roomsBedsCount).length
+          }
 
           return (
             <Popover className="relative" key={index}>
@@ -391,17 +574,17 @@ const ListingFilterTabs = ({
                 outline
                 className={clsx(
                   'md:px-4',
-                  checkedNumber &&
+                  (badgeCount > 0 || (filterOption.tabUIType === 'price-range' && displayText !== filterOption.label)) &&
                     'border-black! ring-1 ring-black ring-inset dark:border-neutral-200! dark:ring-neutral-200'
                 )}
               >
-                <span>{filterOption.label}</span>
+                <span>{displayText}</span>
                 <ChevronDownIcon className="size-4" />
-                {checkedNumber ? (
+                {badgeCount > 0 && (
                   <span className="absolute top-0 -right-0.5 flex size-5 items-center justify-center rounded-full bg-black text-[0.65rem] font-semibold text-white ring-2 ring-white dark:bg-neutral-200 dark:text-neutral-900 dark:ring-neutral-900">
-                    {checkedNumber}
+                    {badgeCount}
                   </span>
-                ) : null}
+                )}
               </PopoverButton>
 
               <PopoverPanel
@@ -409,28 +592,57 @@ const ListingFilterTabs = ({
                 unmount={false}
                 className="absolute -start-5 top-full z-10 mt-3 w-sm transition data-closed:translate-y-1 data-closed:opacity-0"
               >
-                <div className="rounded-2xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900">
+                <Form action={handleFormSubmit} className="rounded-2xl border border-neutral-200 bg-white shadow-xl dark:border-neutral-700 dark:bg-neutral-900">
                   <div className="hidden-scrollbar max-h-[28rem] overflow-y-auto px-5 py-6">
                     {filterOption.tabUIType === 'checkbox' && (
-                      <CheckboxPanel filterOption={filterOption as CheckboxFilter} />
+                      <CheckboxPanel 
+                        filterOption={filterOption as CheckboxFilter} 
+                        checkedValues={checkedFilters}
+                        onCheckboxChange={handleCheckboxChange}
+                      />
                     )}
                     {filterOption.tabUIType === 'price-range' && (
-                      <PriceRagePanel key={index} filterOption={filterOption as PriceRangeFilter} />
+                      <PriceRagePanel 
+                        key={index} 
+                        filterOption={filterOption as PriceRangeFilter}
+                        currentPriceRange={priceRange}
+                        onPriceChange={handlePriceChange}
+                      />
                     )}
                     {filterOption.tabUIType === 'select-number' && (
-                      <NumberSelectPanel key={index} filterOption={filterOption as SelectNumberFilter} />
+                      <NumberSelectPanel 
+                        key={index} 
+                        filterOption={filterOption as SelectNumberFilter}
+                        currentValues={roomsBedsCount}
+                        onValueChange={handleRoomsBedsChange}
+                      />
                     )}
                   </div>
 
                   <div className="flex items-center justify-between rounded-b-2xl bg-neutral-50 p-5 dark:border-t dark:border-neutral-800 dark:bg-neutral-900">
-                    <CloseButton className="-mx-3" as={ButtonThird} type="button">
+                    <CloseButton className="-mx-3" as={ButtonThird} type="button" onClick={() => {
+                      // Clear filters for this specific filter option
+                      if (filterOption.tabUIType === 'checkbox') {
+                        const newCheckedFilters = { ...checkedFilters }
+                        ;(filterOption as CheckboxFilter).options?.forEach(option => {
+                          delete newCheckedFilters[option.name]
+                        })
+                        setCheckedFilters(newCheckedFilters)
+                      } else if (filterOption.tabUIType === 'price-range') {
+                        // Reset price range to default values
+                        const priceFilter = filterOption as PriceRangeFilter
+                        setPriceRange([priceFilter.min, priceFilter.max])
+                      } else if (filterOption.tabUIType === 'select-number') {
+                        setRoomsBedsCount({})
+                      }
+                    }}>
                       {T['common']['Clear']}
                     </CloseButton>
                     <CloseButton type="submit" as={ButtonPrimary}>
                       {T['common']['Apply']}
                     </CloseButton>
                   </div>
-                </div>
+                </Form>
               </PopoverPanel>
             </Popover>
           )

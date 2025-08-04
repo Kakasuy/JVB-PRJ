@@ -12,6 +12,7 @@ export const PriceRangeSlider = ({
   className,
   onChange,
   defaultValue,
+  value,
   inputMaxName = 'price_max',
   inputMinName = 'price_min',
   showTitle = true,
@@ -22,11 +23,15 @@ export const PriceRangeSlider = ({
   className?: string
   onChange?: (value: number[]) => void
   defaultValue?: number[]
+  value?: number[]
   inputMaxName?: string
   inputMinName?: string
   showTitle?: boolean
 }) => {
   const [rangePrices, setRangePrices] = useState<number[]>([defaultValue?.[0] ?? min, defaultValue?.[1] ?? max])
+  
+  // Use controlled value if provided, otherwise use internal state
+  const currentValue = value || rangePrices
 
   return (
     <div className={clsx('relative flex flex-col gap-y-6', className)}>
@@ -38,11 +43,14 @@ export const PriceRangeSlider = ({
             min={min}
             max={max}
             step={1}
-            value={rangePrices} // Sử dụng value thay vì defaultValue để kiểm soát giá trị
+            value={currentValue}
             allowCross={false}
-            onChange={(value) => {
-              const newRange = value as [number, number]
-              setRangePrices(newRange)
+            onChange={(newValue) => {
+              const newRange = newValue as number[]
+              // Only update internal state if not controlled
+              if (!value) {
+                setRangePrices(newRange)
+              }
               onChange?.(newRange)
             }}
           />
@@ -53,16 +61,16 @@ export const PriceRangeSlider = ({
         <div className="flex-1">
           <div className="ps-4 text-xs/6 text-neutral-700 dark:text-neutral-300">Min price</div>
           <div className="relative mt-0.5 w-full rounded-full bg-neutral-100 px-4 py-2 text-sm dark:bg-neutral-800">
-            {rangePrices[0] >= 1000 ? `$ ${convertNumbThousand(rangePrices[0] / 1000)}k` : `$ ${rangePrices[0]}`}
+            {currentValue[0] >= 1000 ? `$ ${convertNumbThousand(currentValue[0] / 1000)}k` : `$ ${currentValue[0]}`}
           </div>
-          <input type="hidden" name={inputMinName} value={rangePrices[0]} />
+          <input type="hidden" name={inputMinName} value={currentValue[0]} />
         </div>
         <div className="flex-1">
           <div className="ps-4 text-xs/6 text-neutral-700 dark:text-neutral-300">Max price</div>
           <div className="relative mt-0.5 w-full rounded-full bg-neutral-100 px-4 py-2 text-sm dark:bg-neutral-800">
-            {rangePrices[1] >= 1000 ? `$ ${convertNumbThousand(rangePrices[1] / 1000)}k` : `$ ${rangePrices[1]}`}
+            {currentValue[1] >= 1000 ? `$ ${convertNumbThousand(currentValue[1] / 1000)}k` : `$ ${currentValue[1]}`}
           </div>
-          <input type="hidden" name={inputMaxName} value={rangePrices[1]} />
+          <input type="hidden" name={inputMaxName} value={currentValue[1]} />
         </div>
       </div>
     </div>
