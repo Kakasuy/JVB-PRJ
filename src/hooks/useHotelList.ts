@@ -60,10 +60,6 @@ export const useHotelList = (): UseHotelListResult => {
       }
       
       localStorage.setItem(getCacheKey(cityCode, limit), JSON.stringify(cacheData))
-      
-      // Update global cache timestamp when any city cache is created
-      const cacheTimestampKey = 'hotels-cache-timestamp'
-      localStorage.setItem(cacheTimestampKey, Date.now().toString())
     } catch (error) {
       console.warn('Failed to cache hotel data:', error)
     }

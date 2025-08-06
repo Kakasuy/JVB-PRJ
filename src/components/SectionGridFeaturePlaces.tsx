@@ -48,34 +48,8 @@ const SectionGridFeaturePlaces: FC<SectionGridFeaturePlacesProps> = ({
 
   
 
-  // Clear cache only if it's older than 15 minutes (persists through F5)
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const cacheTimestampKey = 'hotels-cache-timestamp'
-      const currentTime = Date.now()
-      
-      // Check when cache was last updated
-      const lastCacheTime = localStorage.getItem(cacheTimestampKey)
-      const cacheAge = lastCacheTime ? currentTime - parseInt(lastCacheTime) : Infinity
-      const fifteenMinutes = 15 * 60 * 1000 // 15 minutes in milliseconds
-      
-      const shouldClear = cacheAge > fifteenMinutes
-      
-      if (shouldClear) {
-        // Clear all hotel cache for all cities (cache expired)
-        const cities = ['NYC', 'TYO', 'PAR', 'LON', 'BCN']
-        cities.forEach(cityCode => {
-          const cacheKey = `hotel-list-${cityCode}`
-          const cacheKeyWithLimit = `hotel-list-${cityCode}-limit-16`
-          localStorage.removeItem(cacheKey)
-          localStorage.removeItem(cacheKeyWithLimit)
-        })
-        
-        // Update cache timestamp for new 15-minute cycle
-        localStorage.setItem(cacheTimestampKey, currentTime.toString())
-      }
-    }
-  }, []) // Only run once on mount
+  // No cache clearing - use existing cache from localStorage indefinitely
+  // Cache will only be cleared when dev server restarts (localStorage persists across F5)
   
   // Handle tab changes and fetch data (with caching after first clear)
   useEffect(() => {
