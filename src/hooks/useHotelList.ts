@@ -5,7 +5,7 @@ interface UseHotelListResult {
   hotels: TStayListing[]
   loading: boolean
   error: string | null
-  fetchHotelsByCity: (cityCode: string) => Promise<void>
+  fetchHotelsByCity: (cityCode: string, limit?: number) => Promise<void>
 }
 
 interface CachedHotelData {
@@ -24,20 +24,20 @@ export const useHotelList = (): UseHotelListResult => {
   const [error, setError] = useState<string | null>(null)
 
   // Helper functions for localStorage cache
-  const getCacheKey = (cityCode: string) => `${CACHE_KEY_PREFIX}${cityCode}`
+  const getCacheKey = (cityCode: string, limit?: number) => `${CACHE_KEY_PREFIX}${cityCode}-limit-${limit || 8}`
 
-  const getCachedData = (cityCode: string): CachedHotelData | null => {
+  const getCachedData = (cityCode: string, limit?: number): CachedHotelData | null => {
     if (typeof window === 'undefined') return null
     
     try {
-      const cached = localStorage.getItem(getCacheKey(cityCode))
+      const cached = localStorage.getItem(getCacheKey(cityCode, limit))
       if (!cached) return null
 
       const data: CachedHotelData = JSON.parse(cached)
       
       // Check if cache is expired
       if (Date.now() > data.expiresAt) {
-        localStorage.removeItem(getCacheKey(cityCode))
+        localStorage.removeItem(getCacheKey(cityCode, limit))
         return null
       }
       
@@ -48,7 +48,7 @@ export const useHotelList = (): UseHotelListResult => {
     }
   }
 
-  const setCachedData = (cityCode: string, hotels: TStayListing[]) => {
+  const setCachedData = (cityCode: string, hotels: TStayListing[], limit?: number) => {
     if (typeof window === 'undefined') return
     
     try {
@@ -59,19 +59,23 @@ export const useHotelList = (): UseHotelListResult => {
         expiresAt: Date.now() + CACHE_DURATION
       }
       
-      localStorage.setItem(getCacheKey(cityCode), JSON.stringify(cacheData))
+      localStorage.setItem(getCacheKey(cityCode, limit), JSON.stringify(cacheData))
+      
+      // Update global cache timestamp when any city cache is created
+      const cacheTimestampKey = 'hotels-cache-timestamp'
+      localStorage.setItem(cacheTimestampKey, Date.now().toString())
     } catch (error) {
       console.warn('Failed to cache hotel data:', error)
     }
   }
 
-  const fetchHotelsByCity = useCallback(async (cityCode: string) => {
+  const fetchHotelsByCity = useCallback(async (cityCode: string, limit?: number) => {
     if (!cityCode) return
     
     // Try to get from cache first
-    const cachedData = getCachedData(cityCode)
-    if (cachedData) {
-      console.log(`Using cached hotel data for ${cityCode}`)
+    const cachedData = getCachedData(cityCode, limit)
+    if (cachedData && cachedData.hotels.length >= (limit || 8)) {
+      console.log(`Using cached hotel data for ${cityCode} with limit ${limit || 8}`)
       setHotels(cachedData.hotels)
       return
     }
@@ -86,6 +90,11 @@ export const useHotelList = (): UseHotelListResult => {
         radiusUnit: 'KM',
       })
 
+      // Add limit parameter if specified
+      if (limit && limit > 8) {
+        searchParams.append('limit', limit.toString())
+      }
+
       const response = await fetch(`/api/hotels-list?${searchParams.toString()}`)
       
       if (!response.ok) {
@@ -98,7 +107,7 @@ export const useHotelList = (): UseHotelListResult => {
       if (data.success && data.data) {
         setHotels(data.data)
         // Cache the result for future use
-        setCachedData(cityCode, data.data)
+        setCachedData(cityCode, data.data, limit)
       } else {
         throw new Error('No hotel data received')
       }

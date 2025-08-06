@@ -40,33 +40,83 @@ const SectionGridFeaturePlaces: FC<SectionGridFeaturePlacesProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('New York')
   const [displayData, setDisplayData] = useState<TStayListing[]>(stayListings)
+  const [displayCount, setDisplayCount] = useState(8) // Track how many hotels to display
+  const [showMoreClicks, setShowMoreClicks] = useState(0) // Track number of "Show me more" clicks
   const { hotels, loading, error, fetchHotelsByCity } = useHotelList()
   
   const tabs = ['New York', 'Tokyo', 'Paris', 'London', 'Barcelona']
 
+  
+
+  // Clear cache only if it's older than 15 minutes (persists through F5)
   useEffect(() => {
-    if (useAmadeusData && cityCodeMap[activeTab]) {
-      fetchHotelsByCity(cityCodeMap[activeTab])
+    if (typeof window !== 'undefined') {
+      const cacheTimestampKey = 'hotels-cache-timestamp'
+      const currentTime = Date.now()
+      
+      // Check when cache was last updated
+      const lastCacheTime = localStorage.getItem(cacheTimestampKey)
+      const cacheAge = lastCacheTime ? currentTime - parseInt(lastCacheTime) : Infinity
+      const fifteenMinutes = 15 * 60 * 1000 // 15 minutes in milliseconds
+      
+      const shouldClear = cacheAge > fifteenMinutes
+      
+      if (shouldClear) {
+        // Clear all hotel cache for all cities (cache expired)
+        const cities = ['NYC', 'TYO', 'PAR', 'LON', 'BCN']
+        cities.forEach(cityCode => {
+          const cacheKey = `hotel-list-${cityCode}`
+          const cacheKeyWithLimit = `hotel-list-${cityCode}-limit-16`
+          localStorage.removeItem(cacheKey)
+          localStorage.removeItem(cacheKeyWithLimit)
+        })
+        
+        // Update cache timestamp for new 15-minute cycle
+        localStorage.setItem(cacheTimestampKey, currentTime.toString())
+      }
+    }
+  }, []) // Only run once on mount
+  
+  // Handle tab changes and fetch data (with caching after first clear)
+  useEffect(() => {
+    const cityCode = cityCodeMap[activeTab]
+    
+    // Always reset display state when changing tabs
+    setDisplayCount(8)
+    setShowMoreClicks(0)
+
+    if (useAmadeusData && cityCode) {
+      fetchHotelsByCity(cityCode, 16) // Will use cache if available after first clear
     }
   }, [useAmadeusData, activeTab, fetchHotelsByCity])
 
   useEffect(() => {
     if (useAmadeusData && cityCodeMap[activeTab] && hotels.length > 0) {
-      setDisplayData(hotels.slice(0, 8)) // Limit to 8 hotels
+      setDisplayData(hotels.slice(0, displayCount))
     } else if (!useAmadeusData || !cityCodeMap[activeTab]) {
       // For cities without Amadeus support or when not using Amadeus, use original data
-      setDisplayData(stayListings.slice(0, 8))
+      setDisplayData(stayListings.slice(0, displayCount))
     }
-  }, [hotels, activeTab, stayListings, useAmadeusData])
+  }, [hotels, activeTab, stayListings, useAmadeusData, displayCount])
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
-    if (useAmadeusData && cityCodeMap[tab]) {
-      fetchHotelsByCity(cityCodeMap[tab])
-    } else {
-      // For cities without Amadeus support, use mock data
-      setDisplayData(stayListings.slice(0, 8))
+    // Note: displayCount and showMoreClicks will be set by the useEffect above based on localStorage
+  }
+
+  const handleShowMore = () => {
+    const newClickCount = showMoreClicks + 1
+    setShowMoreClicks(newClickCount)
+    
+    if (newClickCount >= 3) {
+      // Third click - redirect to Stay Categories
+      window.location.href = '/stay-categories/all'
+      return
     }
+    
+    // First and second click - show 4 more hotels
+    const newDisplayCount = displayCount + 4
+    setDisplayCount(newDisplayCount)
   }
 
   let CardName = StayCard
@@ -74,6 +124,13 @@ const SectionGridFeaturePlaces: FC<SectionGridFeaturePlacesProps> = ({
     CardName = StayCard
   } else if (cardType === 'card2') {
     CardName = StayCard2
+  }
+
+  // Determine button text based on click count
+  const getButtonText = () => {
+    if (showMoreClicks === 0) return T['common']['Show me more']
+    if (showMoreClicks === 1) return T['common']['Show me more']
+    return 'View all stays' // Third click will redirect
   }
 
   return (
@@ -120,8 +177,8 @@ const SectionGridFeaturePlaces: FC<SectionGridFeaturePlacesProps> = ({
       )}
       
       <div className="mt-16 flex items-center justify-center">
-        <ButtonPrimary href={'/stay-categories/all'}>
-          {T['common']['Show me more']}
+        <ButtonPrimary onClick={handleShowMore}>
+          {getButtonText()}
           <ArrowRightIcon className="h-5 w-5 rtl:rotate-180" />
         </ButtonPrimary>
       </div>

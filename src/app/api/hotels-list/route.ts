@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
     const radius = searchParams.get('radius') || '20'
     const radiusUnit = searchParams.get('radiusUnit') || 'KM'
     const hotelSource = searchParams.get('hotelSource') || 'ALL'
+    const limit = parseInt(searchParams.get('limit') || '8') // Allow custom limit
 
     // Get OAuth token first
     const tokenResponse = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
@@ -159,7 +160,7 @@ export async function GET(request: NextRequest) {
     const shuffledHotels = [...filteredHotels].sort(() => seededRandom() - 0.5)
     
     const transformedHotels = shuffledHotels
-      .slice(0, 8) // Take exactly 8 hotels - random but consistent per city
+      .slice(0, Math.min(limit, shuffledHotels.length)) // Take up to limit hotels - random but consistent per city
       .map((hotel: any, index: number) => {
         // Generate realistic image URLs
         const hotelImages = [
@@ -242,7 +243,7 @@ export async function GET(request: NextRequest) {
           galleryImgs,
           like: index < 3, // First 3 hotels are liked for consistency
           address: hotel.address?.lines?.join(', ') || getDefaultAddress(cityCode),
-          reviewStart: Math.round((4.2 + (index * 0.1)) * 10) / 10, // Consistent rating 4.2-4.9
+          reviewStart: Math.min(Math.round((4.2 + (index * 0.05)) * 10) / 10, 4.9), // Realistic rating range 4.2-4.9
           reviewCount: 150 + (index * 25), // Consistent review count 150, 175, 200...
           price: `$${generatePrice(cityCode, hotel.name || '')}`, // Smart pricing
           maxGuests: roomInfo.maxGuests,
