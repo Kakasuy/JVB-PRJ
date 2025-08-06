@@ -1,7 +1,7 @@
 'use client'
 
 import { TStayListing } from '@/data/listings'
-import { useHotelSearch } from '@/hooks/useHotelSearch'
+import { useHotelList } from '@/hooks/useHotelList'
 import ButtonPrimary from '@/shared/ButtonPrimary'
 import T from '@/utils/getT'
 import { ArrowRightIcon } from '@heroicons/react/24/solid'
@@ -40,15 +40,15 @@ const SectionGridFeaturePlaces: FC<SectionGridFeaturePlacesProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState('New York')
   const [displayData, setDisplayData] = useState<TStayListing[]>(stayListings)
-  const { hotels, loading, error, searchHotels } = useHotelSearch()
+  const { hotels, loading, error, fetchHotelsByCity } = useHotelList()
   
   const tabs = ['New York', 'Tokyo', 'Paris', 'London', 'Barcelona']
 
   useEffect(() => {
     if (useAmadeusData && cityCodeMap[activeTab]) {
-      searchHotels({ cityCode: cityCodeMap[activeTab] })
+      fetchHotelsByCity(cityCodeMap[activeTab])
     }
-  }, [useAmadeusData, activeTab, searchHotels])
+  }, [useAmadeusData, activeTab, fetchHotelsByCity])
 
   useEffect(() => {
     if (useAmadeusData && cityCodeMap[activeTab] && hotels.length > 0) {
@@ -62,7 +62,7 @@ const SectionGridFeaturePlaces: FC<SectionGridFeaturePlacesProps> = ({
   const handleTabChange = (tab: string) => {
     setActiveTab(tab)
     if (useAmadeusData && cityCodeMap[tab]) {
-      searchHotels({ cityCode: cityCodeMap[tab] })
+      fetchHotelsByCity(cityCodeMap[tab])
     } else {
       // For cities without Amadeus support, use mock data
       setDisplayData(stayListings.slice(0, 8))

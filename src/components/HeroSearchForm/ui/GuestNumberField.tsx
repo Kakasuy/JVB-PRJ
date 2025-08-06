@@ -38,9 +38,9 @@ export const GuestNumberField: FC<Props> = ({
   className = 'flex-1',
   clearDataButtonClassName,
 }) => {
-  const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(2)
-  const [guestChildrenInputValue, setGuestChildrenInputValue] = useState(1)
-  const [guestInfantsInputValue, setGuestInfantsInputValue] = useState(1)
+  const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(0)
+  const [guestChildrenInputValue, setGuestChildrenInputValue] = useState(0)
+  const [guestInfantsInputValue, setGuestInfantsInputValue] = useState(0)
 
   const handleChangeData = (value: number, type: keyof GuestsObject) => {
     let newValue = {
@@ -99,7 +99,7 @@ export const GuestNumberField: FC<Props> = ({
               defaultValue={guestAdultsInputValue}
               onChange={(value) => handleChangeData(value, 'guestAdults')}
               max={10}
-              min={1}
+              min={0}
               label={T['HeroSearchForm']['Adults']}
               description={T['HeroSearchForm']['Ages 13 or above']}
               inputName="guestAdults"

@@ -45,8 +45,8 @@ export const DateRangeField: FC<Props> = ({
   panelClassName,
   isOnlySingleDate = false,
 }) => {
-  const [startDate, setStartDate] = useState<Date | null>(new Date('2025/09/08'))
-  const [endDate, setEndDate] = useState<Date | null>(new Date('2025/09/19'))
+  const [startDate, setStartDate] = useState<Date | null>(null)
+  const [endDate, setEndDate] = useState<Date | null>(null)
 
   return (
     <>
