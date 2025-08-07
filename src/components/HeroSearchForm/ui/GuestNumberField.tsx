@@ -38,7 +38,7 @@ export const GuestNumberField: FC<Props> = ({
   className = 'flex-1',
   clearDataButtonClassName,
 }) => {
-  const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(0)
+  const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(1)
   const [guestChildrenInputValue, setGuestChildrenInputValue] = useState(0)
   const [guestInfantsInputValue, setGuestInfantsInputValue] = useState(0)
 

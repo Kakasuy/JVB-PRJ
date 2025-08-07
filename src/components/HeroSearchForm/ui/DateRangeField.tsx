@@ -45,8 +45,21 @@ export const DateRangeField: FC<Props> = ({
   panelClassName,
   isOnlySingleDate = false,
 }) => {
-  const [startDate, setStartDate] = useState<Date | null>(null)
-  const [endDate, setEndDate] = useState<Date | null>(null)
+  // Default checkin: 2 days from today, checkout: 1 day after checkin
+  const getDefaultStartDate = () => {
+    const today = new Date()
+    today.setDate(today.getDate() + 2)
+    return today
+  }
+  
+  const getDefaultEndDate = () => {
+    const today = new Date()
+    today.setDate(today.getDate() + 3) // 3 days from today = 1 day after checkin
+    return today
+  }
+
+  const [startDate, setStartDate] = useState<Date | null>(getDefaultStartDate())
+  const [endDate, setEndDate] = useState<Date | null>(getDefaultEndDate())
 
   return (
     <>

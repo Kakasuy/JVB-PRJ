@@ -18,8 +18,21 @@ interface Props {
 const ModalSelectDate: FC<Props> = ({ triggerButton, onChange }) => {
   const [showModal, setShowModal] = useState(false)
 
-  const [startDate, setStartDate] = useState<Date | null>(new Date('2025/02/02'))
-  const [endDate, setEndDate] = useState<Date | null>(new Date('2025/02/06'))
+  // Default checkin: 2 days from today, checkout: 1 day after checkin
+  const getDefaultStartDate = () => {
+    const today = new Date()
+    today.setDate(today.getDate() + 2)
+    return today
+  }
+  
+  const getDefaultEndDate = () => {
+    const today = new Date()
+    today.setDate(today.getDate() + 3) // 3 days from today = 1 day after checkin
+    return today
+  }
+
+  const [startDate, setStartDate] = useState<Date | null>(getDefaultStartDate())
+  const [endDate, setEndDate] = useState<Date | null>(getDefaultEndDate())
 
   const onChangeDate = (dates: [Date | null, Date | null]) => {
     const [start, end] = dates

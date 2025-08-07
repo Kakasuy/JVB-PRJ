@@ -17,12 +17,25 @@ const StaySearchFormMobile = () => {
   //
   const [locationInputTo, setLocationInputTo] = useState('')
   const [guestInput, setGuestInput] = useState<GuestsObject>({
-    guestAdults: 0,
+    guestAdults: 1,
     guestChildren: 0,
     guestInfants: 0,
   })
-  const [startDate, setStartDate] = useState<Date | null>(new Date('2025/10/05'))
-  const [endDate, setEndDate] = useState<Date | null>(new Date('2025/10/09'))
+  // Default checkin: 2 days from today, checkout: 1 day after checkin
+  const getDefaultStartDate = () => {
+    const today = new Date()
+    today.setDate(today.getDate() + 2)
+    return today
+  }
+  
+  const getDefaultEndDate = () => {
+    const today = new Date()
+    today.setDate(today.getDate() + 3) // 3 days from today = 1 day after checkin
+    return today
+  }
+
+  const [startDate, setStartDate] = useState<Date | null>(getDefaultStartDate())
+  const [endDate, setEndDate] = useState<Date | null>(getDefaultEndDate())
   const router = useRouter()
 
   const onChangeDate = (dates: [Date | null, Date | null]) => {

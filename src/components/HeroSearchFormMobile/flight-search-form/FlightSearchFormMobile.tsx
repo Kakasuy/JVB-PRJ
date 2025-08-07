@@ -30,7 +30,7 @@ const FlightSearchFormMobile = () => {
   const [flightClassState, setFlightClassState] = useState(flightClasses[0])
 
   const [guestInput, setGuestInput] = useState<GuestsObject>({
-    guestAdults: 0,
+    guestAdults: 1,
     guestChildren: 0,
     guestInfants: 0,
   })

@@ -13,12 +13,12 @@ interface Props {
 }
 
 const GuestsInput: FC<Props> = ({ defaultValue, onChange, className }) => {
-  const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(defaultValue?.guestAdults || 0)
+  const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(defaultValue?.guestAdults || 1)
   const [guestChildrenInputValue, setGuestChildrenInputValue] = useState(defaultValue?.guestChildren || 0)
   const [guestInfantsInputValue, setGuestInfantsInputValue] = useState(defaultValue?.guestInfants || 0)
 
   useEffect(() => {
-    setGuestAdultsInputValue(defaultValue?.guestAdults || 0)
+    setGuestAdultsInputValue(defaultValue?.guestAdults || 1)
   }, [defaultValue?.guestAdults])
   useEffect(() => {
     setGuestChildrenInputValue(defaultValue?.guestChildren || 0)

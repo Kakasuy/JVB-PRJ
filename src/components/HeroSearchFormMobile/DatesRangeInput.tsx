@@ -15,8 +15,23 @@ interface Props {
 }
 
 const StayDatesRangeInput: FC<Props> = ({ className, defaultEndDate, defaultStartDate, onChange }) => {
-  const [startDate, setStartDate] = useState<Date | null>(defaultStartDate || new Date('2025/02/06'))
-  const [endDate, setEndDate] = useState<Date | null>(defaultEndDate || new Date('2025/02/23'))
+  // Default checkin: 2 days from today, checkout: 1 day after checkin
+  const getDefaultStartDate = () => {
+    if (defaultStartDate) return defaultStartDate
+    const today = new Date()
+    today.setDate(today.getDate() + 2)
+    return today
+  }
+  
+  const getDefaultEndDate = () => {
+    if (defaultEndDate) return defaultEndDate
+    const today = new Date()
+    today.setDate(today.getDate() + 3) // 3 days from today = 1 day after checkin
+    return today
+  }
+
+  const [startDate, setStartDate] = useState<Date | null>(getDefaultStartDate())
+  const [endDate, setEndDate] = useState<Date | null>(getDefaultEndDate())
 
   const onChangeDate = (dates: [Date | null, Date | null]) => {
     const [start, end] = dates
