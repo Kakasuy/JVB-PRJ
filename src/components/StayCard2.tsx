@@ -75,13 +75,29 @@ const StayCard2: FC<StayCard2Props> = ({ size = 'default', className = '', data 
         <div className="w-14 border-b border-neutral-100 dark:border-neutral-800"></div>
         <div className="flex items-center justify-between gap-2">
           <div>
-            <span className="text-base font-semibold"> {price}</span>
-            {size === 'default' && (
+            {(data as any)?._amadeusData?.distance ? (
               <>
-                <span className="mx-1 text-sm font-light text-neutral-400 dark:text-neutral-500">/</span>
-                <span className="text-sm font-normal text-neutral-500 dark:text-neutral-400">
-                  {T['common']['night']}
-                </span>
+                <span className="text-base font-semibold">{(data as any)._amadeusData.distance.value} {(data as any)._amadeusData.distance.unit}</span>
+                {size === 'default' && (
+                  <>
+                    <span className="mx-1 text-sm font-light text-neutral-400 dark:text-neutral-500">from</span>
+                    <span className="text-sm font-normal text-neutral-500 dark:text-neutral-400">
+                      city center
+                    </span>
+                  </>
+                )}
+              </>
+            ) : (
+              <>
+                <span className="text-base font-semibold"> {price}</span>
+                {size === 'default' && (
+                  <>
+                    <span className="mx-1 text-sm font-light text-neutral-400 dark:text-neutral-500">/</span>
+                    <span className="text-sm font-normal text-neutral-500 dark:text-neutral-400">
+                      {T['common']['night']}
+                    </span>
+                  </>
+                )}
               </>
             )}
           </div>
