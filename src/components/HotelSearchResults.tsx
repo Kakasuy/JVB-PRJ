@@ -93,7 +93,7 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
 
   
   const HOTELS_PER_PAGE = 8
-  const MAX_PAGES = 2
+  const MAX_PAGES = 5
 
   // Get search parameters from URL or use defaults
   const searchConfig = useMemo(() => {
