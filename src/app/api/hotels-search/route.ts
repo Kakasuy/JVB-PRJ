@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const checkInDate = searchParams.get('checkInDate') || '2025-08-15'
     const checkOutDate = searchParams.get('checkOutDate') || '2025-08-17'
     const adults = searchParams.get('adults') || '1'
-    const radius = searchParams.get('radius') || '50' // Increased radius to 50km
+    const radius = searchParams.get('radius') || '30' // Default radius 30km
     const radiusUnit = searchParams.get('radiusUnit') || 'KM'
     const hotelSource = searchParams.get('hotelSource') || 'ALL'
 
@@ -112,8 +112,8 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Step 2: Get hotel offers for first 30 hotels to increase chances of getting offers
-    const maxHotelsToQuery = Math.min(30, hotelListData.data.length)
+    // Step 2: Get hotel offers for first 50 hotels to increase chances of getting offers
+    const maxHotelsToQuery = Math.min(50, hotelListData.data.length)
     const hotelIds = hotelListData.data.slice(0, maxHotelsToQuery).map((hotel: any) => hotel.hotelId).join(',')
     
     const hotelOffersUrl = new URL('https://test.api.amadeus.com/v3/shopping/hotel-offers')

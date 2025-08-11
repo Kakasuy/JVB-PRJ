@@ -127,7 +127,7 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
       checkInDate: searchParams.get('checkInDate') || defaultCheckIn.toISOString().split('T')[0],
       checkOutDate: searchParams.get('checkOutDate') || defaultCheckOut.toISOString().split('T')[0],
       adults: searchParams.get('adults') || '1', // Default to 1 adult
-      radius: searchParams.get('radius') || '20'
+      radius: searchParams.get('radius') || '30'
     }
   }, [searchParams])
 
