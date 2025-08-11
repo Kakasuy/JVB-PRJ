@@ -112,36 +112,73 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Step 2: Get hotel offers for first 50 hotels to increase chances of getting offers
-    const maxHotelsToQuery = Math.min(50, hotelListData.data.length)
-    const hotelIds = hotelListData.data.slice(0, maxHotelsToQuery).map((hotel: any) => hotel.hotelId).join(',')
+    // Step 2: Batch processing - Query multiple batches of 50 hotels each
+    const BATCH_SIZE = 50
+    const MAX_BATCHES = 3 // Query up to 150 hotels total (3 batches of 50)
+    const totalHotelsToQuery = Math.min(MAX_BATCHES * BATCH_SIZE, hotelListData.data.length)
     
-    const hotelOffersUrl = new URL('https://test.api.amadeus.com/v3/shopping/hotel-offers')
-    hotelOffersUrl.searchParams.append('hotelIds', hotelIds)
-    hotelOffersUrl.searchParams.append('checkInDate', checkInDate)
-    hotelOffersUrl.searchParams.append('checkOutDate', checkOutDate)
-    hotelOffersUrl.searchParams.append('roomQuantity', '1')
-    hotelOffersUrl.searchParams.append('adults', adults)
-    hotelOffersUrl.searchParams.append('currency', 'USD')
+    console.log(`Processing ${totalHotelsToQuery} hotels in ${Math.ceil(totalHotelsToQuery / BATCH_SIZE)} batches`)
+    
+    // Helper function to query offers for a batch of hotels
+    const queryHotelBatch = async (batchHotels: any[], batchIndex: number) => {
+      const hotelIds = batchHotels.map((hotel: any) => hotel.hotelId).join(',')
+      
+      const hotelOffersUrl = new URL('https://test.api.amadeus.com/v3/shopping/hotel-offers')
+      hotelOffersUrl.searchParams.append('hotelIds', hotelIds)
+      hotelOffersUrl.searchParams.append('checkInDate', checkInDate)
+      hotelOffersUrl.searchParams.append('checkOutDate', checkOutDate)
+      hotelOffersUrl.searchParams.append('roomQuantity', '1')
+      hotelOffersUrl.searchParams.append('adults', adults)
+      hotelOffersUrl.searchParams.append('currency', 'USD')
 
-    const hotelResponse = await fetch(hotelOffersUrl.toString(), {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    })
+      console.log(`Querying batch ${batchIndex + 1} with ${batchHotels.length} hotels`)
+      
+      const hotelResponse = await fetch(hotelOffersUrl.toString(), {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      })
 
-    if (!hotelResponse.ok) {
-      const errorText = await hotelResponse.text()
-      return NextResponse.json({ 
-        error: 'Hotel search failed',
-        status: hotelResponse.status,
-        details: errorText 
-      }, { status: 400 })
+      if (!hotelResponse.ok) {
+        const errorText = await hotelResponse.text()
+        console.error(`Batch ${batchIndex + 1} failed:`, errorText)
+        return { data: [] } // Return empty data instead of throwing error
+      }
+
+      const batchData = await hotelResponse.json()
+      console.log(`Batch ${batchIndex + 1} found ${batchData.data?.length || 0} hotels with offers`)
+      
+      return batchData
     }
-
-    const hotelData = await hotelResponse.json()
     
-    console.log(`Found ${hotelData.data?.length || 0} hotels with offers in step 2`)
+    // Create batches of hotels
+    const batches = []
+    for (let i = 0; i < totalHotelsToQuery; i += BATCH_SIZE) {
+      const batch = hotelListData.data.slice(i, i + BATCH_SIZE)
+      if (batch.length > 0) {
+        batches.push(batch)
+      }
+    }
+    
+    // Query all batches in parallel
+    const batchPromises = batches.map((batch, index) => queryHotelBatch(batch, index))
+    const batchResults = await Promise.all(batchPromises)
+    
+    // Combine all results
+    const allHotelData = batchResults.reduce((combined, batchResult) => {
+      if (batchResult.data && batchResult.data.length > 0) {
+        combined.push(...batchResult.data)
+      }
+      return combined
+    }, [])
+    
+    // Create combined response object
+    const hotelData = {
+      data: allHotelData,
+      meta: batchResults[0]?.meta || {}
+    }
+    
+    console.log(`Total hotels with offers from ${batches.length} batches: ${hotelData.data?.length || 0}`)
 
     // Helper function to check if hotel is a test property
     const isTestHotel = (hotelName: string, address?: string) => {
