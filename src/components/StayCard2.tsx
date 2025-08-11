@@ -24,6 +24,7 @@ const StayCard2: FC<StayCard2Props> = ({ size = 'default', className = '', data 
     address,
     title,
     bedrooms,
+    beds,
     handle: listingHandle,
     like,
     saleOff,
@@ -51,7 +52,7 @@ const StayCard2: FC<StayCard2Props> = ({ size = 'default', className = '', data 
       <div className={clsx(size === 'default' ? 'mt-3 gap-y-3' : 'mt-2 gap-y-2', 'flex flex-col')}>
         <div className="flex flex-col gap-y-2">
           <span className="text-sm text-neutral-500 dark:text-neutral-400">
-            {listingCategory} · {bedrooms} beds
+            {listingCategory} · {beds} beds
           </span>
           <div className="flex items-center gap-x-2">
             {isAds && <Badge color="green">ADS</Badge>}

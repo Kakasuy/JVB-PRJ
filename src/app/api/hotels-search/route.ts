@@ -265,6 +265,15 @@ export async function GET(request: NextRequest) {
       const roomInfo = lowestPriceOffer?.room || null
       const roomDescription = roomInfo?.description?.text || ''
       
+      // 🔍 DEBUG: Log bed data from API
+      console.log(`\n🏨 Hotel: "${hotelInfo.name}"`)
+      console.log('📊 Room Info from API:')
+      console.log('  - Room object:', roomInfo ? 'Available' : 'NULL')
+      console.log('  - typeEstimated:', roomInfo?.typeEstimated)
+      console.log('  - estimatedBeds:', roomInfo?.typeEstimated?.beds)
+      console.log('  - bedType:', roomInfo?.typeEstimated?.bedType)
+      console.log('  - roomDescription:', roomDescription ? `"${roomDescription}"` : 'EMPTY')
+      
       // Parse bed information from room data
       const extractBedInfo = () => {
         // Get beds from typeEstimated if available
@@ -302,8 +311,17 @@ export async function GET(request: NextRequest) {
           }
         }
         
+        const finalBeds = parsedBeds || 1 // Default to 1 if no info available
+        
+        // 🔍 DEBUG: Log final bed calculation
+        console.log('🛏️ Bed Calculation:')
+        console.log('  - estimatedBeds (from API):', estimatedBeds)
+        console.log('  - parsedBeds (from description):', parsedBeds)
+        console.log('  - Final beds used:', finalBeds)
+        console.log('  - Reason:', !estimatedBeds && !parsedBeds ? 'DEFAULT FALLBACK' : 'FROM API DATA')
+        
         return {
-          beds: parsedBeds || 1, // Default to 1 if no info available
+          beds: finalBeds,
           bedrooms: parsedBedrooms,
           bathrooms: parsedBathrooms,
           bedType: bedType
