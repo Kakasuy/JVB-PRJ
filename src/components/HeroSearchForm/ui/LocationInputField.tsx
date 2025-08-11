@@ -14,11 +14,13 @@ import {
   Location01Icon,
   TwinTowerIcon,
   Building02Icon,
+  AirplaneTakeOff01Icon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon, IconSvgElement } from '@hugeicons/react'
 import clsx from 'clsx'
 import _ from 'lodash'
 import { FC, useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ClearDataButton } from './ClearDataButton'
 
 type Suggest = {
@@ -123,11 +125,102 @@ export const LocationInputField: FC<Props> = ({
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const [showPopover, setShowPopover] = useState(false)
-  const [selected, setSelected] = useState<Suggest | null>(null)
+  const searchParams = useSearchParams()
+  
+  // Get initial location from URL parameters
+  const getInitialLocation = useCallback(() => {
+    const locationParam = searchParams.get('location')
+    const cityCodeParam = searchParams.get('cityCode')
+    
+    console.log('LocationInputField - URL params:', {
+      location: locationParam,
+      cityCode: cityCodeParam,
+      allParams: Object.fromEntries(searchParams.entries())
+    })
+    
+    // Try to get the display name for the city
+    const getDisplayName = (param: string) => {
+      // Map city codes back to display names
+      const cityCodeToName: Record<string, string> = {
+        // Major global cities
+        'NYC': 'New York', 'PAR': 'Paris', 'LON': 'London', 'TYO': 'Tokyo', 'BCN': 'Barcelona',
+        'MAD': 'Madrid', 'ROM': 'Rome', 'AMS': 'Amsterdam', 'BER': 'Berlin', 'VIE': 'Vienna',
+        'PRG': 'Prague', 'BUD': 'Budapest', 'WAW': 'Warsaw', 'STO': 'Stockholm', 'OSL': 'Oslo',
+        'CPH': 'Copenhagen', 'HEL': 'Helsinki', 'DUB': 'Dublin', 'EDI': 'Edinburgh', 'BRU': 'Brussels',
+        'ZUR': 'Zurich', 'GVA': 'Geneva', 'MIL': 'Milan', 'VCE': 'Venice', 'FLR': 'Florence',
+        'NAP': 'Naples', 'SYD': 'Sydney', 'MEL': 'Melbourne', 'BKK': 'Bangkok', 'SIN': 'Singapore',
+        'HKG': 'Hong Kong', 'SEL': 'Seoul', 'DXB': 'Dubai', 'IST': 'Istanbul', 'CAI': 'Cairo',
+        'CPT': 'Cape Town', 'JNB': 'Johannesburg', 'LAX': 'Los Angeles', 'SFO': 'San Francisco',
+        'CHI': 'Chicago', 'MIA': 'Miami', 'BOS': 'Boston', 'LAS': 'Las Vegas', 'YYZ': 'Toronto',
+        'YVR': 'Vancouver', 'YUL': 'Montreal', 'MEX': 'Mexico City', 'BUE': 'Buenos Aires',
+        'RIO': 'Rio de Janeiro', 'SAO': 'São Paulo',
+        
+        // Indian cities
+        'BOM': 'Mumbai', 'DEL': 'Delhi', 'BLR': 'Bangalore', 'CCU': 'Kolkata', 'MAA': 'Chennai',
+        'HYD': 'Hyderabad', 'AMD': 'Ahmedabad', 'PNQ': 'Pune', 'JAI': 'Jaipur', 'LKO': 'Lucknow',
+        'KNU': 'Kanpur', 'NAG': 'Nagpur', 'IDR': 'Indore', 'TNE': 'Thane', 'BHO': 'Bhopal',
+        'VTZ': 'Visakhapatnam', 'PMP': 'Pimpri', 'PAT': 'Patna', 'BDQ': 'Vadodara', 'GHZ': 'Ghaziabad',
+        'LUH': 'Ludhiana', 'AGR': 'Agra', 'NAS': 'Nashik', 'FAR': 'Faridabad', 'MRT': 'Meerut',
+        'RAJ': 'Rajkot', 'KAL': 'Kalyan', 'VAS': 'Vasai', 'VNS': 'Varanasi', 'SXR': 'Srinagar',
+        'AUR': 'Aurangabad', 'DHN': 'Dhanbad', 'ATQ': 'Amritsar', 'NMU': 'Navi Mumbai', 'IXD': 'Allahabad',
+        'IXR': 'Ranchi', 'HOW': 'Howrah', 'CJB': 'Coimbatore', 'JBP': 'Jabalpur', 'GWL': 'Gwalior',
+        'VGA': 'Vijayawada', 'JDH': 'Jodhpur', 'IXM': 'Madurai', 'RPR': 'Raipur', 'KTU': 'Kota',
+        'GAU': 'Guwahati', 'IXC': 'Chandigarh', 'SSE': 'Solapur', 'HBX': 'Hubballi', 'TRZ': 'Tiruchirappalli',
+        'BEK': 'Bareilly', 'MYS': 'Mysore', 'TUP': 'Tiruppur', 'GGN': 'Gurgaon', 'ALI': 'Aligarh',
+        'JLR': 'Jalandhar', 'BBI': 'Bhubaneswar', 'SXV': 'Salem', 'WGC': 'Warangal', 'GNT': 'Guntur',
+        'BHI': 'Bhiwandi', 'SRE': 'Saharanpur', 'GOP': 'Gorakhpur', 'BKB': 'Bikaner', 'AMV': 'Amravati',
+        'NOI': 'Noida', 'IXW': 'Jamshedpur', 'BIL': 'Bhilai', 'CUT': 'Cuttack', 'FIR': 'Firozabad',
+        'COK': 'Kochi', 'BHU': 'Bhavnagar', 'DED': 'Dehradun', 'RDP': 'Durgapur', 'ASN': 'Asansol',
+        'ROU': 'Rourkela', 'NDC': 'Nanded', 'KOP': 'Kolhapur', 'AJM': 'Ajmer', 'AKD': 'Akola',
+        'GUL': 'Gulbarga', 'JGA': 'Jamnagar', 'UJN': 'Ujjain', 'SIL': 'Siliguri',
+        'JHS': 'Jhansi', 'ULH': 'Ulhasnagar', 'IXJ': 'Jammu', 'SNG': 'Sangli', 'IXE': 'Mangalore'
+      }
+      return cityCodeToName[param] || param
+    }
+    
+    if (locationParam) {
+      // Decode URL parameter to handle special characters
+      const decodedLocation = decodeURIComponent(locationParam)
+      console.log('Using location param:', locationParam, '-> decoded:', decodedLocation)
+      return {
+        id: 'url-param',
+        name: decodedLocation
+      }
+    }
+    
+    if (cityCodeParam) {
+      const displayName = getDisplayName(cityCodeParam)
+      console.log('Using cityCode param:', cityCodeParam, '-> display:', displayName)
+      return {
+        id: 'url-param',
+        name: displayName
+      }
+    }
+    
+    console.log('No location params found, using empty default')
+    return { 
+      id: 'default',
+      name: '' // Empty by default, will show placeholder
+    }
+  }, [searchParams])
+  
+  const [selected, setSelected] = useState<Suggest | null>(getInitialLocation())
   const [isSearching, setIsSearching] = useState(false)
+  
+  // Debug effect to monitor searchParams changes
+  useEffect(() => {
+    console.log('LocationInputField - searchParams changed:', Object.fromEntries(searchParams.entries()))
+  }, [searchParams])
   
   // Hook for Amadeus location search
   const { suggestions, loading, error, searchLocations, clearSuggestions } = useLocationSearch()
+  
+  // Update location when URL parameters change
+  useEffect(() => {
+    const newLocation = getInitialLocation()
+    console.log('LocationInputField useEffect - updating selected:', newLocation)
+    setSelected(newLocation)
+  }, [getInitialLocation])
   
   // Determine location type based on category
   const getLocationType = useCallback(() => {
@@ -169,7 +262,7 @@ export const LocationInputField: FC<Props> = ({
     if ('type' in suggestion) {
       switch (suggestion.type) {
         case 'AIRPORT':
-          return Plane01Icon
+          return AirplaneTakeOff01Icon
         case 'CITY':
           return Building02Icon
         default:
@@ -267,6 +360,16 @@ export const LocationInputField: FC<Props> = ({
               autoComplete="off"
               displayValue={(item?: Suggest) => item?.name || ''}
               onChange={handleInputChange}
+              onBlur={(e) => {
+                // Ensure the input value is captured even when not selecting from dropdown
+                const value = e.target.value.trim()
+                if (value && (!selected || selected.name !== value)) {
+                  setSelected({
+                    id: Date.now().toString(),
+                    name: value,
+                  })
+                }
+              }}
             />
             <div className="mt-0.5 text-start text-sm font-light text-neutral-400">
               <span className="line-clamp-1">{description}</span>

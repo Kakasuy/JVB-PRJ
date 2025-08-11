@@ -6,7 +6,8 @@ import T from '@/utils/getT'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
 import { CalendarIcon } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
-import { FC, useState } from 'react'
+import { FC, useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import DatePicker from 'react-datepicker'
 import { ClearDataButton } from './ClearDataButton'
 
@@ -45,6 +46,8 @@ export const DateRangeField: FC<Props> = ({
   panelClassName,
   isOnlySingleDate = false,
 }) => {
+  const searchParams = useSearchParams()
+  
   // Default checkin: 2 days from today, checkout: 1 day after checkin
   const getDefaultStartDate = () => {
     const today = new Date()
@@ -58,8 +61,27 @@ export const DateRangeField: FC<Props> = ({
     return today
   }
 
-  const [startDate, setStartDate] = useState<Date | null>(getDefaultStartDate())
-  const [endDate, setEndDate] = useState<Date | null>(getDefaultEndDate())
+  // Get initial dates from URL parameters
+  const getInitialDates = useCallback(() => {
+    const checkInParam = searchParams.get('checkInDate')
+    const checkOutParam = searchParams.get('checkOutDate')
+    
+    return {
+      startDate: checkInParam ? new Date(checkInParam) : getDefaultStartDate(),
+      endDate: checkOutParam ? new Date(checkOutParam) : getDefaultEndDate()
+    }
+  }, [searchParams])
+  
+  const initialDates = getInitialDates()
+  const [startDate, setStartDate] = useState<Date | null>(initialDates.startDate)
+  const [endDate, setEndDate] = useState<Date | null>(initialDates.endDate)
+
+  // Update dates when URL parameters change
+  useEffect(() => {
+    const newDates = getInitialDates()
+    setStartDate(newDates.startDate)
+    setEndDate(newDates.endDate)
+  }, [getInitialDates])
 
   return (
     <>
@@ -145,9 +167,9 @@ export const DateRangeField: FC<Props> = ({
       </Popover>
 
       {/* input:hidde */}
-      <input type="hidden" name="checkin" value={startDate ? startDate.toISOString().split('T')[0] : ''} />
+      <input type="hidden" name="checkInDate" value={startDate ? startDate.toISOString().split('T')[0] : ''} />
       {!isOnlySingleDate && (
-        <input type="hidden" name="checkout" value={endDate ? endDate.toISOString().split('T')[0] : ''} />
+        <input type="hidden" name="checkOutDate" value={endDate ? endDate.toISOString().split('T')[0] : ''} />
       )}
     </>
   )

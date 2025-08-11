@@ -21,15 +21,62 @@ export const StaySearchForm = ({ className, formStyle = 'default' }: Props) => {
 
   const handleFormSubmit = (formData: FormData) => {
     const formDataEntries = Object.fromEntries(formData.entries())
-    console.log('Form submitted', formDataEntries)
-    // You can also redirect or perform other actions based on the form data
+    console.log('Form submitted - Raw FormData:', formDataEntries)
+    
+    // Debug: Log individual fields
+    console.log('Location:', formDataEntries['location'])
+    console.log('CheckInDate:', formDataEntries['checkInDate'])
+    console.log('CheckOutDate:', formDataEntries['checkOutDate'])
+    console.log('Adults:', formDataEntries['adults'])
 
-    // example: add location to the URL
-    const location = formDataEntries['location'] as string
-    let url = '/stay-categories/all'
-    if (location) {
-      url = url + `?location=${encodeURIComponent(location)}`
+    // Get form values or set defaults
+    const location = formDataEntries['location'] as string || 'New York' // Default location
+    const checkInDate = formDataEntries['checkInDate'] as string
+    const checkOutDate = formDataEntries['checkOutDate'] as string
+    const adults = formDataEntries['adults'] as string || '1' // Default to 1 adult
+
+    // Set default dates if not provided (check-in +2 days, check-out +3 days from today)
+    const today = new Date()
+    const defaultCheckIn = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000)
+    const defaultCheckOut = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000)
+
+    const finalCheckIn = checkInDate || defaultCheckIn.toISOString().split('T')[0]
+    const finalCheckOut = checkOutDate || defaultCheckOut.toISOString().split('T')[0]
+
+    // Map location to city codes
+    const locationToCityCode = (loc: string): string => {
+      const locationMap: Record<string, string> = {
+        'New York': 'NYC',
+        'Paris': 'PAR',
+        'London': 'LON',
+        'Tokyo': 'TYO',
+        'Barcelona': 'BCN'
+      }
+      
+      // Find city code by partial match
+      const normalizedLoc = loc.toLowerCase()
+      for (const [city, code] of Object.entries(locationMap)) {
+        if (normalizedLoc.includes(city.toLowerCase()) || 
+            city.toLowerCase().includes(normalizedLoc)) {
+          return code
+        }
+      }
+      return 'NYC' // Default to NYC
     }
+
+    const cityCode = locationToCityCode(location)
+
+    // Build URL with search parameters
+    const searchParams = new URLSearchParams({
+      location: location, // Send original location, let HotelSearchResults handle mapping
+      checkInDate: finalCheckIn,
+      checkOutDate: finalCheckOut,
+      adults: adults
+    })
+
+    let url = '/stay-categories/all'
+    url = `${url}?${searchParams.toString()}`
+    
     router.push(url)
   }
 

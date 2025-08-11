@@ -1,12 +1,12 @@
 'use client'
 
 import NcInputNumber from '@/components/NcInputNumber'
-import { GuestsObject } from '@/type'
 import T from '@/utils/getT'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
 import { UserPlusIcon } from '@heroicons/react/24/outline'
 import clsx from 'clsx'
-import { FC, useState } from 'react'
+import { FC, useState, useEffect, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ClearDataButton } from './ClearDataButton'
 
 const styles = {
@@ -38,31 +38,28 @@ export const GuestNumberField: FC<Props> = ({
   className = 'flex-1',
   clearDataButtonClassName,
 }) => {
-  const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(1)
-  const [guestChildrenInputValue, setGuestChildrenInputValue] = useState(0)
-  const [guestInfantsInputValue, setGuestInfantsInputValue] = useState(0)
+  const searchParams = useSearchParams()
+  
+  // Get initial guest count from URL parameters
+  const getInitialGuestCount = useCallback(() => {
+    const adultsParam = searchParams.get('adults')
+    return adultsParam ? parseInt(adultsParam) : 1 // Default to 1 adult
+  }, [searchParams])
+  
+  const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(getInitialGuestCount())
 
-  const handleChangeData = (value: number, type: keyof GuestsObject) => {
-    let newValue = {
-      guestAdults: guestAdultsInputValue,
-      guestChildren: guestChildrenInputValue,
-      guestInfants: guestInfantsInputValue,
-    }
-    if (type === 'guestAdults') {
-      setGuestAdultsInputValue(value)
-      newValue.guestAdults = value
-    }
-    if (type === 'guestChildren') {
-      setGuestChildrenInputValue(value)
-      newValue.guestChildren = value
-    }
-    if (type === 'guestInfants') {
-      setGuestInfantsInputValue(value)
-      newValue.guestInfants = value
-    }
+  // Update guest count when URL parameters change
+  useEffect(() => {
+    const newGuestCount = getInitialGuestCount()
+    setGuestAdultsInputValue(newGuestCount)
+  }, [getInitialGuestCount])
+
+  const handleChangeData = (value: number) => {
+    setGuestAdultsInputValue(value)
   }
 
-  const totalGuests = guestChildrenInputValue + guestAdultsInputValue + guestInfantsInputValue
+  const totalGuests = guestAdultsInputValue
+  
   return (
     <Popover className={`group relative z-10 flex ${className}`}>
       {({ open: showPopover }) => (
@@ -76,20 +73,18 @@ export const GuestNumberField: FC<Props> = ({
 
             <div className="grow">
               <span className={clsx('block font-semibold', styles.mainText[fieldStyle])}>
-                {totalGuests || ''} {T['HeroSearchForm']['Guests']}
+                {totalGuests} Guest{totalGuests !== 1 ? 's' : ''}
               </span>
               <span className="mt-1 block text-sm leading-none font-light text-neutral-400">
-                {totalGuests ? T['HeroSearchForm']['Guests'] : T['HeroSearchForm']['Add guests']}
+                {totalGuests ? `${totalGuests} guest${totalGuests !== 1 ? 's' : ''}` : 'Add guests'}
               </span>
             </div>
           </PopoverButton>
 
           <ClearDataButton
-            className={clsx(!totalGuests && 'sr-only', clearDataButtonClassName)}
+            className={clsx(totalGuests <= 1 && 'sr-only', clearDataButtonClassName)}
             onClick={() => {
-              setGuestAdultsInputValue(0)
-              setGuestChildrenInputValue(0)
-              setGuestInfantsInputValue(0)
+              setGuestAdultsInputValue(1) // Reset to minimum 1 guest
             }}
           />
 
@@ -97,31 +92,15 @@ export const GuestNumberField: FC<Props> = ({
             <NcInputNumber
               className="w-full"
               defaultValue={guestAdultsInputValue}
-              onChange={(value) => handleChangeData(value, 'guestAdults')}
+              onChange={(value) => handleChangeData(value)}
               max={10}
-              min={0}
-              label={T['HeroSearchForm']['Adults']}
-              description={T['HeroSearchForm']['Ages 13 or above']}
-              inputName="guestAdults"
+              min={1} // Minimum 1 guest required
+              label="Guests"
+              description="" // Remove age description
+              inputName="adults" // Changed from 'guestAdults' to 'adults' to match API
             />
-            <NcInputNumber
-              className="w-full"
-              defaultValue={guestChildrenInputValue}
-              onChange={(value) => handleChangeData(value, 'guestChildren')}
-              max={4}
-              label={T['HeroSearchForm']['Children']}
-              description={T['HeroSearchForm']['Ages 2–12']}
-              inputName="guestChildren"
-            />
-            <NcInputNumber
-              className="w-full"
-              defaultValue={guestInfantsInputValue}
-              onChange={(value) => handleChangeData(value, 'guestInfants')}
-              max={4}
-              label={T['HeroSearchForm']['Infants']}
-              description={T['HeroSearchForm']['Ages 0–2']}
-              inputName="guestInfants"
-            />
+            
+            {/* Removed Children and Infants sections */}
           </PopoverPanel>
         </>
       )}

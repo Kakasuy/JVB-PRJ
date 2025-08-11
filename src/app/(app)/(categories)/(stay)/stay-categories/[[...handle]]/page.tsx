@@ -1,12 +1,11 @@
 import HeroSectionWithSearchForm1 from '@/components/hero-sections/HeroSectionWithSearchForm1'
 import { StaySearchForm } from '@/components/HeroSearchForm/StaySearchForm'
 import ListingFilterTabs from '@/components/ListingFilterTabs'
-import StayCard2 from '@/components/StayCard2'
+import { HotelSearchResults } from '@/components/HotelSearchResults'
 import { getStayCategoryByHandle } from '@/data/categories'
 import { getStayListingFilterOptions, getStayListings } from '@/data/listings'
 import { Button } from '@/shared/Button'
 import { Divider } from '@/shared/divider'
-import Pagination from '@/shared/Pagination'
 import convertNumbThousand from '@/utils/convertNumbThousand'
 import { House04Icon, MapPinpoint02Icon, MapsLocation01Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
@@ -75,14 +74,7 @@ const Page = async ({ params }: { params: Promise<{ handle?: string[] }> }) => {
         {/* end heading */}
 
         <ListingFilterTabs filterOptions={filterOptions} />
-        <div className="mt-8 grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:gap-x-8 md:gap-y-12 lg:mt-10 lg:grid-cols-3 xl:grid-cols-4">
-          {listings.map((listing) => (
-            <StayCard2 key={listing.id} data={listing} />
-          ))}
-        </div>
-        <div className="mt-16 flex items-center justify-center">
-          <Pagination />
-        </div>
+        <HotelSearchResults />
       </div>
     </div>
   )

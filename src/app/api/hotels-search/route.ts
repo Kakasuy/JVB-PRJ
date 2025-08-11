@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
     const cityCode = searchParams.get('cityCode') || 'NYC' // Default to New York
     const checkInDate = searchParams.get('checkInDate') || '2025-08-15'
     const checkOutDate = searchParams.get('checkOutDate') || '2025-08-17'
-    const adults = searchParams.get('adults') || '2'
+    const adults = searchParams.get('adults') || '1'
     const radius = searchParams.get('radius') || '50' // Increased radius to 50km
     const radiusUnit = searchParams.get('radiusUnit') || 'KM'
     const hotelSource = searchParams.get('hotelSource') || 'ALL'
@@ -174,14 +174,27 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform data to match our TStayListing interface, filtering out test hotels
-    const transformedHotels = hotelData.data?.filter((hotelOffer: any) => {
+    console.log('Raw hotels before filtering:', hotelData.data?.map(h => ({ 
+      id: h.hotel?.hotelId, 
+      name: h.hotel?.name 
+    })))
+    
+    const filteredHotels = hotelData.data?.filter((hotelOffer: any) => {
       const hotelName = hotelOffer.hotel?.name || ''
       const hotelAddress = hotelOffer.hotel?.address?.lines?.join(', ') || ''
       const detailedInfo = hotelDetailsMap.get(hotelOffer.hotel?.hotelId)
       const detailedAddress = detailedInfo?.address?.lines?.join(', ') || ''
       const bestAddress = detailedAddress || hotelAddress
-      return !isTestHotel(hotelName, bestAddress)
-    }).map((hotelOffer: any) => {
+      const isTest = isTestHotel(hotelName, bestAddress)
+      
+      console.log(`Hotel "${hotelName}" at "${bestAddress}" - isTest: ${isTest}`)
+      
+      return !isTest
+    }) || []
+    
+    console.log(`Filtered hotels count: ${filteredHotels.length} out of ${hotelData.data?.length || 0}`)
+    
+    const transformedHotels = filteredHotels.map((hotelOffer: any) => {
       const hotelInfo = hotelOffer.hotel
       const detailedHotelInfo = hotelDetailsMap.get(hotelInfo.hotelId) // Get detailed info from step 1
       const offers = hotelOffer.offers || []
@@ -325,81 +338,8 @@ export async function GET(request: NextRequest) {
       }
     }) || []
 
-    // If we have fewer than 8 hotels with offers, add some from the hotel list as mock data
-    if (transformedHotels.length < 8 && hotelListData.data.length > transformedHotels.length) {
-      const existingHotelIds = new Set(transformedHotels.map((h: any) => h.id.split('://')[1]))
-      const additionalHotels = hotelListData.data
-        .filter((hotel: any) => !existingHotelIds.has(hotel.hotelId))
-        .filter((hotel: any) => !isTestHotel(hotel.name || '', hotel.address?.lines?.join(', ') || '')) // Filter out test hotels
-        .slice(0, 8 - transformedHotels.length)
-        .map((hotel: any) => {
-          // Create mock hotel data from hotel list without offers
-          const hotelImages = [
-            'https://images.pexels.com/photos/6129967/pexels-photo-6129967.jpeg?auto=compress&cs=tinysrgb&dpr=3&h=750&w=1260',
-            'https://images.pexels.com/photos/261394/pexels-photo-261394.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            'https://images.pexels.com/photos/2861361/pexels-photo-2861361.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            'https://images.pexels.com/photos/6969831/pexels-photo-6969831.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            'https://images.pexels.com/photos/6527036/pexels-photo-6527036.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            'https://images.pexels.com/photos/1320686/pexels-photo-1320686.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            'https://images.pexels.com/photos/2677398/pexels-photo-2677398.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
-            'https://images.pexels.com/photos/271816/pexels-photo-271816.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260'
-          ]
-          
-          const randomImageIndex = Math.floor(Math.random() * hotelImages.length)
-          const featuredImage = hotelImages[randomImageIndex]
-          const galleryImgs = Array.from({ length: 4 }, (_, index) => 
-            hotelImages[(randomImageIndex + index) % hotelImages.length]
-          )
-
-          // For hotels without offers, provide reasonable defaults based on hotel type
-          const getDefaultRoomInfo = (hotelName: string) => {
-            const name = hotelName.toLowerCase()
-            
-            // Determine room type based on hotel name/brand
-            if (name.includes('suite') || name.includes('residence inn') || name.includes('extended stay')) {
-              return { beds: 1, bedrooms: 1, bathrooms: 1 } // Suite style
-            } else if (name.includes('family') || name.includes('holiday inn')) {
-              return { beds: 2, bedrooms: 1, bathrooms: 1 } // Family friendly
-            } else {
-              return { beds: 1, bedrooms: 1, bathrooms: 1 } // Standard hotel room
-            }
-          }
-          
-          const defaultRoomInfo = getDefaultRoomInfo(hotel.name || '')
-
-          return {
-            id: `amadeus-hotel://${hotel.hotelId}`,
-            date: new Date().toLocaleDateString('en-US', { 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric' 
-            }),
-            listingCategory: 'Hotel',
-            title: hotel.name || 'Hotel',
-            handle: hotel.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-') || `hotel-${hotel.hotelId}`,
-            description: `Located in ${getCityDisplayName(cityCode)}`,
-            featuredImage,
-            galleryImgs,
-            like: Math.random() > 0.7,
-            address: hotel.address?.lines?.join(', ') || getDefaultAddress(cityCode),
-            reviewStart: Math.round((Math.random() * 2 + 3) * 10) / 10, // Keep random rating
-            reviewCount: Math.floor(Math.random() * 500 + 20), // Keep random review count
-            price: `$${Math.floor(Math.random() * 400 + 200)}`, // Random price $200-600
-            maxGuests: Math.floor(Math.random() * 3 + 2), // 2-4 guests (keep random as no offer data)
-            bedrooms: defaultRoomInfo.bedrooms, // ✅ Smarter default based on hotel type
-            bathrooms: defaultRoomInfo.bathrooms, // ✅ Smarter default based on hotel type
-            beds: defaultRoomInfo.beds, // ✅ Smarter default based on hotel type
-            saleOff: Math.random() > 0.8 ? `-${Math.floor(Math.random() * 20 + 5)}% today` : null,
-            isAds: null,
-            map: hotel.geoCode ? {
-              lat: parseFloat(hotel.geoCode.latitude),
-              lng: parseFloat(hotel.geoCode.longitude)
-            } : getDefaultCoordinates(cityCode),
-          }
-        })
-      
-      transformedHotels.push(...additionalHotels)
-    }
+    // Only return real hotels with offers - no mock data
+    // Removed fallback logic to add mock hotels
 
     return NextResponse.json({
       success: true,
