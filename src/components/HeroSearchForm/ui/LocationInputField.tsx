@@ -29,6 +29,7 @@ type Suggest = {
   icon?: IconSvgElement
   displayName?: string
   type?: 'AIRPORT' | 'CITY'
+  iataCode?: string // Add iataCode for city/airport codes
 }
 
 const demoInitSuggests: Suggest[] = [
@@ -279,6 +280,7 @@ export const LocationInputField: FC<Props> = ({
     displayName: suggestion.displayName,
     type: suggestion.type,
     icon: getLocationIcon(suggestion),
+    iataCode: suggestion.iataCode, // Store the iataCode from API
   }), [getLocationIcon])
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -386,6 +388,13 @@ export const LocationInputField: FC<Props> = ({
               }}
             />
           </div>
+          
+          {/* Hidden input for cityCode - will be set when user selects from API suggestions */}
+          <input
+            type="hidden"
+            name="cityCode"
+            value={selected?.iataCode || ''}
+          />
         </div>
 
         <Headless.Transition show={showPopover} unmount={false}>

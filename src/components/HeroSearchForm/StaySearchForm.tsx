@@ -25,15 +25,17 @@ export const StaySearchForm = ({ className, formStyle = 'default' }: Props) => {
     
     // Debug: Log individual fields
     console.log('Location:', formDataEntries['location'])
+    console.log('CityCode:', formDataEntries['cityCode']) // New field
     console.log('CheckInDate:', formDataEntries['checkInDate'])
     console.log('CheckOutDate:', formDataEntries['checkOutDate'])
     console.log('Adults:', formDataEntries['adults'])
 
     // Get form values or set defaults
-    const location = formDataEntries['location'] as string || 'New York' // Default location
+    const location = formDataEntries['location'] as string || 'New York'
+    const cityCode = formDataEntries['cityCode'] as string // Get cityCode from form
     const checkInDate = formDataEntries['checkInDate'] as string
     const checkOutDate = formDataEntries['checkOutDate'] as string
-    const adults = formDataEntries['adults'] as string || '1' // Default to 1 adult
+    const adults = formDataEntries['adults'] as string || '1'
 
     // Set default dates if not provided (check-in +2 days, check-out +3 days from today)
     const today = new Date()
@@ -43,36 +45,21 @@ export const StaySearchForm = ({ className, formStyle = 'default' }: Props) => {
     const finalCheckIn = checkInDate || defaultCheckIn.toISOString().split('T')[0]
     const finalCheckOut = checkOutDate || defaultCheckOut.toISOString().split('T')[0]
 
-    // Map location to city codes
-    const locationToCityCode = (loc: string): string => {
-      const locationMap: Record<string, string> = {
-        'New York': 'NYC',
-        'Paris': 'PAR',
-        'London': 'LON',
-        'Tokyo': 'TYO',
-        'Barcelona': 'BCN'
-      }
-      
-      // Find city code by partial match
-      const normalizedLoc = loc.toLowerCase()
-      for (const [city, code] of Object.entries(locationMap)) {
-        if (normalizedLoc.includes(city.toLowerCase()) || 
-            city.toLowerCase().includes(normalizedLoc)) {
-          return code
-        }
-      }
-      return 'NYC' // Default to NYC
-    }
-
-    const cityCode = locationToCityCode(location)
-
-    // Build URL with search parameters
+    // Build URL with search parameters - use cityCode if available, otherwise fallback to location mapping
     const searchParams = new URLSearchParams({
-      location: location, // Send original location, let HotelSearchResults handle mapping
       checkInDate: finalCheckIn,
       checkOutDate: finalCheckOut,
       adults: adults
     })
+
+    // Add cityCode if available from API selection, otherwise add location for fallback mapping
+    if (cityCode) {
+      searchParams.set('cityCode', cityCode)
+      console.log('Using cityCode from API:', cityCode)
+    } else {
+      searchParams.set('location', location)
+      console.log('Using location for mapping:', location)
+    }
 
     let url = '/stay-categories/all'
     url = `${url}?${searchParams.toString()}`
@@ -90,17 +77,21 @@ export const StaySearchForm = ({ className, formStyle = 'default' }: Props) => {
       )}
       action={handleFormSubmit}
     >
-      <LocationInputField 
+      <LocationInputField
         className="hero-search-form__field-after flex-5/12" 
-        fieldStyle={formStyle} 
+        fieldStyle={formStyle}
         category="stays"
       />
+
       <VerticalDividerLine />
+
       <DateRangeField
         className="hero-search-form__field-before hero-search-form__field-after flex-4/12"
         fieldStyle={formStyle}
       />
+
       <VerticalDividerLine />
+
       <GuestNumberField
         className="hero-search-form__field-before flex-4/12"
         clearDataButtonClassName={clsx(formStyle === 'small' && 'sm:end-18', formStyle === 'default' && 'sm:end-22')}

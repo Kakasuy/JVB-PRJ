@@ -102,9 +102,25 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
     const defaultCheckIn = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000)
     const defaultCheckOut = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000)
     
-    // Get location from URL params and map to city code
-    const locationParam = searchParams.get('location') || searchParams.get('cityCode')
-    const cityCode = locationParam ? mapLocationToCityCode(locationParam) : 'NYC'
+    // Get cityCode from URL params - prioritize cityCode over location
+    const cityCodeParam = searchParams.get('cityCode')
+    const locationParam = searchParams.get('location')
+    
+    let cityCode: string
+    
+    if (cityCodeParam) {
+      // Direct cityCode from API selection - use it directly
+      cityCode = cityCodeParam
+      console.log('Using direct cityCode from form:', cityCode)
+    } else if (locationParam) {
+      // Fallback: map location string to cityCode for backward compatibility
+      cityCode = mapLocationToCityCode(locationParam)
+      console.log('Mapped location to cityCode:', locationParam, '->', cityCode)
+    } else {
+      // Default fallback
+      cityCode = 'NYC'
+      console.log('Using default cityCode:', cityCode)
+    }
     
     return {
       cityCode,
