@@ -14,6 +14,8 @@ interface HotelSearchParams {
   checkOutDate?: string
   adults?: string
   radius?: string
+  price_min?: string | null
+  price_max?: string | null
 }
 
 export const useHotelSearch = (): UseHotelSearchResult => {
@@ -33,6 +35,16 @@ export const useHotelSearch = (): UseHotelSearchResult => {
         adults: params.adults || '2',
         radius: params.radius || '20',
       })
+      
+      // Add price filters if provided
+      if (params.price_min) {
+        searchParams.append('price_min', params.price_min)
+      }
+      if (params.price_max) {
+        searchParams.append('price_max', params.price_max)
+      }
+      
+      console.log('🔧 useHotelSearch building URL with params:', Object.fromEntries(searchParams.entries()))
 
       const response = await fetch(`/api/hotels-search?${searchParams.toString()}`)
       

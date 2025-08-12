@@ -24,7 +24,8 @@ import { FilterVerticalIcon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
 import Form from 'next/form'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { PriceRangeSlider } from './PriceRangeSlider'
 
 type CheckboxFilter = {
@@ -343,10 +344,26 @@ const ListingFilterTabs = ({
 }: {
   filterOptions?: Partial<typeof demo_filters_options>
 }) => {
+  const searchParams = useSearchParams()
   const [showAllFilter, setShowAllFilter] = useState(false)
   const [checkedFilters, setCheckedFilters] = useState<Record<string, boolean>>({})
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null)
   const [roomsBedsCount, setRoomsBedsCount] = useState<Record<string, number>>({})
+
+  // Initialize price range from URL params on mount
+  useEffect(() => {
+    const priceMin = searchParams.get('price_min')
+    const priceMax = searchParams.get('price_max')
+    
+    if (priceMin || priceMax) {
+      const priceRangeFilter = filterOptions.find(f => f?.tabUIType === 'price-range') as PriceRangeFilter
+      if (priceRangeFilter) {
+        const min = priceMin ? Number(priceMin) : priceRangeFilter.min
+        const max = priceMax ? Number(priceMax) : priceRangeFilter.max
+        setPriceRange([min, max])
+      }
+    }
+  }, [searchParams, filterOptions])
 
   const updateFiltersFromForm = (formData: FormData) => {
     const formDataObject = Object.fromEntries(formData.entries())
@@ -392,9 +409,56 @@ const ListingFilterTabs = ({
   }
 
   const handleFormSubmit = async (formData: FormData) => {
+    console.log('🚨 FORM SUBMIT TRIGGERED!')
+    console.log('🚨 Form data entries:', Array.from(formData.entries()))
+    
     const formDataObject = Object.fromEntries(formData.entries())
-    console.log('Form submitted with data:', formDataObject)
+    console.log('🔧 Form submitted with data:', formDataObject)
+    
+    // Debug: Check if price data is in form
+    const priceMin = formData.get('price-min')
+    const priceMax = formData.get('price-max')
+    console.log('🔧 Price data from form:', { priceMin, priceMax })
     updateFiltersFromForm(formData)
+    
+    // Update URL params with filter values
+    if (typeof window !== 'undefined') {
+      const currentUrl = new URL(window.location.href)
+      console.log('🔧 Current URL before update:', currentUrl.toString())
+      
+      // Update price range params
+      const priceMin = formData.get('price-min')
+      const priceMax = formData.get('price-max')
+      console.log('🔧 Updating URL with:', { priceMin, priceMax })
+      
+      if (priceMin) {
+        currentUrl.searchParams.set('price_min', priceMin.toString())
+        console.log('🔧 Set price_min:', priceMin.toString())
+      } else {
+        currentUrl.searchParams.delete('price_min')
+        console.log('🔧 Deleted price_min')
+      }
+      
+      if (priceMax) {
+        currentUrl.searchParams.set('price_max', priceMax.toString())
+        console.log('🔧 Set price_max:', priceMax.toString())
+      } else {
+        currentUrl.searchParams.delete('price_max')
+        console.log('🔧 Deleted price_max')
+      }
+      
+      console.log('🔧 New URL after update:', currentUrl.toString())
+      
+      // Update URL without page refresh
+      window.history.pushState({}, '', currentUrl.toString())
+      console.log('🔧 URL updated in browser')
+      
+      // Trigger a custom event to notify other components
+      window.dispatchEvent(new CustomEvent('filtersChanged', {
+        detail: { priceMin: priceMin ? Number(priceMin) : null, priceMax: priceMax ? Number(priceMax) : null }
+      }))
+      console.log('🔧 Dispatched filtersChanged event')
+    }
   }
 
   const handleCheckboxChange = (optionName: string, checked: boolean) => {
@@ -518,11 +582,28 @@ const ListingFilterTabs = ({
                   if (priceRangeFilter) {
                     setPriceRange([priceRangeFilter.min, priceRangeFilter.max])
                   }
+                  
+                  // Clear URL params
+                  if (typeof window !== 'undefined') {
+                    const currentUrl = new URL(window.location.href)
+                    currentUrl.searchParams.delete('price_min')
+                    currentUrl.searchParams.delete('price_max')
+                    window.history.pushState({}, '', currentUrl.toString())
+                    
+                    // Trigger filter change event
+                    window.dispatchEvent(new CustomEvent('filtersChanged', {
+                      detail: { priceMin: null, priceMax: null }
+                    }))
+                  }
+                  
                   setShowAllFilter(false)
                 }} type="button">
                   {T['common']['Clear All']}
                 </ButtonThird>
-                <ButtonPrimary type="submit" onClick={() => setShowAllFilter(false)}>
+                <ButtonPrimary type="submit" onClick={() => {
+                  console.log('🚨 APPLY FILTERS BUTTON CLICKED!')
+                  setShowAllFilter(false)
+                }}>
                   {T['common']['Apply filters']}
                 </ButtonPrimary>
               </div>
@@ -632,13 +713,28 @@ const ListingFilterTabs = ({
                         // Reset price range to default values
                         const priceFilter = filterOption as PriceRangeFilter
                         setPriceRange([priceFilter.min, priceFilter.max])
+                        
+                        // Clear price URL params
+                        if (typeof window !== 'undefined') {
+                          const currentUrl = new URL(window.location.href)
+                          currentUrl.searchParams.delete('price_min')
+                          currentUrl.searchParams.delete('price_max')
+                          window.history.pushState({}, '', currentUrl.toString())
+                          
+                          // Trigger filter change event
+                          window.dispatchEvent(new CustomEvent('filtersChanged', {
+                            detail: { priceMin: null, priceMax: null }
+                          }))
+                        }
                       } else if (filterOption.tabUIType === 'select-number') {
                         setRoomsBedsCount({})
                       }
                     }}>
                       {T['common']['Clear']}
                     </CloseButton>
-                    <CloseButton type="submit" as={ButtonPrimary}>
+                    <CloseButton type="submit" as={ButtonPrimary} onClick={() => {
+                      console.log('🚨 INDIVIDUAL FILTER APPLY BUTTON CLICKED!')
+                    }}>
                       {T['common']['Apply']}
                     </CloseButton>
                   </div>
