@@ -211,10 +211,6 @@ export async function GET(request: NextRequest) {
     })
 
     // Transform data to match our TStayListing interface, filtering out test hotels
-    console.log('Raw hotels before filtering:', hotelData.data?.map(h => ({ 
-      id: h.hotel?.hotelId, 
-      name: h.hotel?.name 
-    })))
     
     const filteredHotels = hotelData.data?.filter((hotelOffer: any) => {
       const hotelName = hotelOffer.hotel?.name || ''
@@ -224,12 +220,10 @@ export async function GET(request: NextRequest) {
       const bestAddress = detailedAddress || hotelAddress
       const isTest = isTestHotel(hotelName, bestAddress)
       
-      console.log(`Hotel "${hotelName}" at "${bestAddress}" - isTest: ${isTest}`)
       
       return !isTest
     }) || []
     
-    console.log(`Filtered hotels count: ${filteredHotels.length} out of ${hotelData.data?.length || 0}`)
     
     const transformedHotels = filteredHotels.map((hotelOffer: any) => {
       const hotelInfo = hotelOffer.hotel
@@ -265,14 +259,6 @@ export async function GET(request: NextRequest) {
       const roomInfo = lowestPriceOffer?.room || null
       const roomDescription = roomInfo?.description?.text || ''
       
-      // 🔍 DEBUG: Log bed data from API
-      console.log(`\n🏨 Hotel: "${hotelInfo.name}"`)
-      console.log('📊 Room Info from API:')
-      console.log('  - Room object:', roomInfo ? 'Available' : 'NULL')
-      console.log('  - typeEstimated:', roomInfo?.typeEstimated)
-      console.log('  - estimatedBeds:', roomInfo?.typeEstimated?.beds)
-      console.log('  - bedType:', roomInfo?.typeEstimated?.bedType)
-      console.log('  - roomDescription:', roomDescription ? `"${roomDescription}"` : 'EMPTY')
       
       // Parse bed information from room data
       const extractBedInfo = () => {
@@ -313,12 +299,6 @@ export async function GET(request: NextRequest) {
         
         const finalBeds = parsedBeds || 1 // Default to 1 if no info available
         
-        // 🔍 DEBUG: Log final bed calculation
-        console.log('🛏️ Bed Calculation:')
-        console.log('  - estimatedBeds (from API):', estimatedBeds)
-        console.log('  - parsedBeds (from description):', parsedBeds)
-        console.log('  - Final beds used:', finalBeds)
-        console.log('  - Reason:', !estimatedBeds && !parsedBeds ? 'DEFAULT FALLBACK' : 'FROM API DATA')
         
         return {
           beds: finalBeds,
