@@ -46,16 +46,37 @@ export const GuestNumberField: FC<Props> = ({
     return adultsParam ? parseInt(adultsParam) : 1 // Default to 1 adult
   }, [searchParams])
   
+  // Get initial room count from URL parameters
+  const getInitialRoomCount = useCallback(() => {
+    const roomsParam = searchParams.get('rooms')
+    return roomsParam ? parseInt(roomsParam) : 1 // Default to 1 room
+  }, [searchParams])
+  
   const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(getInitialGuestCount())
+  const [roomsInputValue, setRoomsInputValue] = useState(getInitialRoomCount())
 
   // Update guest count when URL parameters change
   useEffect(() => {
     const newGuestCount = getInitialGuestCount()
+    const newRoomCount = getInitialRoomCount()
     setGuestAdultsInputValue(newGuestCount)
-  }, [getInitialGuestCount])
+    setRoomsInputValue(newRoomCount)
+  }, [getInitialGuestCount, getInitialRoomCount])
 
   const handleChangeData = (value: number) => {
     setGuestAdultsInputValue(value)
+    // If guests are less than rooms, increase rooms to match
+    if (value < roomsInputValue) {
+      setRoomsInputValue(value)
+    }
+  }
+  
+  const handleChangeRooms = (value: number) => {
+    setRoomsInputValue(value)
+    // If rooms exceed guests, increase guests to match (min 1 guest per room)
+    if (value > guestAdultsInputValue) {
+      setGuestAdultsInputValue(value)
+    }
   }
 
   const totalGuests = guestAdultsInputValue
@@ -73,28 +94,40 @@ export const GuestNumberField: FC<Props> = ({
 
             <div className="grow">
               <span className={clsx('block font-semibold', styles.mainText[fieldStyle])}>
-                {totalGuests} Guest{totalGuests !== 1 ? 's' : ''}
+                {roomsInputValue} Room{roomsInputValue !== 1 ? 's' : ''}, {totalGuests} Guest{totalGuests !== 1 ? 's' : ''}
               </span>
               <span className="mt-1 block text-sm leading-none font-light text-neutral-400">
-                {totalGuests ? `${totalGuests} guest${totalGuests !== 1 ? 's' : ''}` : 'Add guests'}
+                {roomsInputValue} room{roomsInputValue !== 1 ? 's' : ''}, {totalGuests} guest{totalGuests !== 1 ? 's' : ''}
               </span>
             </div>
           </PopoverButton>
 
           <ClearDataButton
-            className={clsx(totalGuests <= 1 && 'sr-only', clearDataButtonClassName)}
+            className={clsx(totalGuests <= 1 && roomsInputValue <= 1 && 'sr-only', clearDataButtonClassName)}
             onClick={() => {
               setGuestAdultsInputValue(1) // Reset to minimum 1 guest
+              setRoomsInputValue(1) // Reset to minimum 1 room
             }}
           />
 
           <PopoverPanel unmount={false} transition className={clsx(styles.panel.base, styles.panel[fieldStyle])}>
             <NcInputNumber
               className="w-full"
+              defaultValue={roomsInputValue}
+              onChange={(value) => handleChangeRooms(value)}
+              max={8} // Maximum 8 rooms
+              min={1} // Minimum 1 room required
+              label="Rooms"
+              description=""
+              inputName="rooms"
+            />
+            
+            <NcInputNumber
+              className="w-full"
               defaultValue={guestAdultsInputValue}
               onChange={(value) => handleChangeData(value)}
-              max={10}
-              min={1} // Minimum 1 guest required
+              max={roomsInputValue * 4} // Max 4 guests per room
+              min={roomsInputValue} // Min 1 guest per room
               label="Guests"
               description="" // Remove age description
               inputName="adults" // Changed from 'guestAdults' to 'adults' to match API

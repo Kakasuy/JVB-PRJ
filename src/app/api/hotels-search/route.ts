@@ -44,6 +44,7 @@ export async function GET(request: NextRequest) {
     const checkInDate = searchParams.get('checkInDate') || '2025-08-15'
     const checkOutDate = searchParams.get('checkOutDate') || '2025-08-17'
     const adults = searchParams.get('adults') || '1'
+    const rooms = searchParams.get('rooms') || '1'
     const radius = searchParams.get('radius') || '30' // Default radius 30km
     const radiusUnit = searchParams.get('radiusUnit') || 'KM'
     const hotelSource = searchParams.get('hotelSource') || 'ALL'
@@ -133,7 +134,7 @@ export async function GET(request: NextRequest) {
       hotelOffersUrl.searchParams.append('hotelIds', hotelIds)
       hotelOffersUrl.searchParams.append('checkInDate', checkInDate)
       hotelOffersUrl.searchParams.append('checkOutDate', checkOutDate)
-      hotelOffersUrl.searchParams.append('roomQuantity', '1')
+      hotelOffersUrl.searchParams.append('roomQuantity', rooms)
       hotelOffersUrl.searchParams.append('adults', adults)
       hotelOffersUrl.searchParams.append('currency', 'USD')
 

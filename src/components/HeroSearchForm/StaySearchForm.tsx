@@ -29,6 +29,7 @@ export const StaySearchForm = ({ className, formStyle = 'default' }: Props) => {
     console.log('CheckInDate:', formDataEntries['checkInDate'])
     console.log('CheckOutDate:', formDataEntries['checkOutDate'])
     console.log('Adults:', formDataEntries['adults'])
+    console.log('Rooms:', formDataEntries['rooms'])
 
     // Get form values or set defaults
     const location = formDataEntries['location'] as string || 'New York'
@@ -36,6 +37,7 @@ export const StaySearchForm = ({ className, formStyle = 'default' }: Props) => {
     const checkInDate = formDataEntries['checkInDate'] as string
     const checkOutDate = formDataEntries['checkOutDate'] as string
     const adults = formDataEntries['adults'] as string || '1'
+    const rooms = formDataEntries['rooms'] as string || '1'
 
     // Set default dates if not provided (check-in +2 days, check-out +3 days from today)
     const today = new Date()
@@ -49,7 +51,8 @@ export const StaySearchForm = ({ className, formStyle = 'default' }: Props) => {
     const searchParams = new URLSearchParams({
       checkInDate: finalCheckIn,
       checkOutDate: finalCheckOut,
-      adults: adults
+      adults: adults,
+      rooms: rooms
     })
 
     // Add cityCode if available from API selection, otherwise add location for fallback mapping

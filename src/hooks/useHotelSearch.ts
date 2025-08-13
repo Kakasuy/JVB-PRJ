@@ -13,6 +13,7 @@ interface HotelSearchParams {
   checkInDate?: string
   checkOutDate?: string
   adults?: string
+  rooms?: string
   radius?: string
   price_min?: string | null
   price_max?: string | null
@@ -33,6 +34,7 @@ export const useHotelSearch = (): UseHotelSearchResult => {
         checkInDate: params.checkInDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 30 days from now
         checkOutDate: params.checkOutDate || new Date(Date.now() + 32 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 32 days from now
         adults: params.adults || '2',
+        rooms: params.rooms || '1',
         radius: params.radius || '20',
       })
       

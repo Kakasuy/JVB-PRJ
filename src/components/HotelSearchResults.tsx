@@ -127,6 +127,7 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
       checkInDate: searchParams.get('checkInDate') || defaultCheckIn.toISOString().split('T')[0],
       checkOutDate: searchParams.get('checkOutDate') || defaultCheckOut.toISOString().split('T')[0],
       adults: searchParams.get('adults') || '1', // Default to 1 adult
+      rooms: searchParams.get('rooms') || '1', // Default to 1 room
       radius: searchParams.get('radius') || '30',
       // Price range filters
       price_min: searchParams.get('price_min'),
@@ -171,6 +172,7 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
           checkInDate: currentParams.get('checkInDate') || defaultCheckIn.toISOString().split('T')[0],
           checkOutDate: currentParams.get('checkOutDate') || defaultCheckOut.toISOString().split('T')[0],
           adults: currentParams.get('adults') || '1',
+          rooms: currentParams.get('rooms') || '1',
           radius: currentParams.get('radius') || '30',
           price_min: currentParams.get('price_min'),
           price_max: currentParams.get('price_max')
@@ -361,7 +363,7 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
       {/* Search info */}
       <div className="mt-8 text-center text-sm text-neutral-500 dark:text-neutral-400">
         <p>
-          Search: {getCityName(searchConfig.cityCode)} • {searchConfig.checkInDate} to {searchConfig.checkOutDate} • {searchConfig.adults} adult{searchConfig.adults !== '1' ? 's' : ''}
+          Search: {getCityName(searchConfig.cityCode)} • {searchConfig.checkInDate} to {searchConfig.checkOutDate} • {searchConfig.rooms} room{searchConfig.rooms !== '1' ? 's' : ''} • {searchConfig.adults} adult{searchConfig.adults !== '1' ? 's' : ''}
         </p>
       </div>
     </div>
