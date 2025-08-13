@@ -52,11 +52,7 @@ export async function GET(request: NextRequest) {
     const priceMin = searchParams.get('price_min') ? Number(searchParams.get('price_min')) : null
     const priceMax = searchParams.get('price_max') ? Number(searchParams.get('price_max')) : null
     
-    console.log('🔍 Price Filter Debug:')
-    console.log('  - price_min param:', searchParams.get('price_min'))
-    console.log('  - price_max param:', searchParams.get('price_max'))
-    console.log('  - parsed priceMin:', priceMin)
-    console.log('  - parsed priceMax:', priceMax)
+    
 
     // Get OAuth token first
     const tokenResponse = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
@@ -386,38 +382,30 @@ export async function GET(request: NextRequest) {
     // Apply price range filters if provided
     let finalHotels = transformedHotels
     if (priceMin !== null || priceMax !== null) {
-      console.log('💰 Applying price filters:', { priceMin, priceMax })
-      console.log('📊 Hotels before filtering:', transformedHotels.length)
+      console.log('Hotels before filtering:', transformedHotels.length)
+      
       
       finalHotels = transformedHotels.filter((hotel) => {
         const priceStr = hotel.price.replace('$', '').replace(',', '')
         const price = parseFloat(priceStr)
         
-        console.log(`🏨 Hotel "${hotel.title}": price="${hotel.price}" -> parsed=${price}`)
-        
         // Skip hotels with invalid prices
         if (isNaN(price)) {
-          console.log('  ⚠️ Invalid price, keeping hotel')
           return true
         }
         
         // Apply min price filter
         if (priceMin !== null && price < priceMin) {
-          console.log(`  ❌ Price ${price} < min ${priceMin}, filtering out`)
           return false
         }
         
         // Apply max price filter  
         if (priceMax !== null && price > priceMax) {
-          console.log(`  ❌ Price ${price} > max ${priceMax}, filtering out`)
           return false
         }
-        
-        console.log('  ✅ Price in range, keeping hotel')
         return true
       })
-      
-      console.log('📊 Hotels after filtering:', finalHotels.length)
+      console.log('Hotels after filtering:', finalHotels.length)
     } else {
       console.log('🚫 No price filters applied')
     }
