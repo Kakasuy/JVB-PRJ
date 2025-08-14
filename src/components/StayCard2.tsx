@@ -102,7 +102,12 @@ const StayCard2: FC<StayCard2Props> = ({ size = 'default', className = '', data 
               </>
             )}
           </div>
-          {!!reviewStart && <StartRating reviewCount={reviewCount} point={reviewStart} />}
+          {!!reviewStart && <StartRating 
+            reviewCount={reviewCount} 
+            point={reviewStart}
+            overallRating={(data as any).overallRating}
+            numberOfRatings={(data as any).numberOfRatings}
+          />}
         </div>
       </div>
     )

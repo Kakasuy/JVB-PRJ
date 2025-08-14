@@ -411,14 +411,61 @@ export async function GET(request: NextRequest) {
       console.log('🚫 No price filters applied')
     }
 
-    // Only return real hotels with offers - no mock data
-    // Removed fallback logic to add mock hotels
+    // Fetch hotel sentiments for all hotels
+    const hotelIds = finalHotels.map(hotel => {
+      // Extract hotelId from id field (format: "amadeus-hotel://HOTELID")
+      const match = hotel.id.match(/amadeus-hotel:\/\/(.+)/)
+      return match ? match[1] : null
+    }).filter(Boolean)
+
+    let sentimentsData = {}
+    
+    if (hotelIds.length > 0) {
+      try {
+        // Call our internal hotel-sentiments endpoint
+        const sentimentsResponse = await fetch(`${process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'}/api/hotel-sentiments`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ hotelIds }),
+        })
+
+        if (sentimentsResponse.ok) {
+          const sentimentsResult = await sentimentsResponse.json()
+          sentimentsData = sentimentsResult.sentiments || {}
+        }
+      } catch (error) {
+        console.error('Failed to fetch hotel sentiments:', error)
+        // Continue without sentiments data
+      }
+    }
+
+    // Merge sentiment data with hotels
+    const hotelsWithSentiments = finalHotels.map(hotel => {
+      const hotelId = hotel.id.match(/amadeus-hotel:\/\/(.+)/)?.[1]
+      const sentiment = hotelId ? sentimentsData[hotelId] : null
+      
+      if (sentiment && sentiment.overallRating > 0) {
+        return {
+          ...hotel,
+          overallRating: sentiment.overallRating,
+          numberOfRatings: sentiment.numberOfRatings,
+          numberOfReviews: sentiment.numberOfReviews,
+          // Keep reviewStart for backward compatibility but it will be overridden by overallRating in UI
+          reviewStart: sentiment.overallRating / 20, // Convert 0-100 to 0-5 scale
+          reviewCount: sentiment.numberOfRatings
+        }
+      }
+      
+      return hotel
+    })
 
     return NextResponse.json({
       success: true,
-      data: finalHotels,
+      data: hotelsWithSentiments,
       meta: {
-        count: finalHotels.length,
+        count: hotelsWithSentiments.length,
         originalCount: transformedHotels.length,
         filtersApplied: { priceMin, priceMax },
         cityCode,
@@ -426,7 +473,8 @@ export async function GET(request: NextRequest) {
         checkOutDate,
         adults,
         hotelsFound: hotelListData.data?.length || 0,
-        hotelsWithOffers: hotelData.data?.length || 0
+        hotelsWithOffers: hotelData.data?.length || 0,
+        sentimentsFound: Object.keys(sentimentsData).length
       },
       raw: hotelData.meta || null, // Include original meta for debugging
     })

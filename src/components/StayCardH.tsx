@@ -97,7 +97,12 @@ const StayCardH: FC<StayCardHProps> = ({ className = '', data }) => {
         {renderTienIch()}
         <div className="my-4 w-14 border-b border-neutral-100 dark:border-neutral-800"></div>
         <div className="flex items-end justify-between">
-          <StartRating reviewCount={reviewCount} point={reviewStart} />
+          <StartRating 
+            reviewCount={reviewCount} 
+            point={reviewStart}
+            overallRating={(data as any).overallRating}
+            numberOfRatings={(data as any).numberOfRatings}
+          />
           <span className="text-base font-semibold text-secondary-500">
             {price}
             {` `}

@@ -77,7 +77,12 @@ const StayCard: FC<StayCardProps> = ({ size = 'default', className = '', data })
               <span className="text-sm font-normal text-neutral-500 dark:text-neutral-400">/night</span>
             )}
           </span>
-          {!!reviewStart && <StartRating reviewCount={reviewCount} point={reviewStart} />}
+          {!!reviewStart && <StartRating 
+            reviewCount={reviewCount} 
+            point={reviewStart}
+            overallRating={(data as any).overallRating}
+            numberOfRatings={(data as any).numberOfRatings}
+          />}
         </div>
       </div>
     )
