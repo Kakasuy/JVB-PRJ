@@ -131,7 +131,11 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
       radius: searchParams.get('radius') || '30',
       // Price range filters
       price_min: searchParams.get('price_min'),
-      price_max: searchParams.get('price_max')
+      price_max: searchParams.get('price_max'),
+      // Rooms & Beds filters
+      beds: searchParams.get('beds'),
+      bedrooms: searchParams.get('bedrooms'),
+      bathrooms: searchParams.get('bathrooms')
     }
   }, [searchParams])
 
@@ -175,7 +179,10 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
           rooms: currentParams.get('rooms') || '1',
           radius: currentParams.get('radius') || '30',
           price_min: currentParams.get('price_min'),
-          price_max: currentParams.get('price_max')
+          price_max: currentParams.get('price_max'),
+          beds: currentParams.get('beds'),
+          bedrooms: currentParams.get('bedrooms'),
+          bathrooms: currentParams.get('bathrooms')
         }
         console.log('🔧 Fresh search config with filters:', updatedConfig)
         

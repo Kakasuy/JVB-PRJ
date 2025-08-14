@@ -17,6 +17,9 @@ interface HotelSearchParams {
   radius?: string
   price_min?: string | null
   price_max?: string | null
+  beds?: string | null
+  bedrooms?: string | null
+  bathrooms?: string | null
 }
 
 export const useHotelSearch = (): UseHotelSearchResult => {
@@ -44,6 +47,17 @@ export const useHotelSearch = (): UseHotelSearchResult => {
       }
       if (params.price_max) {
         searchParams.append('price_max', params.price_max)
+      }
+      
+      // Add rooms & beds filters if provided
+      if (params.beds) {
+        searchParams.append('beds', params.beds)
+      }
+      if (params.bedrooms) {
+        searchParams.append('bedrooms', params.bedrooms)
+      }
+      if (params.bathrooms) {
+        searchParams.append('bathrooms', params.bathrooms)
       }
       
       console.log('🔧 useHotelSearch building URL with params:', Object.fromEntries(searchParams.entries()))

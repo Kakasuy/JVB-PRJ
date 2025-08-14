@@ -53,6 +53,11 @@ export async function GET(request: NextRequest) {
     const priceMin = searchParams.get('price_min') ? Number(searchParams.get('price_min')) : null
     const priceMax = searchParams.get('price_max') ? Number(searchParams.get('price_max')) : null
     
+    // Rooms & Beds filters
+    const minBeds = searchParams.get('beds') ? Number(searchParams.get('beds')) : null
+    const minBedrooms = searchParams.get('bedrooms') ? Number(searchParams.get('bedrooms')) : null
+    const minBathrooms = searchParams.get('bathrooms') ? Number(searchParams.get('bathrooms')) : null
+    
     
 
     // Get OAuth token first
@@ -383,8 +388,7 @@ export async function GET(request: NextRequest) {
     // Apply price range filters if provided
     let finalHotels = transformedHotels
     if (priceMin !== null || priceMax !== null) {
-      console.log('Hotels before filtering:', transformedHotels.length)
-      
+      console.log('Hotels before price filtering:', transformedHotels.length)
       
       finalHotels = transformedHotels.filter((hotel) => {
         const priceStr = hotel.price.replace('$', '').replace(',', '')
@@ -406,9 +410,33 @@ export async function GET(request: NextRequest) {
         }
         return true
       })
-      console.log('Hotels after filtering:', finalHotels.length)
-    } else {
-      console.log('🚫 No price filters applied')
+      console.log('Hotels after price filtering:', finalHotels.length)
+    }
+    
+    // Apply rooms & beds filters if provided
+    if (minBeds !== null || minBedrooms !== null || minBathrooms !== null) {
+      console.log('Hotels before rooms/beds filtering:', finalHotels.length)
+      console.log(`Filter criteria - Beds: ${minBeds}, Bedrooms: ${minBedrooms}, Bathrooms: ${minBathrooms}`)
+      
+      finalHotels = finalHotels.filter((hotel) => {
+        // Check beds
+        if (minBeds !== null && hotel.beds < minBeds) {
+          return false
+        }
+        
+        // Check bedrooms
+        if (minBedrooms !== null && hotel.bedrooms < minBedrooms) {
+          return false
+        }
+        
+        // Check bathrooms
+        if (minBathrooms !== null && hotel.bathrooms < minBathrooms) {
+          return false
+        }
+        
+        return true
+      })
+      console.log('Hotels after rooms/beds filtering:', finalHotels.length)
     }
 
     // Fetch hotel sentiments for all hotels
@@ -467,7 +495,13 @@ export async function GET(request: NextRequest) {
       meta: {
         count: hotelsWithSentiments.length,
         originalCount: transformedHotels.length,
-        filtersApplied: { priceMin, priceMax },
+        filtersApplied: { 
+          priceMin, 
+          priceMax,
+          beds: minBeds,
+          bedrooms: minBedrooms,
+          bathrooms: minBathrooms
+        },
         cityCode,
         checkInDate,
         checkOutDate,

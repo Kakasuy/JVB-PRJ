@@ -325,16 +325,22 @@ const NumberSelectPanel = ({
 }) => {
   return (
     <div className="relative flex flex-col gap-y-5">
-      {options.map((option) => (
-        <NcInputNumber 
-          key={option.name} 
-          inputName={option.name} 
-          label={option.name} 
-          max={option.max}
-          defaultValue={currentValues[option.name] || 0}
-          onChange={(value) => onValueChange?.(option.name, value)}
-        />
-      ))}
+      {options.map((option) => {
+        // Default to 1 for all fields since every hotel has at least 1 bed/bedroom/bathroom
+        const defaultValue = currentValues[option.name] || 1
+        
+        return (
+          <NcInputNumber 
+            key={option.name} 
+            inputName={option.name} 
+            label={option.name} 
+            min={1}
+            max={option.max}
+            defaultValue={defaultValue}
+            onChange={(value) => onValueChange?.(option.name, value)}
+          />
+        )
+      })}
     </div>
   )
 }
@@ -348,7 +354,11 @@ const ListingFilterTabs = ({
   const [showAllFilter, setShowAllFilter] = useState(false)
   const [checkedFilters, setCheckedFilters] = useState<Record<string, boolean>>({})
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null)
-  const [roomsBedsCount, setRoomsBedsCount] = useState<Record<string, number>>({})
+  const [roomsBedsCount, setRoomsBedsCount] = useState<Record<string, number>>({
+    Beds: 1,
+    Bedrooms: 1,
+    Bathrooms: 1
+  })
 
   // Initialize price range from URL params on mount
   useEffect(() => {
@@ -395,7 +405,11 @@ const ListingFilterTabs = ({
 
     // Only update rooms & beds if form contains rooms/beds data
     if (hasRoomsBeds) {
-      const newRoomsBedsCount: Record<string, number> = {}
+      const newRoomsBedsCount: Record<string, number> = {
+        Beds: 1,
+        Bedrooms: 1,
+        Bathrooms: 1
+      }
       for (const [key, value] of formData.entries()) {
         if ((key === 'Beds' || key === 'Bedrooms' || key === 'Bathrooms') && value) {
           const count = Number(value)
@@ -447,6 +461,30 @@ const ListingFilterTabs = ({
         console.log('🔧 Deleted price_max')
       }
       
+      // Update rooms & beds params
+      const beds = formData.get('Beds')
+      const bedrooms = formData.get('Bedrooms')
+      const bathrooms = formData.get('Bathrooms')
+      console.log('🔧 Rooms/beds data from form:', { beds, bedrooms, bathrooms })
+      
+      if (beds && Number(beds) > 0) {
+        currentUrl.searchParams.set('beds', beds.toString())
+      } else {
+        currentUrl.searchParams.delete('beds')
+      }
+      
+      if (bedrooms && Number(bedrooms) > 0) {
+        currentUrl.searchParams.set('bedrooms', bedrooms.toString())
+      } else {
+        currentUrl.searchParams.delete('bedrooms')
+      }
+      
+      if (bathrooms && Number(bathrooms) > 0) {
+        currentUrl.searchParams.set('bathrooms', bathrooms.toString())
+      } else {
+        currentUrl.searchParams.delete('bathrooms')
+      }
+      
       console.log('🔧 New URL after update:', currentUrl.toString())
       
       // Update URL without page refresh
@@ -455,7 +493,13 @@ const ListingFilterTabs = ({
       
       // Trigger a custom event to notify other components
       window.dispatchEvent(new CustomEvent('filtersChanged', {
-        detail: { priceMin: priceMin ? Number(priceMin) : null, priceMax: priceMax ? Number(priceMax) : null }
+        detail: { 
+          priceMin: priceMin ? Number(priceMin) : null, 
+          priceMax: priceMax ? Number(priceMax) : null,
+          beds: beds ? Number(beds) : null,
+          bedrooms: bedrooms ? Number(bedrooms) : null,
+          bathrooms: bathrooms ? Number(bathrooms) : null
+        }
       }))
       console.log('🔧 Dispatched filtersChanged event')
     }
@@ -480,19 +524,20 @@ const ListingFilterTabs = ({
   const handleRoomsBedsChange = (fieldName: string, value: number) => {
     setRoomsBedsCount(prev => {
       const newValues = { ...prev }
-      if (value > 0) {
-        newValues[fieldName] = value
-      } else {
-        delete newValues[fieldName]
-      }
+      // Always keep value >= 1
+      newValues[fieldName] = Math.max(1, value)
       return newValues
     })
   }
 
   // Count total selected filters (Price Range is not counted as a filter)
+  // Beds/Bedrooms/Bathrooms = 1 are not counted as filters (since it's the default)
   const selectedFiltersCount = 
     Object.keys(checkedFilters).length + 
-    Object.keys(roomsBedsCount).length
+    Object.entries(roomsBedsCount).filter(([key, value]) => {
+      // Only count if value > 1 (since 1 is the default for all fields)
+      return value > 1
+    }).length
 
   const renderTabAllFilters = () => {
     return (
@@ -576,7 +621,11 @@ const ListingFilterTabs = ({
               <div className="flex shrink-0 items-center justify-between bg-neutral-50 p-4 sm:px-8 dark:border-t dark:border-neutral-800 dark:bg-neutral-900">
                 <ButtonThird className="-mx-3" onClick={() => {
                   setCheckedFilters({})
-                  setRoomsBedsCount({})
+                  setRoomsBedsCount({
+                    Beds: 1,
+                    Bedrooms: 1,
+                    Bathrooms: 1
+                  })
                   // Reset Price Range to default values
                   const priceRangeFilter = filterOptions.find(f => f?.tabUIType === 'price-range') as PriceRangeFilter
                   if (priceRangeFilter) {
@@ -588,11 +637,20 @@ const ListingFilterTabs = ({
                     const currentUrl = new URL(window.location.href)
                     currentUrl.searchParams.delete('price_min')
                     currentUrl.searchParams.delete('price_max')
+                    currentUrl.searchParams.delete('beds')
+                    currentUrl.searchParams.delete('bedrooms')
+                    currentUrl.searchParams.delete('bathrooms')
                     window.history.pushState({}, '', currentUrl.toString())
                     
                     // Trigger filter change event
                     window.dispatchEvent(new CustomEvent('filtersChanged', {
-                      detail: { priceMin: null, priceMax: null }
+                      detail: { 
+                        priceMin: null, 
+                        priceMax: null,
+                        beds: null,
+                        bedrooms: null,
+                        bathrooms: null
+                      }
                     }))
                   }
                   
@@ -645,7 +703,10 @@ const ListingFilterTabs = ({
               badgeCount = 0 // Price range doesn't count as filter but shows value
             }
           } else if (filterOption.tabUIType === 'select-number') {
-            badgeCount = Object.keys(roomsBedsCount).length
+            // Only count values > 1 (since 1 is the default)
+            badgeCount = Object.entries(roomsBedsCount).filter(([key, value]) => {
+              return value > 1
+            }).length
           }
 
           return (
@@ -727,7 +788,29 @@ const ListingFilterTabs = ({
                           }))
                         }
                       } else if (filterOption.tabUIType === 'select-number') {
-                        setRoomsBedsCount({})
+                        setRoomsBedsCount({
+                          Beds: 1,
+                          Bedrooms: 1,
+                          Bathrooms: 1
+                        })
+                        
+                        // Clear URL params for rooms & beds
+                        if (typeof window !== 'undefined') {
+                          const currentUrl = new URL(window.location.href)
+                          currentUrl.searchParams.delete('beds')
+                          currentUrl.searchParams.delete('bedrooms')
+                          currentUrl.searchParams.delete('bathrooms')
+                          window.history.pushState({}, '', currentUrl.toString())
+                          
+                          // Trigger filter change event
+                          window.dispatchEvent(new CustomEvent('filtersChanged', {
+                            detail: { 
+                              beds: null,
+                              bedrooms: null,
+                              bathrooms: null
+                            }
+                          }))
+                        }
                       }
                     }}>
                       {T['common']['Clear']}
