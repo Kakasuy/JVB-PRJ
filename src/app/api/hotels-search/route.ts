@@ -381,7 +381,27 @@ export async function GET(request: NextRequest) {
         } : getDefaultCoordinates(cityCode),
         // Add bed type info for potential future use
         _bedType: bedInfo.bedType,
-        _roomDescription: roomDescription
+        _roomDescription: roomDescription,
+        // Add rate information for price display
+        lowestRateInfo: {
+          rateCode: lowestPriceOffer?.rateCode || 'RAC',
+          rateFamilyEstimated: lowestPriceOffer?.rateFamilyEstimated?.code || 
+            (lowestPriceOffer?.rateCode === 'PRO' ? 'X' : 'P'), // PRO = Non-refundable, others = Flexible
+          policies: lowestPriceOffer?.policies || {}
+        },
+        // Get highest price for dual display (only if multiple real offers exist)
+        highestRateInfo: offers.length > 1 ? (() => {
+          const highestPriceOffer = offers.reduce((highest: any, current: any) => {
+            const currentPrice = parseFloat(current.price?.total || '0')
+            const highestPrice = parseFloat(highest.price?.total || '0')
+            return currentPrice > highestPrice ? current : highest
+          }, offers[0])
+          return {
+            price: `$${Math.round(parseFloat(highestPriceOffer.price?.total || '0'))}`,
+            rateCode: highestPriceOffer?.rateCode || 'RAC',
+            rateFamilyEstimated: highestPriceOffer?.rateFamilyEstimated?.code || 'P'
+          }
+        })() : null
       }
     }) || []
 

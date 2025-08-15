@@ -1,10 +1,13 @@
 import BtnLikeIcon from '@/components/BtnLikeIcon'
 import GallerySlider from '@/components/GallerySlider'
+import RateBadge from '@/components/RateBadge'
+import RateCodeBadge from '@/components/RateCodeBadge'
 import SaleOffBadge from '@/components/SaleOffBadge'
 import StartRating from '@/components/StartRating'
 import { TStayListing } from '@/data/listings'
 import { Badge } from '@/shared/Badge'
 import T from '@/utils/getT'
+import { RateFamilyCode } from '@/utils/getRateBadge'
 import { Location06Icon } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
 import clsx from 'clsx'
@@ -89,17 +92,23 @@ const StayCard2: FC<StayCard2Props> = ({ size = 'default', className = '', data 
                 )}
               </>
             ) : (
-              <>
-                <span className="text-base font-semibold"> {price}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-semibold">{price}</span>
+                {/* Show RateCode badge instead of RateFamily */}
+                {(data as any).lowestRateInfo?.rateCode && (
+                  <RateCodeBadge 
+                    rateCode={(data as any).lowestRateInfo.rateCode}
+                  />
+                )}
                 {size === 'default' && (
                   <>
-                    <span className="mx-1 text-sm font-light text-neutral-400 dark:text-neutral-500">/</span>
+                    <span className="text-sm font-light text-neutral-400 dark:text-neutral-500">/</span>
                     <span className="text-sm font-normal text-neutral-500 dark:text-neutral-400">
                       {T['common']['night']}
                     </span>
                   </>
                 )}
-              </>
+              </div>
             )}
           </div>
           {!!reviewStart && <StartRating 
