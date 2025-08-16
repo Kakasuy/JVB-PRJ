@@ -135,7 +135,9 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
       // Rooms & Beds filters
       beds: searchParams.get('beds'),
       bedrooms: searchParams.get('bedrooms'),
-      bathrooms: searchParams.get('bathrooms')
+      bathrooms: searchParams.get('bathrooms'),
+      // Room Type filters
+      room_types: searchParams.get('room_types')
     }
   }, [searchParams])
 
@@ -182,7 +184,8 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
           price_max: currentParams.get('price_max'),
           beds: currentParams.get('beds'),
           bedrooms: currentParams.get('bedrooms'),
-          bathrooms: currentParams.get('bathrooms')
+          bathrooms: currentParams.get('bathrooms'),
+          room_types: currentParams.get('room_types')
         }
         console.log('🔧 Fresh search config with filters:', updatedConfig)
         

@@ -1235,31 +1235,59 @@ export type TFlightListing = Awaited<ReturnType<typeof getFlightListings>>[numbe
 export async function getStayListingFilterOptions() {
   return [
     {
-      label: 'Property type',
-      name: 'propertyType',
+      name: 'Room-type',
+      label: 'Room Type',
       tabUIType: 'checkbox',
       options: [
         {
-          name: 'Entire place',
-          value: 'entire_place',
-          description: 'Have a place to yourself',
-          defaultChecked: true,
+          name: 'Standard Room',
+          value: 'STANDARD_ROOM',
+          description: 'Basic comfortable accommodation with essential amenities',
         },
         {
-          name: 'Private room',
-          value: 'private_room',
-          description: 'Have your own room and share some common spaces',
-          defaultChecked: true,
+          name: 'Superior Room',
+          value: 'SUPERIOR_ROOM',
+          description: 'Enhanced room with better amenities and furnishing',
         },
         {
-          name: 'Hotel room',
-          value: 'hotel_room',
-          description: 'Have a private or shared room in a boutique hotel, hostel, and more',
+          name: 'Deluxe Room',
+          value: 'DELUXE_ROOM',
+          description: 'Spacious room with premium features and city views',
         },
         {
-          name: 'Shared room',
-          value: 'shared_room',
-          description: 'Stay in a shared space, like a common room',
+          name: 'Executive Room',
+          value: 'EXECUTIVE_ROOM',
+          description: 'Business-class room with executive lounge access',
+        },
+        {
+          name: 'Club Room',
+          value: 'CLUB_ROOM',
+          description: 'Premium room with club floor privileges',
+        },
+        {
+          name: 'Junior Suite',
+          value: 'JUNIOR_SUITE',
+          description: 'Compact suite with separate seating area',
+        },
+        {
+          name: 'Suite',
+          value: 'SUITE',
+          description: 'Luxurious suite with multiple rooms and living area',
+        },
+        {
+          name: 'Presidential Suite',
+          value: 'PRESIDENTIAL_SUITE',
+          description: 'Top-tier luxury accommodation with premium amenities',
+        },
+        {
+          name: 'Family Room',
+          value: 'FAMILY_ROOM',
+          description: 'Spacious room designed for families with children',
+        },
+        {
+          name: 'Connecting Room',
+          value: 'CONNECTING_ROOM',
+          description: 'Adjacent rooms with internal connecting door',
         },
       ],
     },
@@ -1343,66 +1371,6 @@ export async function getStayListingFilterOptions() {
           name: 'EV charger',
           value: 'ev_charger',
           description: 'Stay in a shared space, like a common room',
-        },
-      ],
-    },
-    {
-      label: 'Property type',
-      name: 'listingCategory',
-      tabUIType: 'checkbox',
-      options: [
-        {
-          name: 'House',
-          value: 'house',
-          description: 'Have a place to yourself',
-        },
-        {
-          name: 'Bed and breakfast',
-          value: 'bed_and_breakfast',
-          description: 'Have your own room and share some common spaces',
-        },
-        {
-          name: 'Apartment',
-          defaultChecked: true,
-          value: 'apartment',
-          description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-        },
-        {
-          name: 'Boutique hotel',
-          value: 'boutique_hotel',
-          description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-        },
-        {
-          name: 'Bungalow',
-          value: 'bungalow',
-          description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-        },
-        {
-          name: 'Chalet',
-          defaultChecked: true,
-          value: 'chalet',
-          description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-        },
-        {
-          name: 'Condominium',
-          defaultChecked: true,
-          value: 'condominium',
-          description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-        },
-        {
-          name: 'Cottage',
-          value: 'cottage',
-          description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-        },
-        {
-          name: 'Guest suite',
-          value: 'guest_suite',
-          description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-        },
-        {
-          name: 'Guesthouse',
-          value: 'guesthouse',
-          description: 'Have a private or shared room in a boutique hotel, hostel, and more',
         },
       ],
     },

@@ -58,6 +58,9 @@ export async function GET(request: NextRequest) {
     const minBedrooms = searchParams.get('bedrooms') ? Number(searchParams.get('bedrooms')) : null
     const minBathrooms = searchParams.get('bathrooms') ? Number(searchParams.get('bathrooms')) : null
     
+    // Room Type filters
+    const roomTypes = searchParams.get('room_types') ? searchParams.get('room_types')?.split(',') : null
+    
     
 
     // Get OAuth token first
@@ -457,6 +460,41 @@ export async function GET(request: NextRequest) {
         return true
       })
       console.log('Hotels after rooms/beds filtering:', finalHotels.length)
+    }
+    
+    // Apply room type filters if provided
+    if (roomTypes && roomTypes.length > 0) {
+      console.log('Hotels before room type filtering:', finalHotels.length)
+      console.log(`Filter criteria - Room Types: ${roomTypes.join(', ')}`)
+      
+      finalHotels = finalHotels.filter((hotel) => {
+        // Find the hotel in the original data to get room type info
+        const originalHotel = hotelData.data?.find((h: any) => h.hotel?.hotelId === hotel.id.replace('amadeus-hotel://', ''))
+        if (!originalHotel) return true // Keep hotel if we can't find original data
+        
+        const offers = originalHotel.offers || []
+        
+        // Check if any offer has a matching room type
+        const hasMatchingRoomType = offers.some((offer: any) => {
+          const roomCategory = offer.room?.typeEstimated?.category
+          
+          // Debug: Log the actual room data structure for the first few hotels
+          if (Math.random() < 0.1) { // Log 10% of offers for debugging
+            console.log('🔍 DEBUG - Room data structure:', {
+              hotelId: originalHotel.hotel?.hotelId,
+              roomCategory,
+              fullRoomData: offer.room,
+              typeEstimated: offer.room?.typeEstimated
+            })
+          }
+          
+          return roomCategory && roomTypes.includes(roomCategory)
+        })
+        
+        return hasMatchingRoomType
+      })
+      
+      console.log('Hotels after room type filtering:', finalHotels.length)
     }
 
     // Fetch hotel sentiments for all hotels

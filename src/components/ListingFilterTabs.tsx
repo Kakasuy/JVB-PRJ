@@ -57,29 +57,59 @@ type SelectNumberFilter = {
 
 const demo_filters_options = [
   {
-    name: 'type-of-place',
-    label: 'Type of place',
+    name: 'Room-type',
+    label: 'Room Type',
     tabUIType: 'checkbox',
     options: [
       {
-        name: 'Entire place',
-        value: 'entire_place',
-        description: 'Have a place to yourself',
+        name: 'Standard Room',
+        value: 'STANDARD_ROOM',
+        description: 'Basic comfortable accommodation with essential amenities',
       },
       {
-        name: 'Private room',
-        value: 'private_room',
-        description: 'Have your own room and share some common spaces',
+        name: 'Superior Room',
+        value: 'SUPERIOR_ROOM',
+        description: 'Enhanced room with better amenities and furnishing',
       },
       {
-        name: 'Hotel room',
-        value: 'hotel_room',
-        description: 'Have a private or shared room in a boutique hotel, hostel, and more',
+        name: 'Deluxe Room',
+        value: 'DELUXE_ROOM',
+        description: 'Spacious room with premium features and city views',
       },
       {
-        name: 'Shared room',
-        value: 'shared_room',
-        description: 'Stay in a shared space, like a common room',
+        name: 'Executive Room',
+        value: 'EXECUTIVE_ROOM',
+        description: 'Business-class room with executive lounge access',
+      },
+      {
+        name: 'Club Room',
+        value: 'CLUB_ROOM',
+        description: 'Premium room with club floor privileges',
+      },
+      {
+        name: 'Junior Suite',
+        value: 'JUNIOR_SUITE',
+        description: 'Compact suite with separate seating area',
+      },
+      {
+        name: 'Suite',
+        value: 'SUITE',
+        description: 'Luxurious suite with multiple rooms and living area',
+      },
+      {
+        name: 'Presidential Suite',
+        value: 'PRESIDENTIAL_SUITE',
+        description: 'Top-tier luxury accommodation with premium amenities',
+      },
+      {
+        name: 'Family Room',
+        value: 'FAMILY_ROOM',
+        description: 'Spacious room designed for families with children',
+      },
+      {
+        name: 'Connecting Room',
+        value: 'CONNECTING_ROOM',
+        description: 'Adjacent rooms with internal connecting door',
       },
     ],
   },
@@ -165,63 +195,6 @@ const demo_filters_options = [
     ],
   },
   {
-    name: 'Property-type',
-    label: 'Property type',
-    tabUIType: 'checkbox',
-    options: [
-      {
-        name: 'House',
-        value: 'house',
-        description: 'Have a place to yourself',
-      },
-      {
-        name: 'Bed and breakfast',
-        value: 'bed_and_breakfast',
-        description: 'Have your own room and share some common spaces',
-      },
-      {
-        name: 'Apartment',
-        value: 'apartment',
-        description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-      },
-      {
-        name: 'Boutique hotel',
-        value: 'boutique_hotel',
-        description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-      },
-      {
-        name: 'Bungalow',
-        value: 'bungalow',
-        description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-      },
-      {
-        name: 'Chalet',
-        value: 'chalet',
-        description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-      },
-      {
-        name: 'Condominium',
-        value: 'condominium',
-        description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-      },
-      {
-        name: 'Cottage',
-        value: 'cottage',
-        description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-      },
-      {
-        name: 'Guest suite',
-        value: 'guest_suite',
-        description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-      },
-      {
-        name: 'Guesthouse',
-        value: 'guesthouse',
-        description: 'Have a private or shared room in a boutique hotel, hostel, and more',
-      },
-    ],
-  },
-  {
     name: 'House-rules',
     label: 'House rules',
     tabUIType: 'checkbox',
@@ -258,7 +231,7 @@ const CheckboxPanel = ({
           <CheckboxField key={option.name}>
             <Checkbox 
               name={`${filterOption.name}[]`} 
-              value={option.name} 
+              value={(option as any).value || option.name} 
               checked={checkedValues[option.name] || false}
               onChange={(checked) => {
                 onCheckboxChange?.(option.name, checked)
@@ -375,6 +348,30 @@ const ListingFilterTabs = ({
     }
   }, [searchParams, filterOptions])
 
+  // Initialize checked filters from URL params on mount
+  useEffect(() => {
+    const roomTypes = searchParams.get('room_types')
+    
+    if (roomTypes) {
+      const roomTypeValues = roomTypes.split(',')
+      const newCheckedFilters: Record<string, boolean> = {}
+      
+      // Find Room Type filter options
+      const roomTypeFilter = filterOptions.find(f => f?.name === 'Room-type') as CheckboxFilter
+      if (roomTypeFilter?.options) {
+        roomTypeFilter.options.forEach(option => {
+          // Check if this option's value is in the URL params
+          const optionValue = (option as any).value || option.name
+          if (roomTypeValues.includes(optionValue)) {
+            newCheckedFilters[option.name] = true
+          }
+        })
+      }
+      
+      setCheckedFilters(newCheckedFilters)
+    }
+  }, [searchParams, filterOptions])
+
   const updateFiltersFromForm = (formData: FormData) => {
     const formDataObject = Object.fromEntries(formData.entries())
     
@@ -485,6 +482,21 @@ const ListingFilterTabs = ({
         currentUrl.searchParams.delete('bathrooms')
       }
       
+      // Update room type params
+      const roomTypeValues: string[] = []
+      for (const [key, value] of formData.entries()) {
+        if (key.includes('Room-type[]') && value) {
+          roomTypeValues.push(value as string)
+        }
+      }
+      console.log('🔧 Room type data from form:', roomTypeValues)
+      
+      if (roomTypeValues.length > 0) {
+        currentUrl.searchParams.set('room_types', roomTypeValues.join(','))
+      } else {
+        currentUrl.searchParams.delete('room_types')
+      }
+      
       console.log('🔧 New URL after update:', currentUrl.toString())
       
       // Update URL without page refresh
@@ -498,7 +510,8 @@ const ListingFilterTabs = ({
           priceMax: priceMax ? Number(priceMax) : null,
           beds: beds ? Number(beds) : null,
           bedrooms: bedrooms ? Number(bedrooms) : null,
-          bathrooms: bathrooms ? Number(bathrooms) : null
+          bathrooms: bathrooms ? Number(bathrooms) : null,
+          roomTypes: roomTypeValues.length > 0 ? roomTypeValues : null
         }
       }))
       console.log('🔧 Dispatched filtersChanged event')
