@@ -72,6 +72,11 @@ const demo_filters_options = [
         description: 'Enhanced room with better amenities and furnishing',
       },
       {
+        name: 'Premium Room',
+        value: 'PREMIUM_ROOM',
+        description: 'High-quality room with premium amenities and services',
+      },
+      {
         name: 'Deluxe Room',
         value: 'DELUXE_ROOM',
         description: 'Spacious room with premium features and city views',
