@@ -464,6 +464,22 @@ export async function GET(request: NextRequest) {
       console.log('Hotels after rooms/beds filtering:', finalHotels.length)
     }
     
+    // TEMPORARY: Collect all unique room types for analytics
+    const allRoomTypes = new Set<string>()
+    finalHotels.forEach((hotel) => {
+      const originalHotel = hotelData.data?.find((h: any) => h.hotel?.hotelId === hotel.id.replace('amadeus-hotel://', ''))
+      if (originalHotel) {
+        const offers = originalHotel.offers || []
+        offers.forEach((offer: any) => {
+          const roomCategory = offer.room?.typeEstimated?.category
+          if (roomCategory) {
+            allRoomTypes.add(roomCategory)
+          }
+        })
+      }
+    })
+    console.log('🔍 ALL UNIQUE ROOM TYPES FOUND:', Array.from(allRoomTypes).sort())
+
     // Apply room type filters if provided
     if (roomTypes && roomTypes.length > 0) {
       console.log('Hotels before room type filtering:', finalHotels.length)
