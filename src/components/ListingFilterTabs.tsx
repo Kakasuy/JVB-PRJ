@@ -632,29 +632,8 @@ const ListingFilterTabs = ({
                     setPriceRange([priceRangeFilter.min, priceRangeFilter.max])
                   }
                   
-                  // Clear URL params
-                  if (typeof window !== 'undefined') {
-                    const currentUrl = new URL(window.location.href)
-                    currentUrl.searchParams.delete('price_min')
-                    currentUrl.searchParams.delete('price_max')
-                    currentUrl.searchParams.delete('beds')
-                    currentUrl.searchParams.delete('bedrooms')
-                    currentUrl.searchParams.delete('bathrooms')
-                    window.history.pushState({}, '', currentUrl.toString())
-                    
-                    // Trigger filter change event
-                    window.dispatchEvent(new CustomEvent('filtersChanged', {
-                      detail: { 
-                        priceMin: null, 
-                        priceMax: null,
-                        beds: null,
-                        bedrooms: null,
-                        bathrooms: null
-                      }
-                    }))
-                  }
-                  
-                  setShowAllFilter(false)
+                  // Don't clear URL params or trigger search - just reset the form values
+                  // Keep the dialog open - don't close it
                 }} type="button">
                   {T['common']['Clear All']}
                 </ButtonThird>
@@ -762,8 +741,8 @@ const ListingFilterTabs = ({
                   </div>
 
                   <div className="flex items-center justify-between rounded-b-2xl bg-neutral-50 p-5 dark:border-t dark:border-neutral-800 dark:bg-neutral-900">
-                    <CloseButton className="-mx-3" as={ButtonThird} type="button" onClick={() => {
-                      // Clear filters for this specific filter option
+                    <ButtonThird type="button" onClick={() => {
+                      // Clear filters for this specific filter option - only reset values, don't trigger search
                       if (filterOption.tabUIType === 'checkbox') {
                         const newCheckedFilters = { ...checkedFilters }
                         ;(filterOption as CheckboxFilter).options?.forEach(option => {
@@ -774,47 +753,16 @@ const ListingFilterTabs = ({
                         // Reset price range to default values
                         const priceFilter = filterOption as PriceRangeFilter
                         setPriceRange([priceFilter.min, priceFilter.max])
-                        
-                        // Clear price URL params
-                        if (typeof window !== 'undefined') {
-                          const currentUrl = new URL(window.location.href)
-                          currentUrl.searchParams.delete('price_min')
-                          currentUrl.searchParams.delete('price_max')
-                          window.history.pushState({}, '', currentUrl.toString())
-                          
-                          // Trigger filter change event
-                          window.dispatchEvent(new CustomEvent('filtersChanged', {
-                            detail: { priceMin: null, priceMax: null }
-                          }))
-                        }
                       } else if (filterOption.tabUIType === 'select-number') {
                         setRoomsBedsCount({
                           Beds: 1,
                           Bedrooms: 1,
                           Bathrooms: 1
                         })
-                        
-                        // Clear URL params for rooms & beds
-                        if (typeof window !== 'undefined') {
-                          const currentUrl = new URL(window.location.href)
-                          currentUrl.searchParams.delete('beds')
-                          currentUrl.searchParams.delete('bedrooms')
-                          currentUrl.searchParams.delete('bathrooms')
-                          window.history.pushState({}, '', currentUrl.toString())
-                          
-                          // Trigger filter change event
-                          window.dispatchEvent(new CustomEvent('filtersChanged', {
-                            detail: { 
-                              beds: null,
-                              bedrooms: null,
-                              bathrooms: null
-                            }
-                          }))
-                        }
                       }
                     }}>
                       {T['common']['Clear']}
-                    </CloseButton>
+                    </ButtonThird>
                     <CloseButton type="submit" as={ButtonPrimary} onClick={() => {
                       console.log('🚨 INDIVIDUAL FILTER APPLY BUTTON CLICKED!')
                     }}>
