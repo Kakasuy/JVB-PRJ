@@ -146,56 +146,9 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
     searchHotels(searchConfig)
   }, [searchConfig, searchHotels])
 
-  // Listen for filter changes from ListingFilterTabs
-  useEffect(() => {
-    const handleFiltersChanged = (event: any) => {
-      console.log('🔧 HotelSearchResults received filtersChanged event:', event.detail)
-      
-      // Force re-read URL params after filter change
-      setTimeout(() => {
-        const currentParams = new URLSearchParams(window.location.search)
-        console.log('🔧 Current URL params after timeout:', Object.fromEntries(currentParams.entries()))
-        
-        // Re-create search config from scratch with all current URL params
-        const today = new Date()
-        const defaultCheckIn = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000)
-        const defaultCheckOut = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000)
-        
-        const cityCodeParam = currentParams.get('cityCode')
-        const locationParam = currentParams.get('location')
-        
-        let cityCode: string
-        if (cityCodeParam) {
-          cityCode = cityCodeParam
-        } else if (locationParam) {
-          cityCode = mapLocationToCityCode(locationParam)
-        } else {
-          cityCode = 'NYC'
-        }
-        
-        const updatedConfig = {
-          cityCode,
-          checkInDate: currentParams.get('checkInDate') || defaultCheckIn.toISOString().split('T')[0],
-          checkOutDate: currentParams.get('checkOutDate') || defaultCheckOut.toISOString().split('T')[0],
-          adults: currentParams.get('adults') || '1',
-          rooms: currentParams.get('rooms') || '1',
-          radius: currentParams.get('radius') || '30',
-          price_min: currentParams.get('price_min'),
-          price_max: currentParams.get('price_max'),
-          beds: currentParams.get('beds'),
-          bedrooms: currentParams.get('bedrooms'),
-          bathrooms: currentParams.get('bathrooms'),
-          room_types: currentParams.get('room_types')
-        }
-        console.log('🔧 Fresh search config with filters:', updatedConfig)
-        
-        searchHotels(updatedConfig)
-      }, 100) // Small delay to ensure URL is updated
-    }
-
-    window.addEventListener('filtersChanged', handleFiltersChanged)
-    return () => window.removeEventListener('filtersChanged', handleFiltersChanged)
-  }, [searchHotels])
+  // REMOVED: Custom event handler for filtersChanged
+  // Now using only URL-based approach for better performance and reliability
+  // The useEffect above (lines 145-147) handles all filter changes via URL params
 
   // Reset to page 1 when search params change
   useEffect(() => {

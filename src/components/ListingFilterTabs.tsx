@@ -503,18 +503,8 @@ const ListingFilterTabs = ({
       window.history.pushState({}, '', currentUrl.toString())
       console.log('🔧 URL updated in browser')
       
-      // Trigger a custom event to notify other components
-      window.dispatchEvent(new CustomEvent('filtersChanged', {
-        detail: { 
-          priceMin: priceMin ? Number(priceMin) : null, 
-          priceMax: priceMax ? Number(priceMax) : null,
-          beds: beds ? Number(beds) : null,
-          bedrooms: bedrooms ? Number(bedrooms) : null,
-          bathrooms: bathrooms ? Number(bathrooms) : null,
-          roomTypes: roomTypeValues.length > 0 ? roomTypeValues : null
-        }
-      }))
-      console.log('🔧 Dispatched filtersChanged event')
+      // REMOVED: Custom event dispatch
+      // URL change will automatically trigger HotelSearchResults re-render via useSearchParams
     }
   }
 

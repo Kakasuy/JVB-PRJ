@@ -385,6 +385,8 @@ export async function GET(request: NextRequest) {
         // Add bed type info for potential future use
         _bedType: bedInfo.bedType,
         _roomDescription: roomDescription,
+        // Add room type category for verification
+        roomType: roomInfo?.typeEstimated?.category || null,
         // Add rate information for price display
         lowestRateInfo: {
           rateCode: lowestPriceOffer?.rateCode || 'RAC',
@@ -478,15 +480,7 @@ export async function GET(request: NextRequest) {
         const hasMatchingRoomType = offers.some((offer: any) => {
           const roomCategory = offer.room?.typeEstimated?.category
           
-          // Debug: Log the actual room data structure for the first few hotels
-          if (Math.random() < 0.1) { // Log 10% of offers for debugging
-            console.log('🔍 DEBUG - Room data structure:', {
-              hotelId: originalHotel.hotel?.hotelId,
-              roomCategory,
-              fullRoomData: offer.room,
-              typeEstimated: offer.room?.typeEstimated
-            })
-          }
+          // Debug logs removed for production performance
           
           return roomCategory && roomTypes.includes(roomCategory)
         })
