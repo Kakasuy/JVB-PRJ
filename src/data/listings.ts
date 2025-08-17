@@ -1235,6 +1235,13 @@ export type TFlightListing = Awaited<ReturnType<typeof getFlightListings>>[numbe
 export async function getStayListingFilterOptions() {
   return [
     {
+      name: 'Price-range',
+      label: 'Price Range',
+      tabUIType: 'price-range',
+      min: 0,
+      max: 2000,
+    },
+    {
       name: 'Room-type',
       label: 'Room Type',
       tabUIType: 'checkbox',
@@ -1277,123 +1284,194 @@ export async function getStayListingFilterOptions() {
         {
           name: 'Suite',
           value: 'SUITE',
-          description: 'Luxurious suite with multiple rooms and living area',
+          description: 'Full suite with separate living and sleeping areas',
         },
         {
           name: 'Presidential Suite',
           value: 'PRESIDENTIAL_SUITE',
-          description: 'Top-tier luxury accommodation with premium amenities',
-        },
-        {
-          name: 'Family Room',
-          value: 'FAMILY_ROOM',
-          description: 'Spacious room designed for families with children',
-        },
-        {
-          name: 'Connecting Room',
-          value: 'CONNECTING_ROOM',
-          description: 'Adjacent rooms with internal connecting door',
-        },
+          description: 'Ultimate luxury accommodation with premium services',
+        }
       ],
     },
     {
-      label: 'Price range',
-      name: 'priceRange',
-      tabUIType: 'price-range',
-      min: 0,
-      max: 1000,
-    },
-    {
-      label: 'Rooms & Beds',
-      name: 'roomsAndBeds',
+      name: 'Rooms-beds',
+      label: 'Rooms and beds',
       tabUIType: 'select-number',
       options: [
-        { name: 'Beds', max: 10 },
-        { name: 'Bedrooms', max: 10 },
-        { name: 'Bathrooms', max: 10 },
+        {
+          name: 'Beds',
+          max: 10,
+        },
+        {
+          name: 'Bedrooms',
+          max: 10,
+        },
+        {
+          name: 'Bathrooms',
+          max: 10,
+        },
       ],
     },
     {
+      name: 'Amenities',
       label: 'Amenities',
-      name: 'amenities',
       tabUIType: 'checkbox',
+      expandable: true,
       options: [
+        // Top/Popular Amenities (Always visible)
+        {
+          name: 'Wi-Fi',
+          value: 'WIFI',
+          description: 'Wireless internet throughout property',
+          popular: true,
+        },
+        {
+          name: 'Air Conditioning',
+          value: 'AIR_CONDITIONING',
+          description: 'Climate-controlled rooms',
+          popular: true,
+        },
+        {
+          name: 'Parking',
+          value: 'PARKING',
+          description: 'Self-parking available',
+          popular: true,
+        },
+        {
+          name: 'Swimming Pool',
+          value: 'SWIMMING_POOL',
+          description: 'Outdoor or indoor swimming pool',
+          popular: true,
+        },
+        {
+          name: 'Fitness Center',
+          value: 'FITNESS_CENTER',
+          description: 'On-site gym and fitness facilities',
+          popular: true,
+        },
+        {
+          name: 'Restaurant',
+          value: 'RESTAURANT',
+          description: 'On-site dining restaurant',
+          popular: true,
+        },
+        
+        // Additional Amenities (Hidden by default, shown when expanded)
+        {
+          name: 'Spa',
+          value: 'SPA',
+          description: 'Full-service spa and wellness center',
+        },
+        {
+          name: 'Room Service',
+          value: 'ROOM_SERVICE',
+          description: '24-hour or limited room service',
+        },
+        {
+          name: 'Business Center',
+          value: 'BUSINESS_CENTER',
+          description: 'Business services and facilities',
+        },
         {
           name: 'Kitchen',
-          value: 'kitchen',
-          description: 'Have a place to yourself',
-          defaultChecked: true,
+          value: 'KITCHEN',
+          description: 'In-room kitchen or kitchenette',
         },
         {
-          name: 'Air conditioning',
-          value: 'air_conditioning',
-          description: 'Have your own room and share some common spaces',
-          defaultChecked: true,
+          name: 'Pets Allowed',
+          value: 'PETS_ALLOWED',
+          description: 'Pet-friendly accommodation',
         },
         {
-          name: 'Heating',
-          value: 'heating',
-          description: 'Have a private or shared room in a boutique hotel, hostel, and more',
+          name: 'Airport Shuttle',
+          value: 'AIRPORT_SHUTTLE',
+          description: 'Free or paid airport transportation',
         },
         {
-          name: 'Dryer',
-          value: 'dryer',
-          description: 'Stay in a shared space, like a common room',
+          name: 'Bar or Lounge',
+          value: 'BAR or LOUNGE',
+          description: 'Hotel bar or cocktail lounge',
         },
         {
-          name: 'Washer',
-          value: 'washer',
-          description: 'Stay in a shared space, like a common room',
-        },
-      ],
-    },
-    {
-      label: 'Facilities',
-      name: 'facilities',
-      tabUIType: 'checkbox',
-      options: [
-        {
-          name: 'Free parking on premise',
-          value: 'free_parking_on_premise',
-          description: 'Have a place to yourself',
+          name: 'Meeting Rooms',
+          value: 'MEETING_ROOMS',
+          description: 'Conference and meeting facilities',
         },
         {
-          name: 'Hot tub',
-          value: 'hot_tub',
-          description: 'Have your own room and share some common spaces',
+          name: 'Jacuzzi',
+          value: 'JACUZZI',
+          description: 'Hot tub and jacuzzi facilities',
         },
         {
-          name: 'Gym',
-          value: 'gym',
-          description: 'Have a private or shared room in a boutique hotel, hostel, and more',
+          name: 'Sauna',
+          value: 'SAUNA',
+          description: 'Traditional sauna facilities',
         },
         {
-          name: 'Pool',
-          value: 'pool',
-          description: 'Stay in a shared space, like a common room',
+          name: 'Tennis',
+          value: 'TENNIS',
+          description: 'Tennis court access',
         },
         {
-          name: 'EV charger',
-          value: 'ev_charger',
-          description: 'Stay in a shared space, like a common room',
-        },
-      ],
-    },
-    {
-      label: 'House rules',
-      name: 'houseRules',
-      tabUIType: 'checkbox',
-      options: [
-        {
-          name: 'Pets allowed',
-          value: 'pets_allowed',
-          description: 'Have a place to yourself',
+          name: 'Golf',
+          value: 'GOLF',
+          description: 'Golf course or golf access',
         },
         {
-          name: 'Smoking allowed',
-          value: 'smoking_allowed',
-          description: 'Have your own room and share some common spaces',
+          name: 'Minibar',
+          value: 'MINIBAR',
+          description: 'In-room minibar and refreshments',
         },
+        {
+          name: 'Television',
+          value: 'TELEVISION',
+          description: 'In-room TV with cable/satellite',
+        },
+        {
+          name: 'Valet Parking',
+          value: 'VALET_PARKING',
+          description: 'Valet parking service',
+        },
+        {
+          name: 'Casino',
+          value: 'CASINO',
+          description: 'On-site casino facilities',
+        },
+        {
+          name: 'Kids Welcome',
+          value: 'KIDS_WELCOME',
+          description: 'Child-friendly facilities and services',
+        },
+        {
+          name: 'No Kids Allowed',
+          value: 'NO_KID_ALLOWED',
+          description: 'Adults-only property',
+        },
+        {
+          name: 'Disabled Facilities',
+          value: 'DISABLED_FACILITIES',
+          description: 'Wheelchair accessible facilities',
+        },
+        {
+          name: 'Baby Sitting',
+          value: 'BABY-SITTING',
+          description: 'Babysitting and childcare services',
+        },
+        {
+          name: 'Massage',
+          value: 'MASSAGE',
+          description: 'Massage and wellness services',
+        },
+        {
+          name: 'Beach Access',
+          value: 'BEACH',
+          description: 'Direct beach access or beachfront location',
+        },
+        {
+          name: 'Solarium',
+          value: 'SOLARIUM',
+          description: 'Sun terrace and solarium facilities',
+        }
       ],
     },
   ]

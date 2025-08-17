@@ -137,7 +137,9 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
       bedrooms: searchParams.get('bedrooms'),
       bathrooms: searchParams.get('bathrooms'),
       // Room Type filters
-      room_types: searchParams.get('room_types')
+      room_types: searchParams.get('room_types'),
+      // Amenities filters
+      amenities: searchParams.get('amenities')
     }
   }, [searchParams])
 

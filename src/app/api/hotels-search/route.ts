@@ -61,6 +61,8 @@ export async function GET(request: NextRequest) {
     // Room Type filters
     const roomTypes = searchParams.get('room_types') ? searchParams.get('room_types')?.split(',') : null
     
+    // Amenities filters - get comma-separated amenities from URL params
+    const amenities = searchParams.get('amenities') ? searchParams.get('amenities')?.split(',') : null
     
 
     // Get OAuth token first
@@ -94,6 +96,14 @@ export async function GET(request: NextRequest) {
     hotelSearchUrl.searchParams.append('radius', radius)
     hotelSearchUrl.searchParams.append('radiusUnit', radiusUnit)
     hotelSearchUrl.searchParams.append('hotelSource', hotelSource)
+    
+    // Add amenities filter if provided
+    if (amenities && amenities.length > 0) {
+      // Join amenities with comma for Amadeus API
+      hotelSearchUrl.searchParams.append('amenities', amenities.join(','))
+      console.log(`🏨 Filtering hotels by amenities: ${amenities.join(', ')}`)
+    }
+    
     // Request more hotels in the first step - removed pagination as it may not be supported
 
     const hotelListResponse = await fetch(hotelSearchUrl.toString(), {
@@ -110,9 +120,9 @@ export async function GET(request: NextRequest) {
         details: errorText 
       }, { status: 400 })
     }
-
-    const hotelListData = await hotelListResponse.json()
     
+    const hotelListData = await hotelListResponse.json()
+
     console.log(`Found ${hotelListData.data?.length || 0} hotels in step 1 for city ${cityCode}`)
     
     if (!hotelListData.data || hotelListData.data.length === 0) {
@@ -568,7 +578,8 @@ export async function GET(request: NextRequest) {
           priceMax,
           beds: minBeds,
           bedrooms: minBedrooms,
-          bathrooms: minBathrooms
+          bathrooms: minBathrooms,
+          amenities: amenities
         },
         cityCode,
         checkInDate,

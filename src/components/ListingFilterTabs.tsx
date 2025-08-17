@@ -32,10 +32,13 @@ type CheckboxFilter = {
   label: string
   name: string
   tabUIType: 'checkbox'
+  expandable?: boolean
   options: {
     name: string
     description?: string
     defaultChecked?: boolean
+    popular?: boolean
+    value?: string
   }[]
 }
 type PriceRangeFilter = {
@@ -56,6 +59,13 @@ type SelectNumberFilter = {
 }
 
 const demo_filters_options = [
+  {
+    name: 'Price-range',
+    label: 'Price Range',
+    tabUIType: 'price-range',
+    min: 0,
+    max: 2000,
+  },
   {
     name: 'Room-type',
     label: 'Room Type',
@@ -99,121 +109,194 @@ const demo_filters_options = [
       {
         name: 'Suite',
         value: 'SUITE',
-        description: 'Luxurious suite with multiple rooms and living area',
+        description: 'Full suite with separate living and sleeping areas',
       },
       {
         name: 'Presidential Suite',
         value: 'PRESIDENTIAL_SUITE',
-        description: 'Top-tier luxury accommodation with premium amenities',
-      },
-      {
-        name: 'Family Room',
-        value: 'FAMILY_ROOM',
-        description: 'Spacious room designed for families with children',
-      },
-      {
-        name: 'Connecting Room',
-        value: 'CONNECTING_ROOM',
-        description: 'Adjacent rooms with internal connecting door',
-      },
+        description: 'Ultimate luxury accommodation with premium services',
+      }
     ],
   },
   {
-    label: 'Price per day',
-    name: 'price-per-day',
-    tabUIType: 'price-range',
-    min: 0,
-    max: 1000,
-  },
-  {
-    label: 'Rooms & Beds',
-    name: 'rooms-beds',
+    name: 'Rooms-beds',
+    label: 'Rooms and beds',
     tabUIType: 'select-number',
     options: [
-      { name: 'Beds', max: 10 },
-      { name: 'Bedrooms', max: 10 },
-      { name: 'Bathrooms', max: 10 },
+      {
+        name: 'Beds',
+        max: 10,
+      },
+      {
+        name: 'Bedrooms',
+        max: 10,
+      },
+      {
+        name: 'Bathrooms',
+        max: 10,
+      },
     ],
   },
   {
+    name: 'Amenities',
     label: 'Amenities',
-    name: 'amenities',
     tabUIType: 'checkbox',
+    expandable: true,
     options: [
+      // Top/Popular Amenities (Always visible)
+      {
+        name: 'Wi-Fi',
+        value: 'WIFI',
+        description: 'Wireless internet throughout property',
+        popular: true,
+      },
+      {
+        name: 'Air Conditioning',
+        value: 'AIR_CONDITIONING',
+        description: 'Climate-controlled rooms',
+        popular: true,
+      },
+      {
+        name: 'Parking',
+        value: 'PARKING',
+        description: 'Self-parking available',
+        popular: true,
+      },
+      {
+        name: 'Swimming Pool',
+        value: 'SWIMMING_POOL',
+        description: 'Outdoor or indoor swimming pool',
+        popular: true,
+      },
+      {
+        name: 'Fitness Center',
+        value: 'FITNESS_CENTER',
+        description: 'On-site gym and fitness facilities',
+        popular: true,
+      },
+      {
+        name: 'Restaurant',
+        value: 'RESTAURANT',
+        description: 'On-site dining restaurant',
+        popular: true,
+      },
+      
+      // Additional Amenities (Hidden by default, shown when expanded)
+      {
+        name: 'Spa',
+        value: 'SPA',
+        description: 'Full-service spa and wellness center',
+      },
+      {
+        name: 'Room Service',
+        value: 'ROOM_SERVICE',
+        description: '24-hour or limited room service',
+      },
+      {
+        name: 'Business Center',
+        value: 'BUSINESS_CENTER',
+        description: 'Business services and facilities',
+      },
       {
         name: 'Kitchen',
-        value: 'kitchen',
-        description: 'Have a place to yourself',
+        value: 'KITCHEN',
+        description: 'In-room kitchen or kitchenette',
       },
       {
-        name: 'Air conditioning',
-        value: 'air_conditioning',
-        description: 'Have your own room and share some common spaces',
+        name: 'Pets Allowed',
+        value: 'PETS_ALLOWED',
+        description: 'Pet-friendly accommodation',
       },
       {
-        name: 'Heating',
-        value: 'heating',
-        description: 'Have a private or shared room in a boutique hotel, hostel, and more',
+        name: 'Airport Shuttle',
+        value: 'AIRPORT_SHUTTLE',
+        description: 'Free or paid airport transportation',
       },
       {
-        name: 'Dryer',
-        value: 'dryer',
-        description: 'Stay in a shared space, like a common room',
+        name: 'Bar or Lounge',
+        value: 'BAR or LOUNGE',
+        description: 'Hotel bar or cocktail lounge',
       },
       {
-        name: 'Washer',
-        value: 'washer',
-        description: 'Stay in a shared space, like a common room',
-      },
-    ],
-  },
-  {
-    name: 'Facilities',
-    label: 'Facilities',
-    tabUIType: 'checkbox',
-    options: [
-      {
-        name: 'Free parking on premise',
-        value: 'free_parking_on_premise',
-        description: 'Have a place to yourself',
+        name: 'Meeting Rooms',
+        value: 'MEETING_ROOMS',
+        description: 'Conference and meeting facilities',
       },
       {
-        name: 'Hot tub',
-        value: 'hot_tub',
-        description: 'Have your own room and share some common spaces',
+        name: 'Jacuzzi',
+        value: 'JACUZZI',
+        description: 'Hot tub and jacuzzi facilities',
       },
       {
-        name: 'Gym',
-        value: 'gym',
-        description: 'Have a private or shared room in a boutique hotel, hostel, and more',
+        name: 'Sauna',
+        value: 'SAUNA',
+        description: 'Traditional sauna facilities',
       },
       {
-        name: 'Pool',
-        value: 'pool',
-        description: 'Stay in a shared space, like a common room',
+        name: 'Tennis',
+        value: 'TENNIS',
+        description: 'Tennis court access',
       },
       {
-        name: 'EV charger',
-        value: 'ev_charger',
-        description: 'Stay in a shared space, like a common room',
-      },
-    ],
-  },
-  {
-    name: 'House-rules',
-    label: 'House rules',
-    tabUIType: 'checkbox',
-    options: [
-      {
-        name: 'Pets allowed',
-        value: 'pets_allowed',
-        description: 'Have a place to yourself',
+        name: 'Golf',
+        value: 'GOLF',
+        description: 'Golf course or golf access',
       },
       {
-        name: 'Smoking allowed',
-        value: 'smoking_allowed',
-        description: 'Have your own room and share some common spaces',
+        name: 'Minibar',
+        value: 'MINIBAR',
+        description: 'In-room minibar and refreshments',
       },
+      {
+        name: 'Television',
+        value: 'TELEVISION',
+        description: 'In-room TV with cable/satellite',
+      },
+      {
+        name: 'Valet Parking',
+        value: 'VALET_PARKING',
+        description: 'Valet parking service',
+      },
+      {
+        name: 'Casino',
+        value: 'CASINO',
+        description: 'On-site casino facilities',
+      },
+      {
+        name: 'Kids Welcome',
+        value: 'KIDS_WELCOME',
+        description: 'Child-friendly facilities and services',
+      },
+      {
+        name: 'No Kids Allowed',
+        value: 'NO_KID_ALLOWED',
+        description: 'Adults-only property',
+      },
+      {
+        name: 'Disabled Facilities',
+        value: 'DISABLED_FACILITIES',
+        description: 'Wheelchair accessible facilities',
+      },
+      {
+        name: 'Baby Sitting',
+        value: 'BABY-SITTING',
+        description: 'Babysitting and childcare services',
+      },
+      {
+        name: 'Massage',
+        value: 'MASSAGE',
+        description: 'Massage and wellness services',
+      },
+      {
+        name: 'Beach Access',
+        value: 'BEACH',
+        description: 'Direct beach access or beachfront location',
+      },
+      {
+        name: 'Solarium',
+        value: 'SOLARIUM',
+        description: 'Sun terrace and solarium facilities',
+      }
     ],
   },
 ]
@@ -229,10 +312,21 @@ const CheckboxPanel = ({
   checkedValues?: Record<string, boolean>;
   onCheckboxChange?: (optionName: string, checked: boolean) => void;
 }) => {
+  const [isExpanded, setIsExpanded] = useState(false)
+  
+  // Separate popular and additional options
+  const popularOptions = filterOption.options.filter(option => (option as any).popular)
+  const additionalOptions = filterOption.options.filter(option => !(option as any).popular)
+  
+  // Determine which options to show
+  const visibleOptions = filterOption.expandable 
+    ? (isExpanded ? filterOption.options : popularOptions)
+    : filterOption.options
+  
   return (
     <Fieldset>
       <CheckboxGroup className={className}>
-        {filterOption.options.map((option) => (
+        {visibleOptions.map((option) => (
           <CheckboxField key={option.name}>
             <Checkbox 
               name={`${filterOption.name}[]`} 
@@ -246,6 +340,27 @@ const CheckboxPanel = ({
             {option.description && <Description>{option.description}</Description>}
           </CheckboxField>
         ))}
+        
+        {/* Show expand/collapse button if this filter is expandable and has additional options */}
+        {filterOption.expandable && additionalOptions.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-700">
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center text-sm text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-200 transition-colors"
+            >
+              <span>
+                {isExpanded 
+                  ? `Show less amenities` 
+                  : `Show ${additionalOptions.length} more amenities`
+                }
+              </span>
+              <ChevronDownIcon 
+                className={`ml-2 h-4 w-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+              />
+            </button>
+          </div>
+        )}
       </CheckboxGroup>
     </Fieldset>
   )
@@ -356,10 +471,13 @@ const ListingFilterTabs = ({
   // Initialize checked filters from URL params on mount
   useEffect(() => {
     const roomTypes = searchParams.get('room_types')
+    const amenities = searchParams.get('amenities')
     
+    const newCheckedFilters: Record<string, boolean> = {}
+    
+    // Handle room types
     if (roomTypes) {
       const roomTypeValues = roomTypes.split(',')
-      const newCheckedFilters: Record<string, boolean> = {}
       
       // Find Room Type filter options
       const roomTypeFilter = filterOptions.find(f => f?.name === 'Room-type') as CheckboxFilter
@@ -372,9 +490,25 @@ const ListingFilterTabs = ({
           }
         })
       }
-      
-      setCheckedFilters(newCheckedFilters)
     }
+    
+    // Handle amenities (from Amenities section only)
+    if (amenities) {
+      const amenitiesValues = amenities.split(',')
+      
+      // Check only Amenities filter
+      const amenitiesFilter = filterOptions.find(f => f?.name === 'Amenities') as CheckboxFilter
+      if (amenitiesFilter?.options) {
+        amenitiesFilter.options.forEach(option => {
+          const optionValue = (option as any).value || option.name
+          if (amenitiesValues.includes(optionValue)) {
+            newCheckedFilters[option.name] = true
+          }
+        })
+      }
+    }
+    
+    setCheckedFilters(newCheckedFilters)
   }, [searchParams, filterOptions])
 
   const updateFiltersFromForm = (formData: FormData) => {
@@ -500,6 +634,21 @@ const ListingFilterTabs = ({
         currentUrl.searchParams.set('room_types', roomTypeValues.join(','))
       } else {
         currentUrl.searchParams.delete('room_types')
+      }
+      
+      // Update amenities params (collect from Amenities section only)
+      const amenitiesValues: string[] = []
+      for (const [key, value] of formData.entries()) {
+        if (key.includes('Amenities[]') && value) {
+          amenitiesValues.push(value as string)
+        }
+      }
+      console.log('🔧 Amenities data from form:', amenitiesValues)
+      
+      if (amenitiesValues.length > 0) {
+        currentUrl.searchParams.set('amenities', amenitiesValues.join(','))
+      } else {
+        currentUrl.searchParams.delete('amenities')
       }
       
       console.log('🔧 New URL after update:', currentUrl.toString())
