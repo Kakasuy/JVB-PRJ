@@ -331,6 +331,38 @@ const demo_filters_options = [
       }
     ],
   },
+  {
+    name: 'Board-type',
+    label: 'Meal Plan',
+    tabUIType: 'checkbox',
+    options: [
+      {
+        name: 'Room Only',
+        value: 'ROOM_ONLY',
+        description: 'No meals included - room accommodation only',
+      },
+      {
+        name: 'Breakfast',
+        value: 'BREAKFAST',
+        description: 'Breakfast included in your stay',
+      },
+      {
+        name: 'Half Board',
+        value: 'HALF_BOARD',
+        description: 'Breakfast and dinner included',
+      },
+      {
+        name: 'Full Board',
+        value: 'FULL_BOARD',
+        description: 'All three meals included (breakfast, lunch, dinner)',
+      },
+      {
+        name: 'All Inclusive',
+        value: 'ALL_INCLUSIVE',
+        description: 'All meals, drinks, and activities included',
+      }
+    ],
+  },
 ]
 
 const CheckboxPanel = ({ 
@@ -505,6 +537,7 @@ const ListingFilterTabs = ({
     const roomTypes = searchParams.get('room_types')
     const amenities = searchParams.get('amenities')
     const hotelStars = searchParams.get('hotel_stars')
+    const boardTypes = searchParams.get('board_types')
     
     const newCheckedFilters: Record<string, boolean> = {}
     
@@ -551,6 +584,22 @@ const ListingFilterTabs = ({
         hotelStarsFilter.options.forEach(option => {
           const optionValue = (option as any).value || option.name
           if (hotelStarsValues.includes(optionValue)) {
+            newCheckedFilters[option.name] = true
+          }
+        })
+      }
+    }
+    
+    // Handle board types (from Board-type section)
+    if (boardTypes) {
+      const boardTypesValues = boardTypes.split(',')
+      
+      // Check only Board-type filter
+      const boardTypesFilter = filterOptions.find(f => f?.name === 'Board-type') as CheckboxFilter
+      if (boardTypesFilter?.options) {
+        boardTypesFilter.options.forEach(option => {
+          const optionValue = (option as any).value || option.name
+          if (boardTypesValues.includes(optionValue)) {
             newCheckedFilters[option.name] = true
           }
         })
@@ -713,6 +762,21 @@ const ListingFilterTabs = ({
         currentUrl.searchParams.set('hotel_stars', hotelStarsValues.join(','))
       } else {
         currentUrl.searchParams.delete('hotel_stars')
+      }
+      
+      // Update board types params (collect from Board-type section)
+      const boardTypesValues: string[] = []
+      for (const [key, value] of formData.entries()) {
+        if (key.includes('Board-type[]') && value) {
+          boardTypesValues.push(value as string)
+        }
+      }
+      console.log('🔧 Board types data from form:', boardTypesValues)
+      
+      if (boardTypesValues.length > 0) {
+        currentUrl.searchParams.set('board_types', boardTypesValues.join(','))
+      } else {
+        currentUrl.searchParams.delete('board_types')
       }
       
       console.log('🔧 New URL after update:', currentUrl.toString())

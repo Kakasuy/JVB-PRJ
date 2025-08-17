@@ -67,6 +67,9 @@ export async function GET(request: NextRequest) {
     // Hotel Stars filters - get comma-separated ratings from URL params
     const hotelStars = searchParams.get('hotel_stars') ? searchParams.get('hotel_stars')?.split(',') : null
     
+    // Board Type filters - get comma-separated board types from URL params  
+    const boardTypes = searchParams.get('board_types') ? searchParams.get('board_types')?.split(',') : null
+    
 
     // Get OAuth token first
     const tokenResponse = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
@@ -165,6 +168,12 @@ export async function GET(request: NextRequest) {
       hotelOffersUrl.searchParams.append('roomQuantity', rooms)
       hotelOffersUrl.searchParams.append('adults', adults)
       hotelOffersUrl.searchParams.append('currency', 'USD')
+      
+      // Add board type filter if provided
+      if (boardTypes && boardTypes.length > 0) {
+        hotelOffersUrl.searchParams.append('boardType', boardTypes.join(','))
+        console.log(`🍽️ Filtering offers by board types: ${boardTypes.join(', ')}`)
+      }
 
       console.log(`Querying batch ${batchIndex + 1} with ${batchHotels.length} hotels`)
       

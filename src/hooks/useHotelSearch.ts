@@ -23,6 +23,7 @@ interface HotelSearchParams {
   room_types?: string | null
   amenities?: string | null
   hotel_stars?: string | null
+  board_types?: string | null
 }
 
 export const useHotelSearch = (): UseHotelSearchResult => {
@@ -76,6 +77,11 @@ export const useHotelSearch = (): UseHotelSearchResult => {
       // Add hotel stars filter if provided
       if (params.hotel_stars) {
         searchParams.append('hotel_stars', params.hotel_stars)
+      }
+      
+      // Add board types filter if provided
+      if (params.board_types) {
+        searchParams.append('board_types', params.board_types)
       }
       
       console.log('🔧 useHotelSearch building URL with params:', Object.fromEntries(searchParams.entries()))

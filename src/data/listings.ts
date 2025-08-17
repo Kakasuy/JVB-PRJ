@@ -1506,6 +1506,38 @@ export async function getStayListingFilterOptions() {
         }
       ],
     },
+    {
+      name: 'Board-type',
+      label: 'Meal Plan',
+      tabUIType: 'checkbox',
+      options: [
+        {
+          name: 'Room Only',
+          value: 'ROOM_ONLY',
+          description: 'No meals included - room accommodation only',
+        },
+        {
+          name: 'Breakfast',
+          value: 'BREAKFAST',
+          description: 'Breakfast included in your stay',
+        },
+        {
+          name: 'Half Board',
+          value: 'HALF_BOARD',
+          description: 'Breakfast and dinner included',
+        },
+        {
+          name: 'Full Board',
+          value: 'FULL_BOARD',
+          description: 'All three meals included (breakfast, lunch, dinner)',
+        },
+        {
+          name: 'All Inclusive',
+          value: 'ALL_INCLUSIVE',
+          description: 'All meals, drinks, and activities included',
+        }
+      ],
+    },
   ]
 }
 export async function getExperienceListingFilterOptions() {
