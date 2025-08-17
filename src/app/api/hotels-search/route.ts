@@ -435,7 +435,21 @@ export async function GET(request: NextRequest) {
             rateCode: highestPriceOffer?.rateCode || 'RAC',
             rateFamilyEstimated: highestPriceOffer?.rateFamilyEstimated?.code || 'P'
           }
-        })() : null
+        })() : null,
+        
+        // Add board type information from offers
+        boardTypes: offers.length > 0 ? (() => {
+          const uniqueBoardTypes = new Set<string>()
+          offers.forEach((offer: any) => {
+            if (offer.boardType) {
+              uniqueBoardTypes.add(offer.boardType)
+            }
+          })
+          return Array.from(uniqueBoardTypes)
+        })() : [],
+        
+        // Add detailed board type info for the lowest price offer
+        lowestOfferBoardType: lowestPriceOffer?.boardType || null
       }
     }) || []
 
@@ -599,7 +613,8 @@ export async function GET(request: NextRequest) {
           bedrooms: minBedrooms,
           bathrooms: minBathrooms,
           amenities: amenities,
-          hotel_stars: hotelStars
+          hotel_stars: hotelStars,
+          board_types: boardTypes
         },
         cityCode,
         checkInDate,
