@@ -64,6 +64,9 @@ export async function GET(request: NextRequest) {
     // Amenities filters - get comma-separated amenities from URL params
     const amenities = searchParams.get('amenities') ? searchParams.get('amenities')?.split(',') : null
     
+    // Hotel Stars filters - get comma-separated ratings from URL params
+    const hotelStars = searchParams.get('hotel_stars') ? searchParams.get('hotel_stars')?.split(',') : null
+    
 
     // Get OAuth token first
     const tokenResponse = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
@@ -102,6 +105,13 @@ export async function GET(request: NextRequest) {
       // Join amenities with comma for Amadeus API
       hotelSearchUrl.searchParams.append('amenities', amenities.join(','))
       console.log(`🏨 Filtering hotels by amenities: ${amenities.join(', ')}`)
+    }
+    
+    // Add hotel stars filter if provided
+    if (hotelStars && hotelStars.length > 0) {
+      // Join ratings with comma for Amadeus API
+      hotelSearchUrl.searchParams.append('ratings', hotelStars.join(','))
+      console.log(`⭐ Filtering hotels by stars: ${hotelStars.join(', ')} stars`)
     }
     
     // Request more hotels in the first step - removed pagination as it may not be supported
@@ -579,7 +589,8 @@ export async function GET(request: NextRequest) {
           beds: minBeds,
           bedrooms: minBedrooms,
           bathrooms: minBathrooms,
-          amenities: amenities
+          amenities: amenities,
+          hotel_stars: hotelStars
         },
         cityCode,
         checkInDate,

@@ -1474,6 +1474,38 @@ export async function getStayListingFilterOptions() {
         }
       ],
     },
+    {
+      name: 'Hotel-stars',
+      label: 'Hotel Rating',
+      tabUIType: 'checkbox',
+      options: [
+        {
+          name: '5 stars',
+          value: '5',
+          description: 'Luxury hotels with premium amenities and services',
+        },
+        {
+          name: '4 stars',
+          value: '4', 
+          description: 'Upscale hotels with high-quality facilities',
+        },
+        {
+          name: '3 stars',
+          value: '3',
+          description: 'Mid-range hotels with good amenities',
+        },
+        {
+          name: '2 stars',
+          value: '2',
+          description: 'Economy hotels with basic amenities',
+        },
+        {
+          name: '1 star',
+          value: '1',
+          description: 'Budget accommodations with essential services',
+        }
+      ],
+    },
   ]
 }
 export async function getExperienceListingFilterOptions() {

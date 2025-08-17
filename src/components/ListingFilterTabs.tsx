@@ -299,6 +299,38 @@ const demo_filters_options = [
       }
     ],
   },
+  {
+    name: 'Hotel-stars',
+    label: 'Hotel Rating',
+    tabUIType: 'checkbox',
+    options: [
+      {
+        name: '5 stars',
+        value: '5',
+        description: 'Luxury hotels with premium amenities and services',
+      },
+      {
+        name: '4 stars',
+        value: '4', 
+        description: 'Upscale hotels with high-quality facilities',
+      },
+      {
+        name: '3 stars',
+        value: '3',
+        description: 'Mid-range hotels with good amenities',
+      },
+      {
+        name: '2 stars',
+        value: '2',
+        description: 'Economy hotels with basic amenities',
+      },
+      {
+        name: '1 star',
+        value: '1',
+        description: 'Budget accommodations with essential services',
+      }
+    ],
+  },
 ]
 
 const CheckboxPanel = ({ 
@@ -472,6 +504,7 @@ const ListingFilterTabs = ({
   useEffect(() => {
     const roomTypes = searchParams.get('room_types')
     const amenities = searchParams.get('amenities')
+    const hotelStars = searchParams.get('hotel_stars')
     
     const newCheckedFilters: Record<string, boolean> = {}
     
@@ -502,6 +535,22 @@ const ListingFilterTabs = ({
         amenitiesFilter.options.forEach(option => {
           const optionValue = (option as any).value || option.name
           if (amenitiesValues.includes(optionValue)) {
+            newCheckedFilters[option.name] = true
+          }
+        })
+      }
+    }
+    
+    // Handle hotel stars (from Hotel-stars section)
+    if (hotelStars) {
+      const hotelStarsValues = hotelStars.split(',')
+      
+      // Check only Hotel-stars filter
+      const hotelStarsFilter = filterOptions.find(f => f?.name === 'Hotel-stars') as CheckboxFilter
+      if (hotelStarsFilter?.options) {
+        hotelStarsFilter.options.forEach(option => {
+          const optionValue = (option as any).value || option.name
+          if (hotelStarsValues.includes(optionValue)) {
             newCheckedFilters[option.name] = true
           }
         })
@@ -649,6 +698,21 @@ const ListingFilterTabs = ({
         currentUrl.searchParams.set('amenities', amenitiesValues.join(','))
       } else {
         currentUrl.searchParams.delete('amenities')
+      }
+      
+      // Update hotel stars params (collect from Hotel-stars section)
+      const hotelStarsValues: string[] = []
+      for (const [key, value] of formData.entries()) {
+        if (key.includes('Hotel-stars[]') && value) {
+          hotelStarsValues.push(value as string)
+        }
+      }
+      console.log('🔧 Hotel stars data from form:', hotelStarsValues)
+      
+      if (hotelStarsValues.length > 0) {
+        currentUrl.searchParams.set('hotel_stars', hotelStarsValues.join(','))
+      } else {
+        currentUrl.searchParams.delete('hotel_stars')
       }
       
       console.log('🔧 New URL after update:', currentUrl.toString())
