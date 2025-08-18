@@ -3,13 +3,52 @@
 import DatePickerCustomDay from '@/components/DatePickerCustomDay'
 import DatePickerCustomHeaderTwoMonth from '@/components/DatePickerCustomHeaderTwoMonth'
 import { Divider } from '@/shared/divider'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import DatePicker from 'react-datepicker'
 import { SectionHeading, SectionSubheading } from './SectionHeading'
 
-const SectionDateRange = () => {
-  const [startDate, setStartDate] = useState<Date | null>(new Date('2025/02/02'))
-  const [endDate, setEndDate] = useState<Date | null>(new Date('2025/02/06'))
+interface SectionDateRangeProps {
+  checkInDate?: string
+  checkOutDate?: string
+}
+
+const SectionDateRange = ({ checkInDate, checkOutDate }: SectionDateRangeProps) => {
+  // Initialize with search params or default dates
+  const getInitialStartDate = () => {
+    if (checkInDate) {
+      const date = new Date(checkInDate)
+      return isNaN(date.getTime()) ? new Date('2025/02/02') : date
+    }
+    return new Date('2025/02/02')
+  }
+  
+  const getInitialEndDate = () => {
+    if (checkOutDate) {
+      const date = new Date(checkOutDate)
+      return isNaN(date.getTime()) ? new Date('2025/02/06') : date
+    }
+    return new Date('2025/02/06')
+  }
+
+  const [startDate, setStartDate] = useState<Date | null>(getInitialStartDate())
+  const [endDate, setEndDate] = useState<Date | null>(getInitialEndDate())
+
+  // Update dates when props change
+  useEffect(() => {
+    if (checkInDate) {
+      const date = new Date(checkInDate)
+      if (!isNaN(date.getTime())) {
+        setStartDate(date)
+      }
+    }
+    if (checkOutDate) {
+      const date = new Date(checkOutDate)
+      if (!isNaN(date.getTime())) {
+        setEndDate(date)
+      }
+    }
+  }, [checkInDate, checkOutDate])
+
   const onChangeDate = (dates: [Date | null, Date | null]) => {
     const [start, end] = dates
     setStartDate(start)

@@ -594,7 +594,10 @@ const Page = async ({
             {renderSectionInfo()}
             {renderSectionAmenities()}
             {renderSectionPolicies()}
-            <SectionDateRange />
+            <SectionDateRange 
+              checkInDate={checkInDate}
+              checkOutDate={checkOutDate}
+            />
           </div>
 
           {/* SIDEBAR */}
