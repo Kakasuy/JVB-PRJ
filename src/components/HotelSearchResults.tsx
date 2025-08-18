@@ -146,7 +146,8 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
       board_types: searchParams.get('board_types'),
       // Policy filters
       free_cancellation: searchParams.get('free_cancellation'),
-      refundable_only: searchParams.get('refundable_only')
+      refundable_only: searchParams.get('refundable_only'),
+      payment_types: searchParams.get('payment_types')
     }
   }, [searchParams])
 

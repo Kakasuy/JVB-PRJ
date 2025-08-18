@@ -73,6 +73,7 @@ export async function GET(request: NextRequest) {
     // Policy filters (Step 3 - post-processing)
     const freeCancellation = searchParams.get('free_cancellation') === 'true'
     const refundableOnly = searchParams.get('refundable_only') === 'true'
+    const paymentTypes = searchParams.get('payment_types') ? searchParams.get('payment_types')?.split(',') : null
     
 
     // Get OAuth token first
@@ -555,9 +556,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Apply policy filters if provided (Step 3 - post-processing based on policies data)
-    if (freeCancellation || refundableOnly) {
+    if (freeCancellation || refundableOnly || (paymentTypes && paymentTypes.length > 0)) {
       console.log('Hotels before policy filtering:', finalHotels.length)
-      console.log(`Policy filter criteria - Free Cancellation: ${freeCancellation}, Refundable Only: ${refundableOnly}`)
+      console.log(`Policy filter criteria - Free Cancellation: ${freeCancellation}, Refundable Only: ${refundableOnly}, Payment Types: ${paymentTypes?.join(', ') || 'none'}`)
       
       finalHotels = finalHotels.filter((hotel) => {
         // Find the hotel in the original data to get policies info
@@ -593,6 +594,16 @@ export async function GET(request: NextRequest) {
             
             if (!isRefundable) {
               return false // This offer is not refundable
+            }
+          }
+          
+          // Check payment types
+          if (paymentTypes && paymentTypes.length > 0) {
+            const paymentType = policies.paymentType || ''
+            const hasMatchingPaymentType = paymentTypes.includes(paymentType)
+            
+            if (!hasMatchingPaymentType) {
+              return false // This offer doesn't have matching payment type
             }
           }
           
@@ -671,7 +682,8 @@ export async function GET(request: NextRequest) {
           hotel_stars: hotelStars,
           board_types: boardTypes,
           free_cancellation: freeCancellation,
-          refundable_only: refundableOnly
+          refundable_only: refundableOnly,
+          payment_types: paymentTypes
         },
         cityCode,
         checkInDate,

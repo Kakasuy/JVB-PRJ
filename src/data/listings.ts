@@ -1562,6 +1562,28 @@ export async function getStayListingFilterOptions() {
         }
       ],
     },
+    {
+      name: 'Payment-type',
+      label: 'Payment Options',
+      tabUIType: 'checkbox',
+      options: [
+        {
+          name: 'Pay at Hotel',
+          value: 'guarantee',
+          description: 'Credit card guarantee - pay when you arrive at the hotel',
+        },
+        {
+          name: 'Pay Now',
+          value: 'prepay',
+          description: 'Full payment required in advance - usually better rates',
+        },
+        {
+          name: 'Deposit Required',
+          value: 'deposit',
+          description: 'Partial payment upfront, remainder due later',
+        }
+      ],
+    },
   ]
 }
 export async function getExperienceListingFilterOptions() {

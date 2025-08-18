@@ -387,6 +387,28 @@ const demo_filters_options = [
       }
     ],
   },
+  {
+    name: 'Payment-type',
+    label: 'Payment Options',
+    tabUIType: 'checkbox',
+    options: [
+      {
+        name: 'Pay at Hotel',
+        value: 'guarantee',
+        description: 'Credit card guarantee - pay when you arrive at the hotel',
+      },
+      {
+        name: 'Pay Now',
+        value: 'prepay',
+        description: 'Full payment required in advance - usually better rates',
+      },
+      {
+        name: 'Deposit Required',
+        value: 'deposit',
+        description: 'Partial payment upfront, remainder due later',
+      }
+    ],
+  },
 ]
 
 const CheckboxPanel = ({ 
@@ -564,6 +586,7 @@ const ListingFilterTabs = ({
     const boardTypes = searchParams.get('board_types')
     const freeCancellation = searchParams.get('free_cancellation')
     const refundableOnly = searchParams.get('refundable_only')
+    const paymentTypes = searchParams.get('payment_types')
     
     const newCheckedFilters: Record<string, boolean> = {}
     
@@ -650,6 +673,22 @@ const ListingFilterTabs = ({
       if (refundFilter?.options) {
         refundFilter.options.forEach(option => {
           if (option.value === 'REFUNDABLE_ONLY') {
+            newCheckedFilters[option.name] = true
+          }
+        })
+      }
+    }
+    
+    // Handle payment types (from Payment-type section)
+    if (paymentTypes) {
+      const paymentTypesValues = paymentTypes.split(',')
+      
+      // Check only Payment-type filter
+      const paymentTypesFilter = filterOptions.find(f => f?.name === 'Payment-type') as CheckboxFilter
+      if (paymentTypesFilter?.options) {
+        paymentTypesFilter.options.forEach(option => {
+          const optionValue = (option as any).value || option.name
+          if (paymentTypesValues.includes(optionValue)) {
             newCheckedFilters[option.name] = true
           }
         })
@@ -857,6 +896,21 @@ const ListingFilterTabs = ({
         currentUrl.searchParams.set('refundable_only', 'true')
       } else {
         currentUrl.searchParams.delete('refundable_only')
+      }
+      
+      // Update payment types params (collect from Payment-type section)
+      const paymentTypesValues: string[] = []
+      for (const [key, value] of formData.entries()) {
+        if (key.includes('Payment-type[]') && value) {
+          paymentTypesValues.push(value as string)
+        }
+      }
+      console.log('🔧 Payment types data from form:', paymentTypesValues)
+      
+      if (paymentTypesValues.length > 0) {
+        currentUrl.searchParams.set('payment_types', paymentTypesValues.join(','))
+      } else {
+        currentUrl.searchParams.delete('payment_types')
       }
       
       console.log('🔧 New URL after update:', currentUrl.toString())

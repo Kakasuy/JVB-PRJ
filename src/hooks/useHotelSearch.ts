@@ -26,6 +26,7 @@ interface HotelSearchParams {
   board_types?: string | null
   free_cancellation?: string | null
   refundable_only?: string | null
+  payment_types?: string | null
 }
 
 export const useHotelSearch = (): UseHotelSearchResult => {
@@ -93,6 +94,10 @@ export const useHotelSearch = (): UseHotelSearchResult => {
       
       if (params.refundable_only) {
         searchParams.append('refundable_only', params.refundable_only)
+      }
+      
+      if (params.payment_types) {
+        searchParams.append('payment_types', params.payment_types)
       }
       
       console.log('🔧 useHotelSearch building URL with params:', Object.fromEntries(searchParams.entries()))
