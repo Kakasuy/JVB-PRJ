@@ -215,33 +215,6 @@ const Page = async ({
   }
 
   const renderSectionInfo = () => {
-    const roomRates = [
-      {
-        name: 'monday-thursday',
-        title: 'Monday - Thursday',
-        price: '$199',
-      },
-      {
-        name: 'friday-sunday',
-        title: 'Friday - Sunday',
-        price: '$219',
-      },
-      {
-        name: 'rent-by-month',
-        title: 'Rent by month',
-        price: '-8.34 %',
-      },
-      {
-        name: 'minimum-nights',
-        title: 'Minimum number of nights',
-        price: '1 night',
-      },
-      {
-        name: 'maximum-nights',
-        title: 'Max number of nights',
-        price: '90 nights',
-      },
-    ]
     return (
       <div className="listingSection__wrap">
         <SectionHeading>Stay information</SectionHeading>
@@ -259,39 +232,207 @@ const Page = async ({
           )}
         </div>
 
-        <Divider className="w-14!" />
-
-        <div>
-          <SectionHeading>Room Rates </SectionHeading>
-          <SectionSubheading>Prices may increase on weekends or holidays</SectionSubheading>
-        </div>
-        <DescriptionList>
-          {roomRates.map((item) => (
-            <Fragment key={item.name}>
-              <DescriptionTerm>{item.title}</DescriptionTerm>
-              <DescriptionDetails>{item.price}</DescriptionDetails>
-            </Fragment>
-          ))}
-        </DescriptionList>
       </div>
     )
   }
 
   const renderSectionAmenities = () => {
-    const Amenities_demos = [
-      { name: 'Fast wifi', icon: Wifi01Icon },
-      { name: 'Bathtub', icon: Bathtub02Icon },
-      { name: 'Hair dryer', icon: HairDryerIcon },
-      { name: 'Sound system', icon: Speaker01Icon },
-      { name: 'Shampoo', icon: ShampooIcon },
-      { name: 'Body soap', icon: BodySoapIcon },
-      { name: 'Water Energy ', icon: WaterEnergyIcon },
-      { name: 'Water Polo', icon: WaterPoloIcon },
-      { name: 'Cable Car', icon: CableCarIcon },
-      { name: 'Tv Smart', icon: TvSmartIcon },
-      { name: 'Cctv Camera', icon: CctvCameraIcon },
-      { name: 'Virtual Reality Vr', icon: VirtualRealityVr01Icon },
+    // Get amenities from Amadeus API data
+    const apiAmenities = (listing as any)?.amenities || []
+    
+    // Complete Amadeus amenities mapping with readable names
+    const amenityNames: { [key: string]: string } = {
+      // Business Facilities
+      'BUS.2': 'Photocopier',
+      'BUS.28': 'Printer', 
+      'BUS.37': 'Audio Visual Equipment',
+      'BUS.38': 'White/Blackboard',
+      'BUS.39': 'Business Center',
+      'BUS.40': 'Cellular Phone Rental',
+      'BUS.41': 'Computer Rental',
+      'BUS.42': 'Executive Desk',
+      'BUS.45': 'LCD/Projector',
+      'BUS.46': 'Meeting Rooms',
+      'BUS.48': 'Overhead Projector',
+      'BUS.49': 'Secretarial Services',
+      'BUS.94': 'Conference Suite',
+      'BUS.95': 'Convention Center',
+      'BUS.96': 'Meeting Facilities',
+
+      // Hotel Amenities & Services
+      'HAC.1': '24 Hour Front Desk',
+      'HAC.101': 'Disabled Facilities',
+      'HAC.103': 'Multilingual Staff',
+      'HAC.104': 'Wedding Services',
+      'HAC.105': 'Banqueting Facilities',
+      'HAC.106': 'Porter/Bellboy',
+      'HAC.107': 'Beauty Parlour',
+      'HAC.110': 'Womens Guest Rooms',
+      'HAC.111': 'Pharmacy',
+      'HAC.15': 'Car Rental',
+      'HAC.16': 'Casino',
+      'HAC.165': 'Bar/Lounge',
+      'HAC.172': 'Transportation',
+      'HAC.178': 'WiFi',
+      'HAC.179': 'Wireless Connectivity',
+      'HAC.191': 'Ballroom',
+      'HAC.192': 'Bus Parking',
+      'HAC.193': 'Childrens Play Area',
+      'HAC.194': 'Nursery',
+      'HAC.195': 'Disco',
+      'HAC.2': '24 Hour Room Service',
+      'HAC.20': 'Coffee Shop',
+      'HAC.201': 'Baggage Storage',
+      'HAC.217': 'No Kids Allowed',
+      'HAC.218': 'Kids Welcome',
+      'HAC.219': 'Courtesy Car',
+      'HAC.22': 'Concierge',
+      'HAC.220': 'No Porn Films',
+      'HAC.221': 'Internet Hotspots',
+      'HAC.222': 'Free Internet',
+      'HAC.223': 'Internet Services',
+      'HAC.224': 'Pets Allowed',
+      'HAC.227': 'Free Breakfast',
+      'HAC.24': 'Conference Facilities',
+      'HAC.259': 'High Speed Internet',
+      'HAC.26': 'Exchange Facilities',
+      'HAC.276': 'Lobby',
+      'HAC.28': 'Doctor On Call',
+      'HAC.281': '24H Coffee Shop',
+      'HAC.282': 'Airport Shuttle',
+      'HAC.283': 'Luggage Service',
+      'HAC.284': 'Piano Bar',
+      'HAC.285': 'VIP Security',
+      'HAC.30': 'Driving Range',
+      'HAC.32': 'Duty Free Shop',
+      'HAC.33': 'Elevator',
+      'HAC.34': 'Executive Floor',
+      'HAC.35': 'Gym',
+      'HAC.36': 'Express Check In',
+      'HAC.37': 'Express Check Out',
+      'HAC.39': 'Florist',
+      'HAC.4': 'Connecting Rooms',
+      'HAC.41': 'Free Airport Shuttle',
+      'HAC.42': 'Free Parking',
+      'HAC.43': 'Free Transportation',
+      'HAC.44': 'Games Room',
+      'HAC.45': 'Gift Shop',
+      'HAC.46': 'Hairdresser',
+      'HAC.52': 'Ice Machines',
+      'HAC.53': 'Garage Parking',
+      'HAC.55': 'Jacuzzi',
+      'HAC.56': 'Jogging Track',
+      'HAC.57': 'Kennels',
+      'HAC.58': 'Laundry Service',
+      'HAC.6': 'Airline Desk',
+      'HAC.60': 'Live Entertainment',
+      'HAC.61': 'Massage',
+      'HAC.62': 'Night Club',
+      'HAC.66': 'Swimming Pool',
+      'HAC.68': 'Parking',
+      'HAC.7': 'ATM/Cash Machine',
+      'HAC.72': 'Poolside Snack Bar',
+      'HAC.76': 'Restaurant',
+      'HAC.77': 'Room Service',
+      'HAC.78': 'Safe Deposit Box',
+      'HAC.79': 'Sauna',
+      'HAC.8': 'Baby Sitting',
+      'HAC.83': 'Solarium',
+      'HAC.84': 'Spa',
+      'HAC.88': 'Convenience Store',
+      'HAC.9': 'Picnic Area',
+      'HAC.90': 'Theatre Desk',
+      'HAC.91': 'Tour Desk',
+      'HAC.92': 'Translation Services',
+      'HAC.93': 'Travel Agency',
+      'HAC.97': 'Valet Parking',
+      'HAC.98': 'Vending Machines',
+
+      // Room Amenities
+      'RMA.2': 'Air Conditioning',
+      'RMA.19': 'Tea/Coffee Making Facilities',
+      'RMA.92': 'Safe',
+      'RMA.50': 'Hair Dryer',
+      'RMA.69': 'Minibar',
+      'RMA.20': 'Television',
+      'RMA.88': 'Refrigerator',
+      'RMA.55': 'Iron/Ironing Board',
+      'RMA.13': 'Bath',
+      'RMA.142': 'Shower',
+      'RMA.123': 'Wi-Fi In Room',
+
+      // Recreation
+      'RST.36': 'Fitness Center',
+      'RST.5': 'Beach',
+      'RST.71': 'Tennis',
+      'RST.27': 'Golf',
+      'RST.20': 'Fishing',
+      'RST.61': 'Horse Riding',
+      'RST.67': 'Miniature Golf',
+      'RST.82': 'Scuba Diving',
+      'RST.88': 'Snow Skiing',
+
+      // Accessibility
+      'PHY.102': 'Accessible Baths',
+      'PHY.6': 'Handicap Facilities',
+      'PHY.28': 'Wheelchair Accessible',
+
+      // Security
+      'SEC.22': 'Fire Detectors',
+      'SEC.58': 'Security Guard',
+      'SEC.9': 'Fire Safety'
+    }
+
+    // Smart icon mapping
+    const getAmenityIcon = (code: string, name: string) => {
+      const searchText = (code + ' ' + name).toLowerCase()
+      
+      if (searchText.includes('wifi') || searchText.includes('internet')) return Wifi01Icon
+      if (searchText.includes('parking') || searchText.includes('garage') || searchText.includes('valet')) return CableCarIcon
+      if (searchText.includes('restaurant') || searchText.includes('dining') || searchText.includes('coffee') || searchText.includes('breakfast')) return TvSmartIcon
+      if (searchText.includes('bar') || searchText.includes('lounge') || searchText.includes('disco')) return Speaker01Icon
+      if (searchText.includes('fitness') || searchText.includes('gym') || searchText.includes('exercise')) return WaterEnergyIcon
+      if (searchText.includes('spa') || searchText.includes('massage') || searchText.includes('sauna') || searchText.includes('beauty')) return ShampooIcon
+      if (searchText.includes('pool') || searchText.includes('swimming') || searchText.includes('beach') || searchText.includes('jacuzzi')) return WaterPoloIcon
+      if (searchText.includes('room service') || searchText.includes('minibar') || searchText.includes('refrigerator')) return BodySoapIcon
+      if (searchText.includes('concierge') || searchText.includes('reception') || searchText.includes('front desk')) return CctvCameraIcon
+      if (searchText.includes('business') || searchText.includes('meeting') || searchText.includes('conference')) return VirtualRealityVr01Icon
+      if (searchText.includes('laundry') || searchText.includes('dry clean') || searchText.includes('hair dryer')) return HairDryerIcon
+      if (searchText.includes('pet') || searchText.includes('animal') || searchText.includes('accessible') || searchText.includes('handicap')) return Bathtub02Icon
+      if (searchText.includes('security') || searchText.includes('safe') || searchText.includes('fire')) return CctvCameraIcon
+      
+      return Wifi01Icon // Default
+    }
+
+    // Enhanced fallback amenities (more realistic hotel amenities)
+    const fallbackAmenities = [
+      { name: 'Free WiFi', icon: Wifi01Icon },
+      { name: 'Free Parking', icon: CableCarIcon },
+      { name: 'Restaurant', icon: TvSmartIcon },
+      { name: '24 Hour Front Desk', icon: CctvCameraIcon },
+      { name: 'Air Conditioning', icon: Wifi01Icon },
+      { name: 'Fitness Center', icon: WaterEnergyIcon },
+      { name: 'Swimming Pool', icon: WaterPoloIcon },
+      { name: 'Room Service', icon: BodySoapIcon },
+      { name: 'Concierge', icon: CctvCameraIcon },
+      { name: 'Laundry Service', icon: HairDryerIcon },
+      { name: 'Business Center', icon: VirtualRealityVr01Icon },
+      { name: 'Spa', icon: ShampooIcon }
     ]
+
+    // Process all amenities from API
+    const displayAmenities = apiAmenities.length > 0 
+      ? apiAmenities.map((amenity: string) => {
+          const name = amenityNames[amenity] || amenity.replace(/_/g, ' ')
+          return {
+            name,
+            icon: getAmenityIcon(amenity, name),
+            code: amenity
+          }
+        })
+      : fallbackAmenities
+
+    const totalCount = apiAmenities.length > 0 ? apiAmenities.length : 6
 
     return (
       <div className="listingSection__wrap">
@@ -302,19 +443,30 @@ const Page = async ({
         <Divider className="w-14!" />
 
         <div className="grid grid-cols-1 gap-6 text-sm text-neutral-700 xl:grid-cols-3 dark:text-neutral-300">
-          {Amenities_demos.filter((_, i) => i < 12).map((item) => (
-            <div key={item.name} className="flex items-center gap-x-3">
+          {displayAmenities.map((item, index) => (
+            <div key={`${item.name}-${index}`} className="flex items-center gap-x-3">
               <item.icon className="h-6 w-6" />
               <span>{item.name}</span>
             </div>
           ))}
         </div>
 
-        {/* ----- */}
-        <div className="w-14 border-b border-neutral-200"></div>
-        <div>
-          <ButtonSecondary>View more 20 amenities</ButtonSecondary>
-        </div>
+        {totalCount > 6 && (
+          <>
+            <div className="w-14 border-b border-neutral-200"></div>
+            <div>
+              <ButtonSecondary>View more {totalCount - 6} amenities</ButtonSecondary>
+            </div>
+          </>
+        )}
+        
+        {/* Debug: Show if using API data */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 text-xs text-gray-500">
+            {apiAmenities.length > 0 ? `Using API amenities (${apiAmenities.length})` : 'Using fallback amenities'}
+          </div>
+        )}
+        
       </div>
     )
   }

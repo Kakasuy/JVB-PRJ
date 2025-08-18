@@ -131,6 +131,10 @@ export async function GET(
       if (hotelSearchResponse.ok) {
         const searchData = await hotelSearchResponse.json()
         detailedHotelInfo = searchData.data?.find((h: any) => h.hotelId === hotelId)
+        console.log(`🏨 Detailed hotel info for ${hotelId}:`, detailedHotelInfo ? 'Found' : 'Not found')
+        if (detailedHotelInfo?.amenities) {
+          console.log(`✨ Amenities found:`, detailedHotelInfo.amenities)
+        }
       }
     } catch (error) {
       console.warn('Could not fetch detailed hotel info:', error)
