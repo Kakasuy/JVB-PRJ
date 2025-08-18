@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useHotelState } from './HotelStateContext'
 import ButtonPrimary from '@/shared/ButtonPrimary'
 import ButtonSecondary from '@/shared/ButtonSecondary'
 import { Badge } from '@/shared/Badge'
@@ -37,9 +38,10 @@ const HotelDetailClient: React.FC<HotelDetailClientProps> = ({
 }) => {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { appliedState: contextAppliedState, updateAppliedState, updateCurrentOffer } = useHotelState()
   
-  // Current applied state (what's actually being used for pricing)
-  const [appliedState, setAppliedState] = useState({
+  // Local applied state (managed by this component)
+  const [localAppliedState, setLocalAppliedState] = useState({
     checkInDate: initialSearchParams.checkInDate || '',
     checkOutDate: initialSearchParams.checkOutDate || '',
     adults: parseInt(initialSearchParams.adults || '1'),
@@ -63,10 +65,15 @@ const HotelDetailClient: React.FC<HotelDetailClientProps> = ({
   
   // Check if there are pending changes
   const hasPendingChanges = 
-    pendingState.checkInDate !== appliedState.checkInDate ||
-    pendingState.checkOutDate !== appliedState.checkOutDate ||
-    pendingState.adults !== appliedState.adults ||
-    pendingState.rooms !== appliedState.rooms
+    pendingState.checkInDate !== localAppliedState.checkInDate ||
+    pendingState.checkOutDate !== localAppliedState.checkOutDate ||
+    pendingState.adults !== localAppliedState.adults ||
+    pendingState.rooms !== localAppliedState.rooms
+    
+  // Update context when local applied state changes
+  useEffect(() => {
+    updateAppliedState(localAppliedState)
+  }, [localAppliedState, updateAppliedState])
 
   // Debounced API call to fetch new pricing
   const fetchNewPricing = useCallback(async (params: {
@@ -95,12 +102,16 @@ const HotelDetailClient: React.FC<HotelDetailClientProps> = ({
           error: null,
           data: data.data
         })
+        // Update context with new offer data
+        updateCurrentOffer(data.data)
       } else {
         setPricing({
           loading: false,
           error: 'No available offers for selected dates and guests',
           data: null
         })
+        // Clear offer when no data available
+        updateCurrentOffer(null)
       }
     } catch (error) {
       console.error('Error fetching new pricing:', error)
@@ -137,7 +148,7 @@ const HotelDetailClient: React.FC<HotelDetailClientProps> = ({
       return
     }
     
-    setAppliedState(pendingState)
+    setLocalAppliedState(pendingState)
     
     fetchNewPricing({
       checkInDate: pendingState.checkInDate,
@@ -193,9 +204,9 @@ const HotelDetailClient: React.FC<HotelDetailClientProps> = ({
     
     // Calculate number of nights using applied state (for pricing)
     let numberOfNights = 1
-    if (appliedState.checkInDate && appliedState.checkOutDate) {
-      const checkIn = new Date(appliedState.checkInDate)
-      const checkOut = new Date(appliedState.checkOutDate)
+    if (localAppliedState.checkInDate && localAppliedState.checkOutDate) {
+      const checkIn = new Date(localAppliedState.checkInDate)
+      const checkOut = new Date(localAppliedState.checkOutDate)
       numberOfNights = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)))
     }
     
@@ -231,10 +242,10 @@ const HotelDetailClient: React.FC<HotelDetailClientProps> = ({
           className="flex flex-col rounded-3xl border border-neutral-200 dark:border-neutral-700"
           id="booking-form"
         >
-          <input type="hidden" name="checkInDate" value={appliedState.checkInDate} />
-          <input type="hidden" name="checkOutDate" value={appliedState.checkOutDate} />
-          <input type="hidden" name="adults" value={appliedState.adults} />
-          <input type="hidden" name="rooms" value={appliedState.rooms} />
+          <input type="hidden" name="checkInDate" value={localAppliedState.checkInDate} />
+          <input type="hidden" name="checkOutDate" value={localAppliedState.checkOutDate} />
+          <input type="hidden" name="adults" value={localAppliedState.adults} />
+          <input type="hidden" name="rooms" value={localAppliedState.rooms} />
           <input type="hidden" name="hotelId" value={hotelId} />
           
           <DatesRangeInputPopover 

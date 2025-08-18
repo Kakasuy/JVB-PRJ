@@ -71,6 +71,9 @@ import SectionHost from '../../components/SectionHost'
 import SectionListingReviews from '../../components/SectionListingReviews'
 import SectionMap from '../../components/SectionMap'
 import HotelDetailClient from './HotelDetailClient'
+import HotelDetailWrapper from './HotelDetailWrapper'
+import { HotelStateProvider } from './HotelStateContext'
+import HotelInfoHeader from './HotelInfoHeader'
 
 export async function generateMetadata({ 
   params,
@@ -426,51 +429,55 @@ const Page = async ({
 
 
   return (
-    <div>
-      {/*  HEADER */}
-      <HeaderGallery images={galleryImgs} />
+    <HotelStateProvider initialState={{ checkInDate, checkOutDate, adults, rooms }}>
+      <div>
+        {/*  HEADER */}
+        <HeaderGallery images={galleryImgs} />
 
-      {/* MAIN */}
-      <main className="relative z-[1] mt-10 flex flex-col gap-8 lg:flex-row xl:gap-10">
-        {/* CONTENT */}
-        <div className="flex w-full flex-col gap-y-8 lg:w-3/5 xl:w-[64%] xl:gap-y-10">
-          {renderSectionHeader()}
-          {renderSectionInfo()}
-          {renderSectionAmenities()}
-          {renderSectionPolicies()}
-          <SectionDateRange />
-        </div>
-
-        {/* SIDEBAR */}
-        <div className="grow">
-          <HotelDetailClient 
-            initialListing={listing}
-            hotelId={handle}
-            searchParams={{
-              checkInDate,
-              checkOutDate,
-              adults,
-              rooms
-            }}
-          />
-        </div>
-      </main>
-
-      <Divider className="my-16" />
-
-      <div className="flex flex-col gap-y-10">
-        <div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
-          <div className="w-full lg:w-4/9 xl:w-1/3">
-            <SectionHost {...host} />
+        {/* MAIN */}
+        <main className="relative z-[1] mt-10 flex flex-col gap-8 lg:flex-row xl:gap-10">
+          {/* CONTENT */}
+          <div className="flex w-full flex-col gap-y-8 lg:w-3/5 xl:w-[64%] xl:gap-y-10">
+            <HotelInfoHeader listing={listing} />
+            {renderSectionInfo()}
+            {renderSectionAmenities()}
+            {renderSectionPolicies()}
+            <SectionDateRange />
           </div>
-          <div className="w-full lg:w-2/3">
-            <SectionListingReviews reviewCount={reviewCount} reviewStart={reviewStart} reviews={reviews} />
-          </div>
-        </div>
 
-        <SectionMap />
+          {/* SIDEBAR */}
+          <div className="grow">
+            <div className="sticky top-5">
+              <HotelDetailClient 
+                initialListing={listing}
+                hotelId={handle}
+                searchParams={{
+                  checkInDate,
+                  checkOutDate,
+                  adults,
+                  rooms
+                }}
+              />
+            </div>
+          </div>
+        </main>
+
+        <Divider className="my-16" />
+
+        <div className="flex flex-col gap-y-10">
+          <div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
+            <div className="w-full lg:w-4/9 xl:w-1/3">
+              <SectionHost {...host} />
+            </div>
+            <div className="w-full lg:w-2/3">
+              <SectionListingReviews reviewCount={reviewCount} reviewStart={reviewStart} reviews={reviews} />
+            </div>
+          </div>
+
+          <SectionMap />
+        </div>
       </div>
-    </div>
+    </HotelStateProvider>
   )
 }
 
