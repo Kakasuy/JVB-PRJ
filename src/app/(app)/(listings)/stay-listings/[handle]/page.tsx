@@ -70,6 +70,7 @@ import { SectionHeading, SectionSubheading } from '../../components/SectionHeadi
 import SectionHost from '../../components/SectionHost'
 import SectionListingReviews from '../../components/SectionListingReviews'
 import SectionMap from '../../components/SectionMap'
+import HotelDetailClient from './HotelDetailClient'
 
 export async function generateMetadata({ 
   params,
@@ -423,125 +424,6 @@ const Page = async ({
     )
   }
 
-  const renderSidebarPriceAndForm = () => {
-    // Get real pricing data from Amadeus if available
-    const amadeusData = (listing as any)?.amadeus
-    const offer = amadeusData?.offers?.[0]
-    const priceInfo = offer?.price
-    
-    // Debug: Log price structure to understand API response
-    if (priceInfo) {
-      console.log('🔍 Price Debug Info:')
-      console.log('Full price object:', priceInfo)
-      console.log('Base price:', priceInfo.base)
-      console.log('Total price:', priceInfo.total)
-      console.log('Currency:', priceInfo.currency)
-      console.log('Taxes:', priceInfo.taxes)
-      console.log('markups:', priceInfo.markups)
-    }
-    
-    // Calculate pricing details
-    const basePrice = priceInfo?.base ? parseFloat(priceInfo.base) : null
-    const totalPrice = priceInfo?.total ? parseFloat(priceInfo.total) : null
-    const currency = priceInfo?.currency || 'USD'
-    const taxesAmount = priceInfo?.taxes ? parseFloat(priceInfo.taxes[0]?.amount || '0') : 0
-    
-    // Calculate number of nights from search params
-    let numberOfNights = 1
-    if (checkInDate && checkOutDate) {
-      const checkIn = new Date(checkInDate)
-      const checkOut = new Date(checkOutDate)
-      numberOfNights = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)))
-    }
-    
-    // Display pricing - need to understand if basePrice is per night or total
-    // For now, assume basePrice from API is the room rate per night
-    const perNightPrice = basePrice ? basePrice : (totalPrice ? totalPrice / numberOfNights : null)
-    const displayPrice = perNightPrice ? `${currency} ${perNightPrice.toFixed(2)}` : price
-    const displayTotal = totalPrice ? `${currency} ${totalPrice.toFixed(2)}` : (perNightPrice ? `${currency} ${(perNightPrice * numberOfNights).toFixed(2)}` : price)
-
-    return (
-      <div className="listingSection__wrap sm:shadow-xl">
-        {/* PRICE */}
-        <div className="flex items-end flex-nowrap text-xl font-semibold sm:text-2xl lg:text-3xl">
-          {totalPrice && perNightPrice && (
-            <span className="text-neutral-300 line-through mr-2 flex-shrink-0 text-lg sm:text-xl lg:text-2xl">
-              {currency} {(perNightPrice * 1.15).toFixed(0)}
-            </span>
-          )}
-          <span className="flex-shrink-0">{displayPrice}</span>
-          <div className="pb-1 ml-1 flex-shrink-0">
-            <span className="text-sm font-normal text-neutral-500 dark:text-neutral-400 sm:text-base">/night</span>
-          </div>
-        </div>
-
-
-        {/* FORM */}
-        <Form
-          action={handleSubmitForm}
-          className="flex flex-col rounded-3xl border border-neutral-200 dark:border-neutral-700"
-          id="booking-form"
-        >
-          {/* Hidden inputs to capture current search values */}
-          <input type="hidden" name="checkInDate" value={checkInDate || ''} />
-          <input type="hidden" name="checkOutDate" value={checkOutDate || ''} />
-          <input type="hidden" name="adults" value={adults} />
-          <input type="hidden" name="rooms" value={rooms} />
-          <input type="hidden" name="hotelId" value={handle} />
-          
-          <DatesRangeInputPopover 
-            className="z-11 flex-1"
-            defaultDates={{
-              startDate: checkInDate,
-              endDate: checkOutDate
-            }}
-          />
-          <div className="w-full border-b border-neutral-200 dark:border-neutral-700"></div>
-          <GuestsInputPopover 
-            className="flex-1"
-            defaultGuests={{
-              adults: parseInt(adults),
-              children: 0,
-              infants: 0,
-              rooms: parseInt(rooms)
-            }}
-          />
-        </Form>
-
-        {/* PRICE BREAKDOWN */}
-        <DescriptionList>
-          {perNightPrice && (
-            <>
-              <DescriptionTerm>{currency} {perNightPrice.toFixed(2)} x {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</DescriptionTerm>
-              <DescriptionDetails className="sm:text-right">{currency} {(perNightPrice * numberOfNights).toFixed(2)}</DescriptionDetails>
-            </>
-          )}
-          
-          {/* Show taxes if available from API, or calculate difference */}
-          {totalPrice && perNightPrice && totalPrice !== (perNightPrice * numberOfNights) && (
-            <>
-              <DescriptionTerm>Taxes & fees</DescriptionTerm>
-              <DescriptionDetails className="sm:text-right">
-                {taxesAmount > 0 ? (
-                  `${currency} ${taxesAmount.toFixed(2)}`
-                ) : (
-                  `${currency} ${(totalPrice - (perNightPrice * numberOfNights)).toFixed(2)}`
-                )}
-              </DescriptionDetails>
-            </>
-          )}
-          
-          <DescriptionTerm className="font-semibold text-neutral-900 dark:text-neutral-100">Total</DescriptionTerm>
-          <DescriptionDetails className="font-semibold sm:text-right">{displayTotal}</DescriptionDetails>
-        </DescriptionList>
-
-        {/* SUBMIT */}
-        <ButtonPrimary form="booking-form" type="submit" className="w-full">
-          {T['common']['Reserve']}
-        </ButtonPrimary>
-      </div>
-    )
-  }
 
   return (
     <div>
@@ -561,7 +443,16 @@ const Page = async ({
 
         {/* SIDEBAR */}
         <div className="grow">
-          <div className="sticky top-5">{renderSidebarPriceAndForm()}</div>
+          <HotelDetailClient 
+            initialListing={listing}
+            hotelId={handle}
+            searchParams={{
+              checkInDate,
+              checkOutDate,
+              adults,
+              rooms
+            }}
+          />
         </div>
       </main>
 

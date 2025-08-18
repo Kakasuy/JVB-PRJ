@@ -5,7 +5,7 @@ import DatePickerCustomHeaderTwoMonth from '@/components/DatePickerCustomHeaderT
 import T from '@/utils/getT'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
 import { CalendarIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { FC, useState } from 'react'
+import { FC, useState, useEffect } from 'react'
 import DatePicker from 'react-datepicker'
 
 interface Props {
@@ -14,9 +14,10 @@ interface Props {
     startDate?: string
     endDate?: string
   }
+  onDateChange?: (dates: { startDate?: string, endDate?: string }) => void
 }
 
-const DatesRangeInputPopover: FC<Props> = ({ className = 'flex-1', defaultDates }) => {
+const DatesRangeInputPopover: FC<Props> = ({ className = 'flex-1', defaultDates, onDateChange }) => {
   // Use default dates from props if available, otherwise use fallback dates
   const getInitialStartDate = () => {
     if (defaultDates?.startDate) {
@@ -34,12 +35,30 @@ const DatesRangeInputPopover: FC<Props> = ({ className = 'flex-1', defaultDates 
 
   const [startDate, setStartDate] = useState<Date | null>(getInitialStartDate())
   const [endDate, setEndDate] = useState<Date | null>(getInitialEndDate())
+  
+  // Update internal state when defaultDates changes
+  useEffect(() => {
+    if (defaultDates?.startDate) {
+      setStartDate(new Date(defaultDates.startDate))
+    }
+    if (defaultDates?.endDate) {
+      setEndDate(new Date(defaultDates.endDate))
+    }
+  }, [defaultDates])
   //
 
   const onChangeDate = (dates: [Date | null, Date | null]) => {
     const [start, end] = dates
     setStartDate(start)
     setEndDate(end)
+    
+    // Call callback if provided
+    if (onDateChange && start && end) {
+      onDateChange({
+        startDate: start.toISOString().split('T')[0],
+        endDate: end.toISOString().split('T')[0]
+      })
+    }
   }
 
   const renderInput = () => {

@@ -5,7 +5,7 @@ import { GuestsObject } from '@/type'
 import T from '@/utils/getT'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
 import { UserPlusIcon } from '@heroicons/react/24/outline'
-import { FC, useState } from 'react'
+import { FC, useState, useEffect } from 'react'
 
 interface Props {
   className?: string
@@ -15,14 +15,31 @@ interface Props {
     infants?: number
     rooms?: number
   }
+  onGuestsChange?: (guests: { adults?: number, rooms?: number }) => void
 }
 
-const GuestsInputPopover: FC<Props> = ({ className = 'flex-1', defaultGuests }) => {
+const GuestsInputPopover: FC<Props> = ({ className = 'flex-1', defaultGuests, onGuestsChange }) => {
   // Use default guests if provided, otherwise use fallback values
   const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(defaultGuests?.adults || 2)
   const [guestChildrenInputValue, setGuestChildrenInputValue] = useState(defaultGuests?.children ?? 1)
   const [guestInfantsInputValue, setGuestInfantsInputValue] = useState(defaultGuests?.infants ?? 1)
   const [roomsInputValue, setRoomsInputValue] = useState(defaultGuests?.rooms || 1)
+  
+  // Update internal state when defaultGuests changes
+  useEffect(() => {
+    if (defaultGuests?.adults !== undefined) {
+      setGuestAdultsInputValue(defaultGuests.adults)
+    }
+    if (defaultGuests?.children !== undefined) {
+      setGuestChildrenInputValue(defaultGuests.children)
+    }
+    if (defaultGuests?.infants !== undefined) {
+      setGuestInfantsInputValue(defaultGuests.infants)
+    }
+    if (defaultGuests?.rooms !== undefined) {
+      setRoomsInputValue(defaultGuests.rooms)
+    }
+  }, [defaultGuests])
 
   const handleChangeData = (value: number, type: keyof GuestsObject | 'rooms') => {
     let newValue = {
@@ -30,9 +47,13 @@ const GuestsInputPopover: FC<Props> = ({ className = 'flex-1', defaultGuests }) 
       guestChildren: guestChildrenInputValue,
       guestInfants: guestInfantsInputValue,
     }
+    
+    let callbackData: { adults?: number, rooms?: number } = {}
+    
     if (type === 'guestAdults') {
       setGuestAdultsInputValue(value)
       newValue.guestAdults = value
+      callbackData.adults = value
     }
     if (type === 'guestChildren') {
       setGuestChildrenInputValue(value)
@@ -44,6 +65,12 @@ const GuestsInputPopover: FC<Props> = ({ className = 'flex-1', defaultGuests }) 
     }
     if (type === 'rooms') {
       setRoomsInputValue(value)
+      callbackData.rooms = value
+    }
+    
+    // Call callback if provided and we have relevant changes
+    if (onGuestsChange && (callbackData.adults !== undefined || callbackData.rooms !== undefined)) {
+      onGuestsChange(callbackData)
     }
   }
 
