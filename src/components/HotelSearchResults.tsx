@@ -143,7 +143,10 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
       // Hotel Stars filters
       hotel_stars: searchParams.get('hotel_stars'),
       // Board Type filters
-      board_types: searchParams.get('board_types')
+      board_types: searchParams.get('board_types'),
+      // Policy filters
+      free_cancellation: searchParams.get('free_cancellation'),
+      refundable_only: searchParams.get('refundable_only')
     }
   }, [searchParams])
 

@@ -1538,6 +1538,30 @@ export async function getStayListingFilterOptions() {
         }
       ],
     },
+    {
+      name: 'Cancellation-policy',
+      label: 'Cancellation',
+      tabUIType: 'checkbox',
+      options: [
+        {
+          name: 'Free Cancellation',
+          value: 'FREE_CANCELLATION',
+          description: 'Cancel your booking without penalty fees',
+        }
+      ],
+    },
+    {
+      name: 'Refund-policy',
+      label: 'Refund Policy',
+      tabUIType: 'checkbox',
+      options: [
+        {
+          name: 'Refundable Only',
+          value: 'REFUNDABLE_ONLY',
+          description: 'Show only fully refundable booking options',
+        }
+      ],
+    },
   ]
 }
 export async function getExperienceListingFilterOptions() {

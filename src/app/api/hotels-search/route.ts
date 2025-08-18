@@ -70,6 +70,10 @@ export async function GET(request: NextRequest) {
     // Board Type filters - get comma-separated board types from URL params  
     const boardTypes = searchParams.get('board_types') ? searchParams.get('board_types')?.split(',') : null
     
+    // Policy filters (Step 3 - post-processing)
+    const freeCancellation = searchParams.get('free_cancellation') === 'true'
+    const refundableOnly = searchParams.get('refundable_only') === 'true'
+    
 
     // Get OAuth token first
     const tokenResponse = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
@@ -550,6 +554,57 @@ export async function GET(request: NextRequest) {
       console.log('Hotels after room type filtering:', finalHotels.length)
     }
 
+    // Apply policy filters if provided (Step 3 - post-processing based on policies data)
+    if (freeCancellation || refundableOnly) {
+      console.log('Hotels before policy filtering:', finalHotels.length)
+      console.log(`Policy filter criteria - Free Cancellation: ${freeCancellation}, Refundable Only: ${refundableOnly}`)
+      
+      finalHotels = finalHotels.filter((hotel) => {
+        // Find the hotel in the original data to get policies info
+        const originalHotel = hotelData.data?.find((h: any) => h.hotel?.hotelId === hotel.id.replace('amadeus-hotel://', ''))
+        if (!originalHotel) return true // Keep hotel if we can't find original data
+        
+        const offers = originalHotel.offers || []
+        if (offers.length === 0) return true // Keep hotel if no offers
+        
+        // Check if any offer meets the policy criteria
+        const hasValidOffer = offers.some((offer: any) => {
+          const policies = offer.policies || {}
+          
+          // Check free cancellation
+          if (freeCancellation) {
+            const cancellations = policies.cancellations || []
+            const hasFreeCancellation = cancellations.some((cancellation: any) => {
+              // Free cancellation if amount is 0 or null/undefined
+              const amount = parseFloat(cancellation.amount || '0')
+              return amount === 0
+            })
+            
+            if (!hasFreeCancellation) {
+              return false // This offer doesn't have free cancellation
+            }
+          }
+          
+          // Check refundable rates
+          if (refundableOnly) {
+            const refundable = policies.refundable || {}
+            const cancellationRefund = refundable.cancellationRefund || ''
+            const isRefundable = cancellationRefund !== 'NON_REFUNDABLE' && cancellationRefund !== ''
+            
+            if (!isRefundable) {
+              return false // This offer is not refundable
+            }
+          }
+          
+          return true // This offer meets all policy criteria
+        })
+        
+        return hasValidOffer
+      })
+      
+      console.log('Hotels after policy filtering:', finalHotels.length)
+    }
+
     // Fetch hotel sentiments for all hotels
     const hotelIds = finalHotels.map(hotel => {
       // Extract hotelId from id field (format: "amadeus-hotel://HOTELID")
@@ -614,7 +669,9 @@ export async function GET(request: NextRequest) {
           bathrooms: minBathrooms,
           amenities: amenities,
           hotel_stars: hotelStars,
-          board_types: boardTypes
+          board_types: boardTypes,
+          free_cancellation: freeCancellation,
+          refundable_only: refundableOnly
         },
         cityCode,
         checkInDate,

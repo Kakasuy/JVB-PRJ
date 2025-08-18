@@ -24,6 +24,8 @@ interface HotelSearchParams {
   amenities?: string | null
   hotel_stars?: string | null
   board_types?: string | null
+  free_cancellation?: string | null
+  refundable_only?: string | null
 }
 
 export const useHotelSearch = (): UseHotelSearchResult => {
@@ -82,6 +84,15 @@ export const useHotelSearch = (): UseHotelSearchResult => {
       // Add board types filter if provided
       if (params.board_types) {
         searchParams.append('board_types', params.board_types)
+      }
+      
+      // Add policy filters if provided
+      if (params.free_cancellation) {
+        searchParams.append('free_cancellation', params.free_cancellation)
+      }
+      
+      if (params.refundable_only) {
+        searchParams.append('refundable_only', params.refundable_only)
       }
       
       console.log('🔧 useHotelSearch building URL with params:', Object.fromEntries(searchParams.entries()))

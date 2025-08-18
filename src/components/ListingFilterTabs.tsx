@@ -363,6 +363,30 @@ const demo_filters_options = [
       }
     ],
   },
+  {
+    name: 'Cancellation-policy',
+    label: 'Cancellation',
+    tabUIType: 'checkbox',
+    options: [
+      {
+        name: 'Free Cancellation',
+        value: 'FREE_CANCELLATION',
+        description: 'Cancel your booking without penalty fees',
+      }
+    ],
+  },
+  {
+    name: 'Refund-policy',
+    label: 'Refund Policy',
+    tabUIType: 'checkbox',
+    options: [
+      {
+        name: 'Refundable Only',
+        value: 'REFUNDABLE_ONLY',
+        description: 'Show only fully refundable booking options',
+      }
+    ],
+  },
 ]
 
 const CheckboxPanel = ({ 
@@ -538,6 +562,8 @@ const ListingFilterTabs = ({
     const amenities = searchParams.get('amenities')
     const hotelStars = searchParams.get('hotel_stars')
     const boardTypes = searchParams.get('board_types')
+    const freeCancellation = searchParams.get('free_cancellation')
+    const refundableOnly = searchParams.get('refundable_only')
     
     const newCheckedFilters: Record<string, boolean> = {}
     
@@ -600,6 +626,30 @@ const ListingFilterTabs = ({
         boardTypesFilter.options.forEach(option => {
           const optionValue = (option as any).value || option.name
           if (boardTypesValues.includes(optionValue)) {
+            newCheckedFilters[option.name] = true
+          }
+        })
+      }
+    }
+    
+    // Handle free cancellation policy (from Cancellation-policy section)
+    if (freeCancellation === 'true') {
+      const cancellationFilter = filterOptions.find(f => f?.name === 'Cancellation-policy') as CheckboxFilter
+      if (cancellationFilter?.options) {
+        cancellationFilter.options.forEach(option => {
+          if (option.value === 'FREE_CANCELLATION') {
+            newCheckedFilters[option.name] = true
+          }
+        })
+      }
+    }
+    
+    // Handle refundable rates policy (from Refund-policy section)
+    if (refundableOnly === 'true') {
+      const refundFilter = filterOptions.find(f => f?.name === 'Refund-policy') as CheckboxFilter
+      if (refundFilter?.options) {
+        refundFilter.options.forEach(option => {
+          if (option.value === 'REFUNDABLE_ONLY') {
             newCheckedFilters[option.name] = true
           }
         })
@@ -777,6 +827,36 @@ const ListingFilterTabs = ({
         currentUrl.searchParams.set('board_types', boardTypesValues.join(','))
       } else {
         currentUrl.searchParams.delete('board_types')
+      }
+      
+      // Update policy params (Free Cancellation - boolean)
+      const freeCancellationValues: string[] = []
+      for (const [key, value] of formData.entries()) {
+        if (key.includes('Cancellation-policy[]') && value === 'FREE_CANCELLATION') {
+          freeCancellationValues.push(value as string)
+        }
+      }
+      console.log('🔧 Free cancellation data from form:', freeCancellationValues)
+      
+      if (freeCancellationValues.length > 0) {
+        currentUrl.searchParams.set('free_cancellation', 'true')
+      } else {
+        currentUrl.searchParams.delete('free_cancellation')
+      }
+      
+      // Update refund policy params (Refundable Only - boolean)
+      const refundableOnlyValues: string[] = []
+      for (const [key, value] of formData.entries()) {
+        if (key.includes('Refund-policy[]') && value === 'REFUNDABLE_ONLY') {
+          refundableOnlyValues.push(value as string)
+        }
+      }
+      console.log('🔧 Refundable only data from form:', refundableOnlyValues)
+      
+      if (refundableOnlyValues.length > 0) {
+        currentUrl.searchParams.set('refundable_only', 'true')
+      } else {
+        currentUrl.searchParams.delete('refundable_only')
       }
       
       console.log('🔧 New URL after update:', currentUrl.toString())
