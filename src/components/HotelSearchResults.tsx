@@ -293,7 +293,11 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
       {/* Hotels grid */}
       <div className="grid grid-cols-1 gap-x-6 gap-y-8 sm:grid-cols-2 md:gap-x-8 md:gap-y-12 lg:grid-cols-3 xl:grid-cols-4">
         {paginatedHotels.map((hotel) => (
-          <StayCard2 key={hotel.id} data={hotel} />
+          <StayCard2 
+            key={hotel.id} 
+            data={hotel} 
+            searchParams={searchConfig}
+          />
         ))}
       </div>
 

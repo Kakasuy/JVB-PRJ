@@ -10,11 +10,30 @@ import DatePicker from 'react-datepicker'
 
 interface Props {
   className?: string
+  defaultDates?: {
+    startDate?: string
+    endDate?: string
+  }
 }
 
-const DatesRangeInputPopover: FC<Props> = ({ className = 'flex-1' }) => {
-  const [startDate, setStartDate] = useState<Date | null>(new Date('2025/02/02'))
-  const [endDate, setEndDate] = useState<Date | null>(new Date('2025/02/06'))
+const DatesRangeInputPopover: FC<Props> = ({ className = 'flex-1', defaultDates }) => {
+  // Use default dates from props if available, otherwise use fallback dates
+  const getInitialStartDate = () => {
+    if (defaultDates?.startDate) {
+      return new Date(defaultDates.startDate)
+    }
+    return new Date('2025/02/02')
+  }
+  
+  const getInitialEndDate = () => {
+    if (defaultDates?.endDate) {
+      return new Date(defaultDates.endDate)
+    }
+    return new Date('2025/02/06')
+  }
+
+  const [startDate, setStartDate] = useState<Date | null>(getInitialStartDate())
+  const [endDate, setEndDate] = useState<Date | null>(getInitialEndDate())
   //
 
   const onChangeDate = (dates: [Date | null, Date | null]) => {

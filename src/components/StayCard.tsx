@@ -13,9 +13,15 @@ interface StayCardProps {
   className?: string
   data: TStayListing
   size?: 'default' | 'small'
+  searchParams?: {
+    checkInDate?: string
+    checkOutDate?: string
+    adults?: string
+    rooms?: string
+  }
 }
 
-const StayCard: FC<StayCardProps> = ({ size = 'default', className = '', data }) => {
+const StayCard: FC<StayCardProps> = ({ size = 'default', className = '', data, searchParams }) => {
   const {
     galleryImgs,
     listingCategory,
@@ -34,13 +40,32 @@ const StayCard: FC<StayCardProps> = ({ size = 'default', className = '', data })
 
   // Generate listing URL - handle both Amadeus data and mock data
   const listingHref = (() => {
+    let baseUrl = ''
+    
     // For Amadeus data (id format: "amadeus-hotel://HOTEL_ID")
     if (id?.startsWith('amadeus-hotel://')) {
       const hotelId = id.replace('amadeus-hotel://', '')
-      return `/stay-listings/${hotelId}`
+      baseUrl = `/stay-listings/${hotelId}`
+    } else {
+      // For mock data (use handle)
+      baseUrl = `/stay-listings/${listingHandle}`
     }
-    // For mock data (use handle)
-    return `/stay-listings/${listingHandle}`
+    
+    // Add search parameters if available
+    if (searchParams) {
+      const params = new URLSearchParams()
+      if (searchParams.checkInDate) params.set('checkInDate', searchParams.checkInDate)
+      if (searchParams.checkOutDate) params.set('checkOutDate', searchParams.checkOutDate)
+      if (searchParams.adults) params.set('adults', searchParams.adults)
+      if (searchParams.rooms) params.set('rooms', searchParams.rooms)
+      
+      const paramString = params.toString()
+      if (paramString) {
+        baseUrl += `?${paramString}`
+      }
+    }
+    
+    return baseUrl
   })()
 
   const renderSliderGallery = () => {
