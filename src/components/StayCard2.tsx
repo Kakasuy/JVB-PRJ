@@ -38,7 +38,16 @@ const StayCard2: FC<StayCard2Props> = ({ size = 'default', className = '', data 
     id,
   } = data
 
-  const listingHref = `/stay-listings/${listingHandle}`
+  // Generate listing URL - handle both Amadeus data and mock data
+  const listingHref = (() => {
+    // For Amadeus data (id format: "amadeus-hotel://HOTEL_ID")
+    if (id?.startsWith('amadeus-hotel://')) {
+      const hotelId = id.replace('amadeus-hotel://', '')
+      return `/stay-listings/${hotelId}`
+    }
+    // For mock data (use handle)
+    return `/stay-listings/${listingHandle}`
+  })()
 
   const renderSliderGallery = () => {
     return (

@@ -16,8 +16,30 @@ import {
 } from '@/components/Icons'
 import { getListingReviews } from '@/data/data'
 import { getStayListingByHandle } from '@/data/listings'
+
+// Helper function to get hotel detail from API
+async function getHotelDetail(hotelId: string) {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000'
+    const response = await fetch(`${baseUrl}/api/hotel-detail/${hotelId}`, {
+      cache: 'no-store' // Always get fresh data
+    })
+    
+    if (!response.ok) {
+      console.error(`Hotel detail API failed: ${response.status}`)
+      return null
+    }
+    
+    const data = await response.json()
+    return data.success ? data.data : null
+  } catch (error) {
+    console.error('Error fetching hotel detail:', error)
+    return null
+  }
+}
 import ButtonPrimary from '@/shared/ButtonPrimary'
 import ButtonSecondary from '@/shared/ButtonSecondary'
+import { Badge } from '@/shared/Badge'
 import { DescriptionDetails, DescriptionList, DescriptionTerm } from '@/shared/description-list'
 import { Divider } from '@/shared/divider'
 import T from '@/utils/getT'
@@ -38,12 +60,19 @@ import SectionMap from '../../components/SectionMap'
 
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }): Promise<Metadata> {
   const { handle } = await params
-  const listing = await getStayListingByHandle(handle)
+  
+  // Try to get hotel detail from Amadeus API first
+  let listing = await getHotelDetail(handle)
+  
+  // If API fails, fall back to mock data
+  if (!listing) {
+    listing = await getStayListingByHandle(handle)
+  }
 
   if (!listing) {
     return {
-      title: 'Listing not found',
-      description: 'The listing you are looking for does not exist.',
+      title: 'Hotel not found',
+      description: 'The hotel you are looking for does not exist.',
     }
   }
 
@@ -56,7 +85,14 @@ export async function generateMetadata({ params }: { params: Promise<{ handle: s
 const Page = async ({ params }: { params: Promise<{ handle: string }> }) => {
   const { handle } = await params
 
-  const listing = await getStayListingByHandle(handle)
+  // Try to get hotel detail from Amadeus API first
+  let listing = await getHotelDetail(handle)
+  
+  // If API fails or handle is not a hotel ID, fall back to mock data
+  if (!listing) {
+    console.log(`No Amadeus data found for ${handle}, trying mock data...`)
+    listing = await getStayListingByHandle(handle)
+  }
 
   if (!listing?.id) {
     return redirect('/stay-categories/all')
@@ -157,18 +193,17 @@ const Page = async ({ params }: { params: Promise<{ handle: string }> }) => {
       <div className="listingSection__wrap">
         <SectionHeading>Stay information</SectionHeading>
         <div className="leading-relaxed text-neutral-700 dark:text-neutral-300">
-          <span>
-            Providing lake views, The Symphony 9 Tam Coc in Ninh Binh provides accommodation, an outdoor swimming pool,
-            a bar, a shared lounge, a garden and barbecue facilities. Complimentary WiFi is provided.
-          </span>
-          <br />
-          <br />
-          <span>There is a private bathroom with bidet in all units, along with a hairdryer and free toiletries.</span>
-          <br /> <br />
-          <span>
-            The Symphony 9 Tam Coc offers a terrace. Both a bicycle rental service and a car rental service are
-            available at the accommodation, while cycling can be enjoyed nearby.
-          </span>
+          <span>{description}</span>
+          
+          {/* Show Amadeus-specific room details if available */}
+          {(listing as any)?.amadeus?.offers?.[0]?.roomDescription && (
+            <>
+              <br /><br />
+              <span>
+                <strong>Room Details:</strong> {(listing as any).amadeus.offers[0].roomDescription}
+              </span>
+            </>
+          )}
         </div>
 
         <Divider className="w-14!" />
@@ -231,6 +266,114 @@ const Page = async ({ params }: { params: Promise<{ handle: string }> }) => {
     )
   }
 
+  const renderSectionPolicies = () => {
+    const amadeusData = (listing as any)?.amadeus
+    if (!amadeusData?.offers?.[0]?.policies) {
+      return null
+    }
+
+    const policies = amadeusData.offers[0].policies
+    const cancellations = policies.cancellations || []
+    const paymentType = policies.paymentType
+    const refundable = policies.refundable
+
+    return (
+      <div className="listingSection__wrap">
+        <div>
+          <SectionHeading>Booking Policies</SectionHeading>
+          <SectionSubheading>Important information about your reservation</SectionSubheading>
+        </div>
+        <Divider className="w-14!" />
+
+        <div className="space-y-6">
+          {/* Cancellation Policy */}
+          {cancellations.length > 0 && (
+            <div>
+              <h4 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                Cancellation Policy
+              </h4>
+              <div className="mt-3 space-y-2">
+                {cancellations.map((cancellation: any, index: number) => (
+                  <div key={index} className="flex items-center justify-between rounded-lg bg-neutral-50 p-3 dark:bg-neutral-800">
+                    <div>
+                      <span className="text-sm text-neutral-600 dark:text-neutral-300">
+                        Cancel before {new Date(cancellation.deadline).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="text-right">
+                      {cancellation.amount === '0' || !cancellation.amount ? (
+                        <Badge color="green">Free Cancellation</Badge>
+                      ) : (
+                        <span className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                          ${Math.round(parseFloat(cancellation.amount))} fee
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Payment Policy */}
+          {paymentType && (
+            <div>
+              <h4 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                Payment Policy
+              </h4>
+              <div className="mt-3">
+                <div className="flex items-center gap-3">
+                  {paymentType === 'guarantee' && (
+                    <>
+                      <Badge color="blue">Credit Card Required</Badge>
+                      <span className="text-sm text-neutral-600 dark:text-neutral-300">
+                        Pay when you arrive at the hotel
+                      </span>
+                    </>
+                  )}
+                  {paymentType === 'prepay' && (
+                    <>
+                      <Badge color="purple">Prepayment Required</Badge>
+                      <span className="text-sm text-neutral-600 dark:text-neutral-300">
+                        Full payment required in advance
+                      </span>
+                    </>
+                  )}
+                  {paymentType === 'deposit' && (
+                    <>
+                      <Badge color="yellow">Deposit Required</Badge>
+                      <span className="text-sm text-neutral-600 dark:text-neutral-300">
+                        Partial payment required upfront
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Refund Policy */}
+          {refundable?.cancellationRefund && (
+            <div>
+              <h4 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100">
+                Refund Policy
+              </h4>
+              <div className="mt-3">
+                {refundable.cancellationRefund === 'NON_REFUNDABLE' ? (
+                  <Badge color="red">Non-Refundable</Badge>
+                ) : refundable.cancellationRefund === 'REFUNDABLE_UP_TO_DEADLINE' ? (
+                  <Badge color="green">Refundable Up To Deadline</Badge>
+                ) : (
+                  <Badge color="gray">{refundable.cancellationRefund}</Badge>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    )
+  }
+
   const renderSidebarPriceAndForm = () => {
     return (
       <div className="listingSection__wrap sm:shadow-xl">
@@ -281,6 +424,7 @@ const Page = async ({ params }: { params: Promise<{ handle: string }> }) => {
           {renderSectionHeader()}
           {renderSectionInfo()}
           {renderSectionAmenities()}
+          {renderSectionPolicies()}
           <SectionDateRange />
         </div>
 
