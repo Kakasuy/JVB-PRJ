@@ -1,21 +1,48 @@
 'use client'
 
 import ModalSelectDate from '@/components/ModalSelectDate'
-import ModalSelectGuests from '@/components/ModalSelectGuests'
+import ModalSelectHotelGuests from './ModalSelectHotelGuests'
 import { GuestsObject } from '@/type'
 import converSelectedDateToString from '@/utils/converSelectedDateToString'
 import T from '@/utils/getT'
 import { PencilSquareIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
 
-const YourTrip = () => {
-  const [startDate, setStartDate] = useState<Date | null>(new Date('2025/02/06'))
-  const [endDate, setEndDate] = useState<Date | null>(new Date('2025/02/23'))
-  const [guests, setGuests] = useState<GuestsObject>({
-    guestAdults: 2,
-    guestChildren: 1,
-    guestInfants: 1,
+interface YourTripProps {
+  defaultDates?: {
+    startDate: string
+    endDate: string
+  }
+  defaultGuests?: GuestsObject & {
+    rooms?: number
+  }
+  onDateChange?: (dates: { startDate: string, endDate: string }) => void
+  onGuestsChange?: (guests: { rooms: number, adults: number }) => void
+}
+
+const YourTrip = ({ defaultDates, defaultGuests, onDateChange, onGuestsChange }: YourTripProps = {}) => {
+  const [startDate, setStartDate] = useState<Date | null>(() => {
+    if (defaultDates?.startDate) {
+      return new Date(defaultDates.startDate)
+    }
+    return new Date('2025/02/06')
   })
+  
+  const [endDate, setEndDate] = useState<Date | null>(() => {
+    if (defaultDates?.endDate) {
+      return new Date(defaultDates.endDate)
+    }
+    return new Date('2025/02/23')
+  })
+  
+  const [guests, setGuests] = useState<GuestsObject>({
+    guestAdults: defaultGuests?.guestAdults || 2,
+    guestChildren: defaultGuests?.guestChildren || 0,
+    guestInfants: defaultGuests?.guestInfants || 0,
+  })
+  
+  // Track rooms separately 
+  const [rooms, setRooms] = useState(defaultGuests?.rooms || 1)
 
   return (
     <div>
@@ -26,6 +53,14 @@ const YourTrip = () => {
             const [start, end] = dates
             setStartDate(start)
             setEndDate(end)
+            
+            // Notify parent component of date changes
+            if (onDateChange && start && end) {
+              onDateChange({
+                startDate: start.toISOString().split('T')[0],
+                endDate: end.toISOString().split('T')[0]
+              })
+            }
           }}
           triggerButton={({ openModal }) => (
             <button
@@ -44,8 +79,26 @@ const YourTrip = () => {
           )}
         />
 
-        <ModalSelectGuests
-          onChangeGuests={setGuests}
+        <ModalSelectHotelGuests
+          defaultValue={{
+            rooms: rooms,
+            adults: guests.guestAdults
+          }}
+          onChangeGuests={(hotelGuests) => {
+            setRooms(hotelGuests.rooms)
+            setGuests(prev => ({
+              ...prev,
+              guestAdults: hotelGuests.adults
+            }))
+            
+            // Notify parent component of guest changes
+            if (onGuestsChange) {
+              onGuestsChange({
+                rooms: hotelGuests.rooms,
+                adults: hotelGuests.adults
+              })
+            }
+          }}
           triggerButton={({ openModal }) => (
             <button
               type="button"
@@ -56,9 +109,7 @@ const YourTrip = () => {
                 <span className="text-sm text-neutral-400">{T['HeroSearchForm']['Guests']}</span>
                 <span className="mt-1.5 text-lg font-semibold">
                   <span className="line-clamp-1">
-                    {`${
-                      (guests.guestAdults || 0) + (guests.guestChildren || 0)
-                    } Guests, ${guests.guestInfants || 0} Infants`}
+                    {`${rooms} Room${rooms !== 1 ? 's' : ''}, ${guests.guestAdults} Guest${guests.guestAdults !== 1 ? 's' : ''}`}
                   </span>
                 </span>
               </div>
@@ -75,6 +126,7 @@ const YourTrip = () => {
       <input type="hidden" name="guestAdults" value={guests.guestAdults} />
       <input type="hidden" name="guestChildren" value={guests.guestChildren} />
       <input type="hidden" name="guestInfants" value={guests.guestInfants} />
+      <input type="hidden" name="rooms" value={rooms} />
       {/*  */}
       <input type="hidden" name="startDate" value={startDate ? startDate.toISOString() : ''} />
       <input type="hidden" name="endDate" value={endDate ? endDate.toISOString() : ''} />

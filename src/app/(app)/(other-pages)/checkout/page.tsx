@@ -6,13 +6,86 @@ import { DescriptionDetails, DescriptionList, DescriptionTerm } from '@/shared/d
 import { Divider } from '@/shared/divider'
 import Form from 'next/form'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
-import React from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import React, { useState, useEffect } from 'react'
 import PayWith from './PayWith'
 import YourTrip from './YourTrip'
 
+interface CheckoutData {
+  offer: {
+    id: string
+    checkInDate: string
+    checkOutDate: string
+    price: {
+      total: string
+      base: string
+      currency: string
+      taxes: any[]
+    }
+    room: {
+      type: string
+      description: string
+      bedType: string
+      beds: number
+    }
+    guests: {
+      adults: number
+      rooms: number
+    }
+    policies: any
+    boardType: string
+  }
+  hotel: {
+    id: string
+    name: string
+    address: string
+    location: {
+      lat: number
+      lng: number
+    }
+    rating: number
+    reviewCount: number
+    featuredImage: string
+    amenities: string[]
+    beds: number
+    bedrooms: number
+    bathrooms: number
+    chainCode?: string
+  }
+  searchParams: {
+    checkInDate: string
+    checkOutDate: string
+    adults: number
+    rooms: number
+  }
+}
+
 const Page = () => {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  
+  // State for checkout data
+  const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null)
+  const [originalCheckoutData, setOriginalCheckoutData] = useState<CheckoutData | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isUpdating, setIsUpdating] = useState(false)
+  
+  // Pending changes state
+  const [pendingChanges, setPendingChanges] = useState<{
+    checkInDate?: string
+    checkOutDate?: string
+    adults?: number
+    rooms?: number
+  } | null>(null)
+
+  // Get URL parameters
+  const offerId = searchParams.get('offerId')
+  const hotelId = searchParams.get('hotelId')
+  const checkInDate = searchParams.get('checkInDate')
+  const checkOutDate = searchParams.get('checkOutDate')
+  const adults = searchParams.get('adults')
+  const rooms = searchParams.get('rooms')
 
   React.useEffect(() => {
     document.documentElement.scrollTo({
@@ -20,6 +93,148 @@ const Page = () => {
       behavior: 'instant',
     })
   }, [])
+
+  // Fetch checkout data
+  useEffect(() => {
+    const fetchCheckoutData = async () => {
+      if (!offerId || !hotelId || !checkInDate || !checkOutDate) {
+        setError('Missing required checkout parameters')
+        setLoading(false)
+        return
+      }
+
+      try {
+        const url = new URL(`/api/checkout/${offerId}`, window.location.origin)
+        url.searchParams.set('hotelId', hotelId)
+        url.searchParams.set('checkInDate', checkInDate)
+        url.searchParams.set('checkOutDate', checkOutDate)
+        if (adults) url.searchParams.set('adults', adults)
+        if (rooms) url.searchParams.set('rooms', rooms)
+
+        console.log('🛒 Fetching checkout data:', url.toString())
+
+        const response = await fetch(url.toString())
+        const data = await response.json()
+
+        if (data.success) {
+          setCheckoutData(data.data)
+          setOriginalCheckoutData(data.data) // Store original for revert
+          console.log('✅ Checkout data loaded:', data.data)
+        } else {
+          setError(data.error || 'Failed to load checkout data')
+        }
+      } catch (err) {
+        console.error('❌ Error fetching checkout data:', err)
+        setError('Failed to load checkout information')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchCheckoutData()
+  }, [offerId, hotelId, checkInDate, checkOutDate, adults, rooms])
+
+  // Handle date changes from YourTrip component
+  const handleDateChange = (dates: { startDate: string, endDate: string }) => {
+    if (!checkoutData) return
+    
+    const hasChanges = dates.startDate !== checkoutData.offer.checkInDate || 
+                      dates.endDate !== checkoutData.offer.checkOutDate
+    
+    if (hasChanges) {
+      setPendingChanges(prev => ({
+        ...prev,
+        checkInDate: dates.startDate,
+        checkOutDate: dates.endDate
+      }))
+    } else {
+      // Remove date changes if reverted to original
+      setPendingChanges(prev => prev ? {
+        ...prev,
+        checkInDate: undefined,
+        checkOutDate: undefined
+      } : null)
+    }
+  }
+
+  // Handle guests/rooms changes
+  const handleGuestsChange = (guests: { rooms: number, adults: number }) => {
+    if (!checkoutData) return
+    
+    const hasChanges = guests.rooms !== checkoutData.offer.guests.rooms || 
+                      guests.adults !== checkoutData.offer.guests.adults
+    
+    if (hasChanges) {
+      setPendingChanges(prev => ({
+        ...prev,
+        rooms: guests.rooms,
+        adults: guests.adults
+      }))
+    } else {
+      // Remove guest changes if reverted to original
+      setPendingChanges(prev => prev ? {
+        ...prev,
+        rooms: undefined,
+        adults: undefined
+      } : null)
+    }
+  }
+
+  // Check if there are any pending changes
+  const hasPendingChanges = pendingChanges && Object.values(pendingChanges).some(v => v !== undefined)
+
+  // Apply pending changes - revalidate offer with new parameters
+  const applyChanges = async () => {
+    if (!checkoutData || !hotelId || !pendingChanges) return
+    
+    setIsUpdating(true)
+    
+    try {
+      // Use pending changes or fall back to current values
+      const newCheckInDate = pendingChanges.checkInDate || checkoutData.offer.checkInDate
+      const newCheckOutDate = pendingChanges.checkOutDate || checkoutData.offer.checkOutDate
+      const newAdults = pendingChanges.adults || checkoutData.offer.guests.adults
+      const newRooms = pendingChanges.rooms || checkoutData.offer.guests.rooms
+
+      const url = new URL(`/api/checkout/${checkoutData.offer.id}`, window.location.origin)
+      url.searchParams.set('hotelId', hotelId)
+      url.searchParams.set('checkInDate', newCheckInDate)
+      url.searchParams.set('checkOutDate', newCheckOutDate)
+      url.searchParams.set('adults', newAdults.toString())
+      url.searchParams.set('rooms', newRooms.toString())
+
+      console.log('🔄 Applying changes:', { newCheckInDate, newCheckOutDate, newAdults, newRooms })
+
+      const response = await fetch(url.toString())
+      const data = await response.json()
+
+      if (data.success) {
+        // Success - update checkout data and clear pending changes
+        setCheckoutData(data.data)
+        setPendingChanges(null)
+        console.log('✅ Changes applied successfully')
+      } else {
+        // Offer not available - show error but keep pending changes
+        setError(data.error || 'Offer not available with new parameters')
+        console.log('❌ Offer not available:', data.error)
+      }
+    } catch (err) {
+      console.error('❌ Error applying changes:', err)
+      setError('Failed to apply changes. Please try again.')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  // Revert to original offer
+  const revertChanges = () => {
+    if (originalCheckoutData) {
+      setCheckoutData(originalCheckoutData)
+      setPendingChanges(null)
+      setError(null)
+      console.log('🔙 Reverted to original offer')
+    }
+  }
 
   const handleSubmitForm = async (formData: FormData) => {
     const formObject = Object.fromEntries(formData.entries())
@@ -29,51 +244,175 @@ const Page = () => {
   }
 
   const renderSidebar = () => {
+    // Show loading state
+    if (loading) {
+      return (
+        <div className="flex w-full flex-col gap-y-6 border-neutral-200 px-0 sm:gap-y-8 sm:rounded-4xl sm:p-6 lg:border xl:p-8 dark:border-neutral-700">
+          <div className="flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <span className="ml-4">Loading checkout...</span>
+          </div>
+        </div>
+      )
+    }
+
+    // Show error state
+    if (error && !checkoutData) {
+      return (
+        <div className="flex w-full flex-col gap-y-6 border-neutral-200 px-0 sm:gap-y-8 sm:rounded-4xl sm:p-6 lg:border xl:p-8 dark:border-neutral-700">
+          <div className="text-center py-8">
+            <div className="text-red-600 text-lg mb-4">Checkout Error</div>
+            <p className="text-neutral-500 dark:text-neutral-400 mb-4">
+              {error || 'Unable to load checkout information'}
+            </p>
+            <ButtonPrimary onClick={() => router.back()}>
+              Go Back
+            </ButtonPrimary>
+          </div>
+        </div>
+      )
+    }
+
+    // Show offer unavailable error (but keep sidebar data)
+    if (error && checkoutData && originalCheckoutData) {
+      return (
+        <div className="flex w-full flex-col gap-y-6 border-neutral-200 px-0 sm:gap-y-8 sm:rounded-4xl sm:p-6 lg:border xl:p-8 dark:border-neutral-700">
+          <div className="text-center py-8">
+            <div className="text-red-600 text-lg mb-4">Offer Not Available</div>
+            <p className="text-neutral-500 dark:text-neutral-400 mb-4">
+              {error}
+            </p>
+            <div className="flex flex-col gap-3">
+              <ButtonPrimary onClick={revertChanges}>
+                Back to Previous Offer
+              </ButtonPrimary>
+              <button 
+                onClick={() => router.back()}
+                className="text-neutral-500 hover:text-neutral-700 text-sm underline"
+              >
+                Return to Hotel Detail
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
+    if (!checkoutData) {
+      return null
+    }
+
+    const { hotel, offer } = checkoutData
+
+    // Calculate number of nights
+    const checkIn = new Date(offer.checkInDate)
+    const checkOut = new Date(offer.checkOutDate)
+    const numberOfNights = Math.max(1, Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24)))
+
+    // Pricing calculations
+    const totalPrice = parseFloat(offer.price.total)
+    const basePrice = parseFloat(offer.price.base || offer.price.total)
+    const perNightPrice = basePrice / numberOfNights
+    const taxesAndFees = totalPrice - basePrice
+    const currency = offer.price.currency
+
     return (
       <div className="flex w-full flex-col gap-y-6 border-neutral-200 px-0 sm:gap-y-8 sm:rounded-4xl sm:p-6 lg:border xl:p-8 dark:border-neutral-700">
         <div className="flex flex-col sm:flex-row sm:items-center">
           <div className="w-full shrink-0 sm:w-40">
             <div className="aspect-w-4 overflow-hidden rounded-2xl aspect-h-3 sm:aspect-h-4">
               <Image
-                alt=""
+                alt={hotel.name}
                 fill
                 sizes="200px"
-                src="https://images.pexels.com/photos/6373478/pexels-photo-6373478.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940"
+                src={hotel.featuredImage}
+                className="object-cover"
               />
             </div>
           </div>
           <div className="flex flex-col gap-y-3 py-5 text-start sm:ps-5">
             <div>
               <span className="line-clamp-1 text-sm text-neutral-500 dark:text-neutral-400">
-                Hotel room in Tokyo, Jappan
+                Hotel room in {hotel.address}
               </span>
-              <span className="mt-1 block text-base font-medium">The Lounge & Bar</span>
+              <span className="mt-1 block text-base font-medium line-clamp-2">{hotel.name}</span>
             </div>
-            <p className="block text-sm text-neutral-500 dark:text-neutral-400">2 beds · 2 baths</p>
+            <p className="block text-sm text-neutral-500 dark:text-neutral-400">
+              {hotel.beds} bed{hotel.beds !== 1 ? 's' : ''} · {hotel.bathrooms} bath{hotel.bathrooms !== 1 ? 's' : ''}
+            </p>
             <Divider className="w-10!" />
-            <StartRating />
+            <div className="flex items-center gap-2">
+              <StartRating reviewCount={hotel.reviewCount} point={hotel.rating} />
+              <span className="text-sm text-neutral-500">({hotel.reviewCount} reviews)</span>
+            </div>
           </div>
         </div>
 
         <Divider className="block lg:hidden" />
 
         <DescriptionList>
-          <DescriptionTerm>$19.00 x 3 day</DescriptionTerm>
-          <DescriptionDetails className="sm:text-right">$57.00</DescriptionDetails>
-          <DescriptionTerm>Service charge</DescriptionTerm>
-          <DescriptionDetails className="sm:text-right">$0.00</DescriptionDetails>
-          <DescriptionTerm>Fee</DescriptionTerm>
-          <DescriptionDetails className="sm:text-right">$0.00</DescriptionDetails>
-          <DescriptionTerm>Tax</DescriptionTerm>
-          <DescriptionDetails className="sm:text-right">$0.00</DescriptionDetails>
-          <DescriptionTerm className="font-semibold text-neutral-900">Total</DescriptionTerm>
-          <DescriptionDetails className="font-semibold sm:text-right">$57.00</DescriptionDetails>
+          <DescriptionTerm>{currency} {perNightPrice.toFixed(2)} x {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</DescriptionTerm>
+          <DescriptionDetails className="sm:text-right">{currency} {basePrice.toFixed(2)}</DescriptionDetails>
+          
+          {taxesAndFees > 0 && (
+            <>
+              <DescriptionTerm>Taxes & fees</DescriptionTerm>
+              <DescriptionDetails className="sm:text-right">{currency} {taxesAndFees.toFixed(2)}</DescriptionDetails>
+            </>
+          )}
+          
+          <DescriptionTerm className="font-semibold text-neutral-900 dark:text-neutral-100">Total</DescriptionTerm>
+          <DescriptionDetails className="font-semibold sm:text-right">{currency} {totalPrice.toFixed(2)}</DescriptionDetails>
         </DescriptionList>
+
+        {/* Room Details */}
+        {offer.room.description && (
+          <>
+            <Divider />
+            <div>
+              <h4 className="font-medium mb-2">Room Details</h4>
+              <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                {offer.room.description}
+              </p>
+            </div>
+          </>
+        )}
       </div>
     )
   }
 
   const renderMain = () => {
+    if (loading) {
+      return (
+        <div className="flex w-full flex-col gap-y-8 border-neutral-200 px-0 sm:rounded-4xl sm:border sm:p-6 xl:p-8 dark:border-neutral-700">
+          <div className="flex items-center justify-center py-16">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <span className="ml-4">Loading checkout...</span>
+          </div>
+        </div>
+      )
+    }
+
+    if (error && !checkoutData) {
+      return (
+        <div className="flex w-full flex-col gap-y-8 border-neutral-200 px-0 sm:rounded-4xl sm:border sm:p-6 xl:p-8 dark:border-neutral-700">
+          <div className="text-center py-8">
+            <h1 className="text-3xl font-semibold lg:text-4xl mb-4">Checkout Error</h1>
+            <p className="text-neutral-500 dark:text-neutral-400 mb-4">
+              {error || 'Unable to load checkout information'}
+            </p>
+            <ButtonPrimary onClick={() => router.back()}>
+              Go Back to Hotel
+            </ButtonPrimary>
+          </div>
+        </div>
+      )
+    }
+
+    if (!checkoutData) {
+      return null
+    }
+
     return (
       <Form
         action={handleSubmitForm}
@@ -81,8 +420,70 @@ const Page = () => {
       >
         <h1 className="text-3xl font-semibold lg:text-4xl">Confirm and payment</h1>
         <Divider />
-        <YourTrip />
+        <YourTrip 
+          defaultDates={{
+            startDate: checkoutData.offer.checkInDate,
+            endDate: checkoutData.offer.checkOutDate
+          }}
+          defaultGuests={{
+            guestAdults: checkoutData.offer.guests.adults,
+            guestChildren: 0,
+            guestInfants: 0,
+            rooms: checkoutData.offer.guests.rooms
+          }}
+          onDateChange={handleDateChange}
+          onGuestsChange={handleGuestsChange}
+        />
+        
+        {/* Apply Changes Button */}
+        {hasPendingChanges && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-blue-900 dark:text-blue-100">Changes Pending</h4>
+                <p className="text-sm text-blue-700 dark:text-blue-300">Apply changes to update pricing and availability</p>
+              </div>
+              <ButtonPrimary 
+                onClick={applyChanges}
+                disabled={isUpdating}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400"
+              >
+                {isUpdating ? (
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    <span>Applying...</span>
+                  </div>
+                ) : (
+                  'Apply Changes'
+                )}
+              </ButtonPrimary>
+            </div>
+          </div>
+        )}
+        
+        {/* Show error if offer not available but allow continuing with form */}
+        {error && checkoutData && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <h4 className="font-medium text-red-900 dark:text-red-100 mb-2">Offer Not Available</h4>
+                <p className="text-sm text-red-700 dark:text-red-300 mb-3">{error}</p>
+                <ButtonPrimary 
+                  onClick={revertChanges}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Back to Previous Offer
+                </ButtonPrimary>
+              </div>
+            </div>
+          </div>
+        )}
         <PayWith />
+        
+        {/* Hidden inputs for form submission */}
+        <input type="hidden" name="offerId" value={checkoutData.offer.id} />
+        <input type="hidden" name="hotelId" value={checkoutData.hotel.id} />
+        
         <div>
           <ButtonPrimary type="submit" className="mt-10 text-base/6!">
             Confirm and pay

@@ -217,8 +217,30 @@ const HotelDetailClient: React.FC<HotelDetailClientProps> = ({
     // Client-side form submission handler
     const handleSubmitForm = async (formData: FormData) => {
       console.log('Form submitted with data:', Object.fromEntries(formData.entries()))
-      // TODO: Redirect to checkout or process booking
-      alert('Booking functionality coming soon!')
+      
+      // Get current offer data for checkout
+      if (!offer?.id) {
+        alert('No offer available for booking. Please try different dates.')
+        return
+      }
+      
+      // Build checkout URL with offer data
+      const checkoutUrl = new URL('/checkout', window.location.origin)
+      checkoutUrl.searchParams.set('offerId', offer.id)
+      checkoutUrl.searchParams.set('hotelId', hotelId)
+      checkoutUrl.searchParams.set('checkInDate', localAppliedState.checkInDate)
+      checkoutUrl.searchParams.set('checkOutDate', localAppliedState.checkOutDate)
+      checkoutUrl.searchParams.set('adults', localAppliedState.adults.toString())
+      checkoutUrl.searchParams.set('rooms', localAppliedState.rooms.toString())
+      
+      // Add pricing info for checkout
+      if (totalPrice) checkoutUrl.searchParams.set('totalPrice', totalPrice.toString())
+      if (currency) checkoutUrl.searchParams.set('currency', currency)
+      
+      console.log('🚀 Redirecting to checkout:', checkoutUrl.toString())
+      
+      // Redirect to checkout with offer data
+      router.push(checkoutUrl.toString())
     }
 
     return (
