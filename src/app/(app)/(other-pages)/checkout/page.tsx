@@ -236,11 +236,147 @@ const Page = () => {
     }
   }
 
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [bookingError, setBookingError] = useState<string | null>(null)
+
   const handleSubmitForm = async (formData: FormData) => {
     const formObject = Object.fromEntries(formData.entries())
-    console.log('Form submitted:', formObject)
-    // Here you can handle the form submission, e.g., send it to an API
-    router.push('/pay-done') // Uncomment this line if you want to redirect after form submission
+    
+    // Clear previous errors
+    setBookingError(null)
+    
+    // Validate payment form first
+    const paymentMethod = formObject.paymentMethod as string
+    
+    if (paymentMethod === 'creditCard') {
+      // Basic client-side validation
+      const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'cardNumber', 'cardHolder', 'expiryDate', 'cvv']
+      const missingFields = requiredFields.filter(field => !formObject[field]?.toString().trim())
+      
+      if (missingFields.length > 0) {
+        setBookingError(`Please fill in all required fields: ${missingFields.join(', ')}`)
+        return
+      }
+      
+      // Validate email format
+      const email = formObject.email as string
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setBookingError('Please enter a valid email address')
+        return
+      }
+      
+      // Validate phone number
+      const phone = formObject.phone as string
+      if (phone.replace(/\D/g, '').length < 10) {
+        setBookingError('Please enter a valid phone number')
+        return
+      }
+      
+      // Validate card number
+      const cardNumber = formObject.cardNumber as string
+      if (cardNumber.length < 13 || cardNumber.length > 19) {
+        setBookingError('Please enter a valid card number')
+        return
+      }
+      
+      // Validate expiry date
+      const expiryDate = formObject.expiryDate as string
+      if (expiryDate) {
+        const today = new Date()
+        const expiry = new Date(expiryDate + '-01') // Add day to make valid date
+        if (expiry <= today) {
+          setBookingError('Card has expired. Please use a valid card.')
+          return
+        }
+      }
+      
+      // Validate CVV
+      const cvv = formObject.cvv as string
+      if (cvv.length < 3 || cvv.length > 4) {
+        setBookingError('Please enter a valid CVV')
+        return
+      }
+    }
+    
+    if (!checkoutData) {
+      setBookingError('Checkout data not available. Please try again.')
+      return
+    }
+    
+    console.log('✅ Form validation passed. Submitting booking...')
+    
+    setIsSubmitting(true)
+    
+    try {
+      // Prepare booking data
+      const bookingPayload = {
+        offerId: checkoutData.offer.id,
+        hotelId: checkoutData.hotel.id,
+        paymentMethod: formObject.paymentMethod as string,
+        
+        // Guest Information
+        title: formObject.title as string,
+        firstName: formObject.firstName as string,
+        lastName: formObject.lastName as string,
+        email: formObject.email as string,
+        phone: formObject.phone as string,
+        
+        // Payment Information
+        cardNumber: formObject.cardNumber as string,
+        cardHolder: formObject.cardHolder as string,
+        expiryDate: formObject.expiryDate as string,
+        cvv: formObject.cvv as string,
+        cardVendor: formObject.cardVendor as string,
+        
+        // Booking Details
+        checkInDate: checkoutData.offer.checkInDate,
+        checkOutDate: checkoutData.offer.checkOutDate,
+        adults: checkoutData.offer.guests.adults,
+        rooms: checkoutData.offer.guests.rooms
+      }
+      
+      console.log('🔄 Submitting booking to API:', bookingPayload)
+      
+      const response = await fetch('/api/booking/hotel', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingPayload),
+      })
+      
+      const result = await response.json()
+      
+      if (result.success) {
+        console.log('✅ Booking successful:', result.data)
+        
+        // Redirect to success page with booking details
+        const successUrl = new URL('/pay-done', window.location.origin)
+        successUrl.searchParams.set('bookingId', result.data.bookingId)
+        successUrl.searchParams.set('confirmationNumber', result.data.confirmationNumber || '')
+        successUrl.searchParams.set('hotelName', checkoutData.hotel.name)
+        
+        router.push(successUrl.toString())
+      } else {
+        console.error('❌ Booking failed:', result.error)
+        
+        // Handle specific error codes
+        if (result.code === 'OFFER_UNAVAILABLE') {
+          setBookingError('This offer is no longer available. Please select a different option.')
+        } else if (result.code === 'BOOKING_INVALID') {
+          setBookingError('Booking information is invalid. Please check your details and try again.')
+        } else if (result.code === 'MISSING_FIELDS' || result.code === 'MISSING_CARD_FIELDS') {
+          setBookingError(result.error)
+        } else {
+          setBookingError(result.error || 'Booking failed. Please try again.')
+        }
+      }
+    } catch (error) {
+      console.error('❌ Booking submission error:', error)
+      setBookingError('Network error. Please check your connection and try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const renderSidebar = () => {
@@ -480,13 +616,36 @@ const Page = () => {
         )}
         <PayWith />
         
+        {/* Booking Error Display */}
+        {bookingError && (
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+            <div className="flex items-start">
+              <div className="flex-1">
+                <h4 className="font-medium text-red-900 dark:text-red-100 mb-2">Booking Error</h4>
+                <p className="text-sm text-red-700 dark:text-red-300">{bookingError}</p>
+              </div>
+            </div>
+          </div>
+        )}
+        
         {/* Hidden inputs for form submission */}
         <input type="hidden" name="offerId" value={checkoutData.offer.id} />
         <input type="hidden" name="hotelId" value={checkoutData.hotel.id} />
         
         <div>
-          <ButtonPrimary type="submit" className="mt-10 text-base/6!">
-            Confirm and pay
+          <ButtonPrimary 
+            type="submit" 
+            className="mt-10 text-base/6!"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                <span>Processing Booking...</span>
+              </div>
+            ) : (
+              'Confirm and pay'
+            )}
           </ButtonPrimary>
         </div>
       </Form>
