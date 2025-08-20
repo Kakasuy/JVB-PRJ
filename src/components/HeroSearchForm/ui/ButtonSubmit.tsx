@@ -5,8 +5,8 @@ import { FC } from 'react'
 
 const styles = {
   base: 'absolute z-10 top-1/2 flex -translate-y-1/2 items-center justify-center rounded-full bg-primary-600 text-neutral-50 hover:bg-primary-700 focus:outline-hidden cursor-pointer',
-  default: 'size-16 end-2 xl:end-4',
-  small: 'size-14 end-2',
+  default: 'size-16 end-3 sm:end-4 xl:end-6',
+  small: 'size-14 end-3 sm:end-4',
 }
 
 interface Props {

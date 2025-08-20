@@ -30,14 +30,14 @@ async function PageHome() {
       <BgGlassmorphism />
       <div className="relative container mb-24 flex flex-col gap-y-24 lg:mb-28 lg:gap-y-32">
         <HeroSectionWithSearchForm1
-          heading="Find rides."
+          heading="Book your transfer."
           image={heroImage}
           imageAlt="hero"
           searchForm={<HeroSearchForm initTab="Cars" />}
           description={
             <>
               <p className="max-w-xl text-base text-neutral-500 sm:text-xl dark:text-neutral-400">
-                Discover of car rentals tailored to your needs.
+                Discover reliable transfer services from airports to your destination.
               </p>
               <ButtonPrimary href={'/car-categories/all'} className="sm:text-base/normal">
                 Start your search
@@ -47,8 +47,8 @@ async function PageHome() {
         />
 
         <div>
-          <HeadingWithSub subheading="Explore the best cars and experiences around the world">
-            Find your perfect cars
+          <HeadingWithSub subheading="Explore popular transfer routes and destinations">
+            Popular transfer services
           </HeadingWithSub>
           <SectionSliderNewCategories
             itemClassName="w-[17rem] lg:w-1/3 xl:w-1/4"
@@ -59,8 +59,8 @@ async function PageHome() {
 
         <div className="relative py-16">
           <BackgroundSection />
-          <HeadingWithSub isCenter subheading={'Discover great cars near where you live'}>
-            The best car rentals
+          <HeadingWithSub isCenter subheading={'Reliable transfers for every journey'}>
+            Featured transfer options
           </HeadingWithSub>
           <div className="grid grid-cols-1 gap-x-6 gap-y-7 xl:grid-cols-2">
             {carListings.map((listing) => (
@@ -68,8 +68,8 @@ async function PageHome() {
             ))}
           </div>
           <div className="mt-16 flex justify-center">
-            <ButtonPrimary href={'/car-listings'} className="sm:text-base/normal">
-              View all car rentals
+            <ButtonPrimary href={'/car-categories/all'} className="sm:text-base/normal">
+              View all transfers
             </ButtonPrimary>
           </div>
         </div>
@@ -77,8 +77,8 @@ async function PageHome() {
         <SectionOurFeatures type="type2" rightImg={ourFeatureImage} />
 
         <div>
-          <HeadingWithSub subheading="Explore houses based on 10 types of stays">
-            Explore by types of stays.
+          <HeadingWithSub subheading="Choose from different types of transfer services">
+            Transfer types available
           </HeadingWithSub>
           <SectionSliderNewCategories categories={categories} categoryCardType="card5" />
         </div>

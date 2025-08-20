@@ -1,6 +1,6 @@
 import CarCardH from '@/components/CarCardH'
 import HeroSectionWithSearchForm1 from '@/components/hero-sections/HeroSectionWithSearchForm1'
-import { RentalCarSearchForm } from '@/components/HeroSearchForm/RentalCarSearchForm'
+import { TransferSearchForm } from '@/components/HeroSearchForm/TransferSearchForm'
 import ListingFilterTabs from '@/components/ListingFilterTabs'
 import { getCarCategoryByHandle } from '@/data/categories'
 import { getCarListingFilterOptions, getCarListings } from '@/data/listings'
@@ -45,14 +45,14 @@ const Page = async ({ params }: { params: Promise<{ handle?: string[] }> }) => {
           heading={category.name}
           image={category.coverImage}
           imageAlt={category.name}
-          searchForm={<RentalCarSearchForm formStyle="default" />}
+          searchForm={<TransferSearchForm formStyle="default" />}
           description={
             <div className="flex items-center sm:text-lg">
               <HugeiconsIcon icon={MapPinpoint02Icon} size={20} color="currentColor" strokeWidth={1.5} />
               <span className="ms-2.5">{category.region} </span>
               <span className="mx-5"></span>
               <HugeiconsIcon icon={Car03Icon} size={20} color="currentColor" strokeWidth={1.5} />
-              <span className="ms-2.5">{convertNumbThousand(category.count)} cars</span>
+              <span className="ms-2.5">{convertNumbThousand(category.count)} transfers</span>
             </div>
           }
         />
@@ -63,7 +63,7 @@ const Page = async ({ params }: { params: Promise<{ handle?: string[] }> }) => {
         {/* start heading */}
         <div className="flex flex-wrap items-end justify-between gap-x-2.5 gap-y-5">
           <h2 id="heading" className="scroll-mt-20 text-lg font-semibold sm:text-xl">
-            Over {convertNumbThousand(category.count)} cars
+            Over {convertNumbThousand(category.count)} transfers
             {category.handle !== 'all' ? ` in ${category.name}` : null}
           </h2>
           <Button color="white" className="ms-auto" href={'/car-categories-map/' + category.handle}>

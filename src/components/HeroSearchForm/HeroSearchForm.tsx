@@ -15,6 +15,7 @@ import { ExperiencesSearchForm } from './ExperiencesSearchForm'
 import { FlightSearchForm } from './FlightSearchForm'
 import { RealEstateHeroSearchForm } from './RealEstateHeroSearchForm'
 import { RentalCarSearchForm } from './RentalCarSearchForm'
+import { TransferSearchForm } from './TransferSearchForm'
 import { StaySearchForm } from './StaySearchForm'
 
 export const formTabs: {
@@ -24,7 +25,7 @@ export const formTabs: {
   formComponent: React.ComponentType<{ formStyle: 'default' | 'small' }>
 }[] = [
   { name: 'Stays', icon: House03Icon, href: '/', formComponent: StaySearchForm },
-  { name: 'Cars', icon: Car05Icon, href: '/car', formComponent: RentalCarSearchForm },
+  { name: 'Cars', icon: Car05Icon, href: '/car', formComponent: TransferSearchForm },
   { name: 'Experiences', icon: HotAirBalloonFreeIcons, href: '/experience', formComponent: ExperiencesSearchForm },
   { name: 'RealEstates', icon: RealEstate02Icon, href: '/real-estate', formComponent: RealEstateHeroSearchForm },
   { name: 'Flights', icon: Airplane02Icon, href: '/flight-categories/all', formComponent: FlightSearchForm },
@@ -34,14 +35,14 @@ const HeroSearchForm = ({ className, initTab = 'Stays' }: { className?: string; 
   return (
     <div className={clsx('hero-search-form', className)}>
       <Headless.TabGroup defaultIndex={formTabs.findIndex((tab) => tab.name === initTab)}>
-        <Headless.TabList className="ms-3 mb-8 flex sm:gap-x-6 xl:ms-10 xl:gap-x-10">
+        <Headless.TabList className="ms-3 mb-8 mt-16 sm:mt-20 lg:mt-24 flex gap-x-4 sm:gap-x-6 xl:ms-10 xl:gap-x-8 relative z-20">
           {formTabs.map((tab) => {
             return (
               <Headless.Tab
                 key={tab.name}
                 as={Link}
                 href={tab.href}
-                className="group/tab flex shrink-0 cursor-pointer items-center text-sm font-medium text-neutral-500 hover:text-neutral-700 focus-visible:outline-hidden data-selected:text-neutral-950 lg:text-base dark:hover:text-neutral-400 dark:data-selected:text-neutral-100"
+                className="group/tab flex shrink-0 cursor-pointer items-center text-sm font-medium text-neutral-500 hover:text-neutral-700 focus-visible:outline-hidden data-selected:text-neutral-950 lg:text-base dark:hover:text-neutral-400 dark:data-selected:text-neutral-100 px-2 py-1"
               >
                 <div className="me-1.5 hidden size-2.5 rounded-full bg-neutral-950 group-data-selected/tab:block xl:me-2 dark:bg-neutral-100" />
                 <span>{tab.name}</span>
