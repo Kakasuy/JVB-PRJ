@@ -110,7 +110,7 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
     console.log('📤 API Request Data:', requestData)
 
     try {
-      // Test API call directly
+      // Call API to get transfer offers
       const response = await fetch('/api/transfer-search', {
         method: 'POST',
         headers: {
@@ -123,8 +123,38 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
       console.log('📥 API Response:', result)
 
       if (response.ok) {
-        alert(`✅ API Success! Found ${result.data?.length || 0} transfer offers`)
-        console.log('🎉 Transfer offers:', result.data)
+        console.log('🎉 Transfer offers found:', result.data?.length || 0)
+        
+        // Store search data and results in sessionStorage
+        const searchData = {
+          searchParams: {
+            from: `${startAirport.iataCode} - ${startAirport.name}`,
+            to: endLocation.formatted_address,
+            datetime: pickupDateTime,
+            type: transferType,
+            passengers: passengers.toString()
+          },
+          apiData: requestData,
+          results: result.data || [],
+          searchTimestamp: Date.now()
+        }
+
+        sessionStorage.setItem('transferSearchData', JSON.stringify(searchData))
+        console.log('💾 Search data stored:', searchData)
+
+        // Navigate to car categories to display results
+        const urlParams = new URLSearchParams({
+          from: searchData.searchParams.from,
+          to: searchData.searchParams.to,
+          datetime: pickupDateTime,
+          type: transferType,
+          passengers: passengers.toString()
+        })
+
+        const resultsUrl = `/car-categories/all?${urlParams.toString()}`
+        console.log('🔄 Navigating to:', resultsUrl)
+        router.push(resultsUrl)
+        
       } else {
         alert(`❌ API Error: ${result.error}`)
         console.error('API Error:', result)

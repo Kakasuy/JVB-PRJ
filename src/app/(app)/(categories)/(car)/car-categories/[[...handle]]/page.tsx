@@ -2,6 +2,7 @@ import CarCardH from '@/components/CarCardH'
 import HeroSectionWithSearchForm1 from '@/components/hero-sections/HeroSectionWithSearchForm1'
 import { TransferSearchForm } from '@/components/HeroSearchForm/TransferSearchForm'
 import ListingFilterTabs from '@/components/ListingFilterTabs'
+import TransferResults from '@/components/TransferResults'
 import { getCarCategoryByHandle } from '@/data/categories'
 import { getCarListingFilterOptions, getCarListings } from '@/data/listings'
 import { Button } from '@/shared/Button'
@@ -74,14 +75,20 @@ const Page = async ({ params }: { params: Promise<{ handle?: string[] }> }) => {
         <Divider className="my-8 md:mb-12" />
         {/* end heading */}
 
-        <ListingFilterTabs filterOptions={filterOptions} />
-        <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-7 xl:grid-cols-2">
-          {listings.map((listing) => (
-            <CarCardH key={listing.id} data={listing} />
-          ))}
-        </div>
-        <div className="mt-16 flex items-center justify-center">
-          <Pagination />
+        {/* Transfer Results - shows when search data is available */}
+        <TransferResults />
+        
+        {/* Default Car Listings - shows when no search data */}
+        <div className="transfer-fallback">
+          <ListingFilterTabs filterOptions={filterOptions} />
+          <div className="mt-10 grid grid-cols-1 gap-x-6 gap-y-7 xl:grid-cols-2">
+            {listings.map((listing) => (
+              <CarCardH key={listing.id} data={listing} />
+            ))}
+          </div>
+          <div className="mt-16 flex items-center justify-center">
+            <Pagination />
+          </div>
         </div>
       </div>
     </div>
