@@ -6,7 +6,22 @@ import clsx from 'clsx'
 import Form from 'next/form'
 import { useRouter } from 'next/navigation'
 import { FC, useEffect, useState } from 'react'
-import { ButtonSubmit, LocationInputField, VerticalDividerLine } from './ui'
+import { ButtonSubmit, VerticalDividerLine } from './ui'
+import AirportPicker from '@/components/AirportPicker'
+import GeocodingInput, { LocationData } from '@/components/GeocodingInput'
+
+interface AirportData {
+  iataCode: string
+  name: string
+  address: {
+    cityName: string
+    countryName: string
+  }
+  geoCode: {
+    latitude: number
+    longitude: number
+  }
+}
 
 interface Props {
   className?: string
@@ -24,6 +39,10 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
   const [passengers, setPassengers] = useState(2)
   const [pickupDate, setPickupDate] = useState('')
   const [pickupTime, setPickupTime] = useState('')
+  
+  // Location data
+  const [startAirport, setStartAirport] = useState<AirportData | null>(null)
+  const [endLocation, setEndLocation] = useState<LocationData | null>(null)
 
   const router = useRouter()
 
@@ -41,33 +60,79 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
     setPickupTime('10:00')
   }, [])
 
-  const handleFormSubmit = (formData: FormData) => {
-    const formDataEntries = Object.fromEntries(formData.entries())
-    console.log('🚗 Transfer search form submitted:', formDataEntries)
+  const handleAirportSelect = (airport: AirportData | null) => {
+    setStartAirport(airport)
+    console.log('🛫 Start airport selected:', airport)
+  }
+
+  const handleLocationSelect = (location: LocationData) => {
+    setEndLocation(location)
+    console.log('📍 End location selected:', location)
+  }
+
+  const handleFormSubmit = async () => {
+    console.log('🚗 Transfer search form submitted')
+    console.log('🛫 Start airport:', startAirport)
+    console.log('📍 End location:', endLocation)
+    console.log('📅 Date/Time:', pickupDate, pickupTime)
 
     // Validate required fields
-    const startLocation = formDataEntries['start-location'] as string
-    const endLocation = formDataEntries['end-location'] as string
-    const pickupDateTime = `${formDataEntries['pickup-date']}T${formDataEntries['pickup-time']}:00`
-
-    if (!startLocation || !endLocation || !pickupDate || !pickupTime) {
-      alert('Please fill in all required fields')
+    if (!startAirport) {
+      alert('Please select a departure airport')
       return
     }
 
-    // Prepare search parameters
-    const searchParams = new URLSearchParams({
-      from: startLocation,
-      to: endLocation,
-      datetime: pickupDateTime,
-      type: transferType,
-      passengers: passengers.toString()
-    })
+    if (!endLocation) {
+      alert('Please select a destination address')
+      return
+    }
 
-    // Navigate to transfer results page
-    const searchUrl = `/car-categories/all?${searchParams.toString()}`
-    console.log('🔄 Navigating to:', searchUrl)
-    router.push(searchUrl)
+    if (!pickupDate || !pickupTime) {
+      alert('Please select pickup date and time')
+      return
+    }
+
+    const pickupDateTime = `${pickupDate}T${pickupTime}:00`
+
+    // Prepare API request data
+    const requestData = {
+      startLocationCode: startAirport.iataCode,
+      endAddressLine: endLocation.addressLine,
+      endCityName: endLocation.cityName,
+      endCountryCode: endLocation.countryCode,
+      endGeoCode: endLocation.geoCode,
+      transferType: transferType,
+      startDateTime: pickupDateTime,
+      passengers: passengers,
+      currencyCode: 'USD'
+    }
+
+    console.log('📤 API Request Data:', requestData)
+
+    try {
+      // Test API call directly
+      const response = await fetch('/api/transfer-search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestData),
+      })
+
+      const result = await response.json()
+      console.log('📥 API Response:', result)
+
+      if (response.ok) {
+        alert(`✅ API Success! Found ${result.data?.length || 0} transfer offers`)
+        console.log('🎉 Transfer offers:', result.data)
+      } else {
+        alert(`❌ API Error: ${result.error}`)
+        console.error('API Error:', result)
+      }
+    } catch (error) {
+      console.error('Request failed:', error)
+      alert(`❌ Request failed: ${error}`)
+    }
   }
 
   return (
@@ -106,30 +171,40 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
 
       {/* LOCATION AND DATE/TIME INPUTS */}
       <div className="relative flex flex-wrap lg:flex-nowrap pr-20 sm:pr-24 xl:pr-28">
-        {/* FROM Location */}
-        <div className="w-full lg:flex-1">
-          <LocationInputField
-            placeholder="Airport code or address"
-            description="Pickup location"
-            className="hero-search-form__field-after"
-            inputName="start-location"
-            fieldStyle={formStyle}
-            category="car"
-          />
+        {/* FROM Airport */}
+        <div className={clsx(
+          "w-full lg:flex-1 relative z-10 cursor-pointer flex items-center focus:outline-hidden text-start",
+          formStyle === 'default' && 'px-4 py-4 sm:px-7 xl:px-8 xl:py-6',
+          formStyle === 'small' && 'px-4 py-3 sm:px-7 xl:px-8'
+        )}>
+          <div className="grow">
+            <AirportPicker
+              placeholder="Search departure airport..."
+              description="Pickup location"
+              onAirportSelect={handleAirportSelect}
+              name="start-airport"
+              required
+            />
+          </div>
         </div>
         
         <VerticalDividerLine />
         
         {/* TO Location */}
-        <div className="w-full lg:flex-1">
-          <LocationInputField
-            placeholder="Airport code or address"
-            description="Drop-off location"
-            className="hero-search-form__field-before hero-search-form__field-after"
-            inputName="end-location"
-            fieldStyle={formStyle}
-            category="car"
-          />
+        <div className={clsx(
+          "w-full lg:flex-1 relative z-10 cursor-pointer flex items-center focus:outline-hidden text-start",
+          formStyle === 'default' && 'px-4 py-4 sm:px-7 xl:px-8 xl:py-6',
+          formStyle === 'small' && 'px-4 py-3 sm:px-7 xl:px-8'
+        )}>
+          <div className="grow">
+            <GeocodingInput
+              placeholder="Enter destination address..."
+              description="Drop-off location"
+              onLocationSelect={handleLocationSelect}
+              name="end-location"
+              required
+            />
+          </div>
         </div>
         
         <VerticalDividerLine />
@@ -225,7 +300,18 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
         <input type="hidden" name="transfer-type" value={transferType} />
         <input type="hidden" name="passengers" value={passengers} />
 
-        <ButtonSubmit fieldStyle={formStyle} />
+        <button
+          type="button"
+          onClick={handleFormSubmit}
+          className={clsx(
+            "absolute inset-y-0 end-4 flex h-full w-12 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:end-6 sm:h-12 sm:w-12",
+            formStyle === 'small' && 'sm:end-5 sm:h-10 sm:w-10'
+          )}
+        >
+          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </button>
       </div>
     </Form>
   )

@@ -3,15 +3,57 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
+    console.log('📥 Received request body:', JSON.stringify(body, null, 2))
+    
     const { 
       startLocationCode, 
       startAddressLine, 
       endLocationCode, 
-      endAddressLine, 
+      endAddressLine,
+      endCityName,
+      endCountryCode,
+      endGeoCode,
       transferType, 
       startDateTime, 
-      passengers 
+      passengers,
+      currencyCode = 'USD'
     } = body
+
+    // Validate required fields
+    if (!startLocationCode && !startAddressLine) {
+      return NextResponse.json(
+        { error: 'Start location code or address line is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!endAddressLine) {
+      return NextResponse.json(
+        { error: 'End address line is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!endCityName) {
+      return NextResponse.json(
+        { error: 'End city name is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!endCountryCode) {
+      return NextResponse.json(
+        { error: 'End country code is required' },
+        { status: 400 }
+      )
+    }
+
+    if (!endGeoCode) {
+      return NextResponse.json(
+        { error: 'End geo code (latitude,longitude) is required' },
+        { status: 400 }
+      )
+    }
 
     // Get Amadeus access token
     const tokenResponse = await fetch('https://test.api.amadeus.com/v1/security/oauth2/token', {
@@ -37,11 +79,12 @@ export async function POST(request: NextRequest) {
     const tokenData = await tokenResponse.json()
     const accessToken = tokenData.access_token
 
-    // Prepare transfer search request body
+    // Prepare transfer search request body with all required fields
     const transferSearchBody: any = {
-      transferType,
+      transferType: transferType || 'PRIVATE',
       startDateTime,
-      passengers
+      passengers: passengers || 2,
+      currencyCode
     }
 
     // Add start location (priority: locationCode > addressLine)
@@ -51,11 +94,15 @@ export async function POST(request: NextRequest) {
       transferSearchBody.startAddressLine = startAddressLine
     }
 
-    // Add end location (priority: locationCode > addressLine)  
+    // Add end location with required fields
+    transferSearchBody.endAddressLine = endAddressLine
+    transferSearchBody.endCityName = endCityName
+    transferSearchBody.endCountryCode = endCountryCode
+    transferSearchBody.endGeoCode = endGeoCode
+
+    // Add end location code if provided
     if (endLocationCode) {
       transferSearchBody.endLocationCode = endLocationCode
-    } else if (endAddressLine) {
-      transferSearchBody.endAddressLine = endAddressLine
     }
 
     console.log('🚗 Transfer search request:', transferSearchBody)
