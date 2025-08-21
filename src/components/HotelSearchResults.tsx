@@ -8,6 +8,8 @@ import { Button } from '@/shared/Button'
 
 interface HotelSearchResultsProps {
   className?: string
+  cityCode?: string
+  cityName?: string
 }
 
 // Map location string to city code
@@ -86,7 +88,7 @@ const mapLocationToCityCode = (location: string): string => {
   return 'NYC'
 }
 
-export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ className }) => {
+export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ className, cityCode, cityName }) => {
   const { hotels, loading, error, searchHotels } = useHotelSearch()
   const searchParams = useSearchParams()
   const [currentPage, setCurrentPage] = useState(1)
@@ -102,28 +104,32 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
     const defaultCheckIn = new Date(today.getTime() + 2 * 24 * 60 * 60 * 1000)
     const defaultCheckOut = new Date(today.getTime() + 3 * 24 * 60 * 60 * 1000)
     
-    // Get cityCode from URL params - prioritize cityCode over location
+    // Get cityCode with priority: props > URL params > default
     const cityCodeParam = searchParams.get('cityCode')
     const locationParam = searchParams.get('location')
     
-    let cityCode: string
+    let finalCityCode: string
     
-    if (cityCodeParam) {
-      // Direct cityCode from API selection - use it directly
-      cityCode = cityCodeParam
-      console.log('Using direct cityCode from form:', cityCode)
+    if (cityCode) {
+      // City code from props (from category card click) - highest priority
+      finalCityCode = cityCode
+      console.log('🎯 Using cityCode from category card:', finalCityCode)
+    } else if (cityCodeParam) {
+      // Direct cityCode from URL params - use it directly
+      finalCityCode = cityCodeParam
+      console.log('📍 Using direct cityCode from URL:', finalCityCode)
     } else if (locationParam) {
       // Fallback: map location string to cityCode for backward compatibility
-      cityCode = mapLocationToCityCode(locationParam)
-      console.log('Mapped location to cityCode:', locationParam, '->', cityCode)
+      finalCityCode = mapLocationToCityCode(locationParam)
+      console.log('🗺️ Mapped location to cityCode:', locationParam, '->', finalCityCode)
     } else {
       // Default fallback
-      cityCode = 'NYC'
-      console.log('Using default cityCode:', cityCode)
+      finalCityCode = 'NYC'
+      console.log('🏙️ Using default cityCode:', finalCityCode)
     }
     
     return {
-      cityCode,
+      cityCode: finalCityCode,
       checkInDate: searchParams.get('checkInDate') || defaultCheckIn.toISOString().split('T')[0],
       checkOutDate: searchParams.get('checkOutDate') || defaultCheckOut.toISOString().split('T')[0],
       adults: searchParams.get('adults') || '1', // Default to 1 adult
@@ -149,7 +155,7 @@ export const HotelSearchResults: React.FC<HotelSearchResultsProps> = ({ classNam
       refundable_only: searchParams.get('refundable_only'),
       payment_types: searchParams.get('payment_types')
     }
-  }, [searchParams])
+  }, [searchParams, cityCode])
 
   // Perform search when searchConfig changes (initial load and when URL params change)
   useEffect(() => {

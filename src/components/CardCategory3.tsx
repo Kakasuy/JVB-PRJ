@@ -4,6 +4,17 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { FC } from 'react'
 
+// City code mapping for API search
+const cityCodeMap: Record<string, string> = {
+  'New York, USA': 'NYC',
+  'Amsterdam, Netherlands': 'AMS', 
+  'Paris, France': 'PAR',
+  'London, UK': 'LON',
+  'Bangkok, Thailand': 'BKK',
+  'Barcelona, Spain': 'BCN',
+  'Roma, Italy': 'ROM'
+}
+
 export interface CardCategory3Props {
   className?: string
   category: TCategory
@@ -11,6 +22,14 @@ export interface CardCategory3Props {
 
 const CardCategory3: FC<CardCategory3Props> = ({ className = '', category }) => {
   const { count, name, href, thumbnail } = category
+
+  // Get city code for API search
+  const cityCode = cityCodeMap[name]
+  
+  // Create navigation URL with city parameter if city is supported
+  const navigationHref = cityCode 
+    ? `/stay-categories/all?city=${cityCode}&cityName=${encodeURIComponent(name)}`
+    : href
 
   return (
     <div className={`group relative flex flex-col ${className}`}>
@@ -28,7 +47,7 @@ const CardCategory3: FC<CardCategory3Props> = ({ className = '', category }) => 
       </div>
       <div className="mt-4">
         <h2 className="text-base font-medium text-neutral-900 dark:text-neutral-100">
-          <Link href={href} className="absolute inset-0"></Link>
+          <Link href={navigationHref} className="absolute inset-0"></Link>
           <span className="line-clamp-1">{name}</span>
         </h2>
         <span className={`mt-1.5 block text-sm text-neutral-600 dark:text-neutral-400`}>

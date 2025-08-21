@@ -24,10 +24,12 @@ interface SectionGridFeaturePlacesProps {
 // City code mapping (moved outside component to avoid useEffect dependency)
 const cityCodeMap: Record<string, string> = {
   'New York': 'NYC',
-  'Tokyo': 'TYO',
+  'Amsterdam': 'AMS',
   'Paris': 'PAR',
   'London': 'LON',
-  'Barcelona': 'BCN'
+  'Bangkok': 'BKK',
+  'Barcelona': 'BCN',
+  'Rome': 'ROM'
 }
 
 const SectionGridFeaturePlaces: FC<SectionGridFeaturePlacesProps> = ({
@@ -44,7 +46,7 @@ const SectionGridFeaturePlaces: FC<SectionGridFeaturePlacesProps> = ({
   const [showMoreClicks, setShowMoreClicks] = useState(0) // Track number of "Show me more" clicks
   const { hotels, loading, error, fetchHotelsByCity } = useHotelList()
   
-  const tabs = ['New York', 'Tokyo', 'Paris', 'London', 'Barcelona']
+  const tabs = ['New York', 'Amsterdam', 'Paris', 'London', 'Bangkok', 'Barcelona', 'Rome']
 
   
 

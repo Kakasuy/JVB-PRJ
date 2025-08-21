@@ -25,8 +25,15 @@ export async function generateMetadata({ params }: { params: Promise<{ handle?: 
   return { title: name, description }
 }
 
-const Page = async ({ params }: { params: Promise<{ handle?: string[] }> }) => {
+const Page = async ({ 
+  params,
+  searchParams 
+}: { 
+  params: Promise<{ handle?: string[] }>
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) => {
   const { handle } = await params
+  const search = await searchParams
 
   const category = await getStayCategoryByHandle(handle?.[0])
   const listings = await getStayListings()
@@ -35,6 +42,10 @@ const Page = async ({ params }: { params: Promise<{ handle?: string[] }> }) => {
   if (!category?.id) {
     return redirect('/stay-categories/all')
   }
+
+  // Extract city parameters from URL
+  const cityCode = search.city as string
+  const cityName = search.cityName as string
 
   return (
     <div className="pb-28">
@@ -74,7 +85,7 @@ const Page = async ({ params }: { params: Promise<{ handle?: string[] }> }) => {
         {/* end heading */}
 
         <ListingFilterTabs filterOptions={filterOptions} />
-        <HotelSearchResults />
+        <HotelSearchResults cityCode={cityCode} cityName={cityName} />
       </div>
     </div>
   )
