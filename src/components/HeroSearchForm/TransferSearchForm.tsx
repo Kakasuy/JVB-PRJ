@@ -135,7 +135,9 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
           searchTimestamp: Date.now()
         }
 
+        // Store in both sessionStorage and localStorage for tab compatibility
         sessionStorage.setItem('transferSearchData', JSON.stringify(searchData))
+        localStorage.setItem('transferSearchData', JSON.stringify(searchData))
         
         // Trigger custom event to notify components of data change
         window.dispatchEvent(new CustomEvent('transferSearchUpdated'))

@@ -84,8 +84,11 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
   useEffect(() => {
     const loadTransferData = () => {
       try {
-        // Check if we have search results in sessionStorage
-        const storedData = sessionStorage.getItem('transferSearchData')
+        // Check if we have search results in sessionStorage or localStorage
+        let storedData = sessionStorage.getItem('transferSearchData')
+        if (!storedData) {
+          storedData = localStorage.getItem('transferSearchData')
+        }
         if (storedData) {
           const searchData = JSON.parse(storedData)
           console.log(`📦 Displaying ${searchData.results?.length || 0} transfer offers`)
