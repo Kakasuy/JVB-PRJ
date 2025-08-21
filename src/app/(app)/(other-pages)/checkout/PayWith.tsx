@@ -23,6 +23,7 @@ const TITLES = [
   { value: 'MR', label: 'Mr.' },
   { value: 'MRS', label: 'Mrs.' },
   { value: 'MS', label: 'Ms.' },
+  { value: 'DR', label: 'Dr.' },
 ]
 
 interface FormErrors {
@@ -33,7 +34,16 @@ interface FormErrors {
   cardNumber?: string
   cardHolder?: string
   expiryDate?: string
-  cvv?: string
+}
+
+interface ValidationState {
+  firstName: 'valid' | 'invalid' | 'initial'
+  lastName: 'valid' | 'invalid' | 'initial'
+  email: 'valid' | 'invalid' | 'initial'
+  phone: 'valid' | 'invalid' | 'initial'
+  cardNumber: 'valid' | 'invalid' | 'initial'
+  cardHolder: 'valid' | 'invalid' | 'initial'
+  expiryDate: 'valid' | 'invalid' | 'initial'
 }
 
 const PayWith = () => {
@@ -51,10 +61,18 @@ const PayWith = () => {
   const [cardNumber, setCardNumber] = React.useState('')
   const [cardHolder, setCardHolder] = React.useState('')
   const [expiryDate, setExpiryDate] = React.useState('')
-  const [cvv, setCvv] = React.useState('')
   
   // Validation
   const [errors, setErrors] = React.useState<FormErrors>({})
+  const [validationStates, setValidationStates] = React.useState<ValidationState>({
+    firstName: 'initial',
+    lastName: 'initial',
+    email: 'initial',
+    phone: 'initial',
+    cardNumber: 'initial',
+    cardHolder: 'initial',
+    expiryDate: 'initial'
+  })
   const [isValidating, setIsValidating] = React.useState(false)
   
   const formatPhoneNumber = (phone: string) => {
@@ -69,11 +87,112 @@ const PayWith = () => {
   
   const getCardVendor = (cardNumber: string) => {
     const num = cardNumber.replace(/\s/g, '')
-    if (num.startsWith('4')) return 'VISA'
-    if (/^5[1-5]/.test(num) || /^2[2-7]/.test(num)) return 'MASTERCARD'
-    if (/^3[47]/.test(num)) return 'AMEX'
-    if (/^6/.test(num)) return 'DISCOVER'
-    return 'UNKNOWN'
+    if (num.startsWith('4')) return 'VI' // Visa
+    if (/^5[1-5]/.test(num) || /^2[2-7]/.test(num)) return 'MC' // Mastercard
+    if (/^3[47]/.test(num)) return 'AX' // American Express
+    if (/^6/.test(num)) return 'DC' // Discover
+    return 'VI' // Default to Visa for Amadeus compatibility
+  }
+
+  // Luhn Algorithm for credit card validation
+  const validateCardLuhn = (cardNumber: string) => {
+    const num = cardNumber.replace(/\s/g, '')
+    if (num.length < 13 || num.length > 19) return false
+    
+    const digits = num.split('').map(Number)
+    let sum = 0
+    let isEven = false
+    
+    for (let i = digits.length - 1; i >= 0; i--) {
+      let digit = digits[i]
+      
+      if (isEven) {
+        digit *= 2
+        if (digit > 9) {
+          digit -= 9
+        }
+      }
+      
+      sum += digit
+      isEven = !isEven
+    }
+    
+    return sum % 10 === 0
+  }
+
+  // Enhanced email validation
+  const validateEmail = (email: string) => {
+    if (!email.trim()) return false
+    const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
+    return emailRegex.test(email)
+  }
+
+  // Enhanced phone validation
+  const validatePhoneNumber = (phone: string, countryCode: string) => {
+    const cleaned = phone.replace(/\D/g, '')
+    if (!cleaned) return false
+    
+    // Basic length validation based on country
+    switch (countryCode) {
+      case '+1': // US/Canada
+        return cleaned.length === 10
+      case '+44': // UK
+        return cleaned.length >= 10 && cleaned.length <= 11
+      case '+84': // Vietnam
+        return cleaned.length >= 9 && cleaned.length <= 11
+      default:
+        return cleaned.length >= 8 && cleaned.length <= 15
+    }
+  }
+
+  // Real-time field validation
+  const validateField = (fieldName: keyof ValidationState, value: string, additionalParam?: string) => {
+    let isValid = false
+    let errorMessage = ''
+
+    switch (fieldName) {
+      case 'firstName':
+      case 'lastName':
+        isValid = value.trim().length >= 1
+        errorMessage = isValid ? '' : `${fieldName === 'firstName' ? 'First' : 'Last'} name is required`
+        break
+      
+      case 'email':
+        isValid = validateEmail(value)
+        errorMessage = !value.trim() ? 'Email is required' : 
+                     isValid ? '' : 'Please enter a valid email address'
+        break
+      
+      case 'phone':
+        isValid = validatePhoneNumber(value, additionalParam || '+1')
+        errorMessage = !value.trim() ? 'Phone number is required' : 
+                     isValid ? '' : 'Please enter a valid phone number'
+        break
+      
+      case 'cardNumber':
+        isValid = validateCardLuhn(value)
+        errorMessage = !value.trim() ? 'Card number is required' : 
+                     isValid ? '' : 'Please enter a valid card number'
+        break
+      
+      case 'cardHolder':
+        isValid = value.trim().length >= 2
+        errorMessage = isValid ? '' : 'Cardholder name is required'
+        break
+      
+      case 'expiryDate':
+        if (!value) {
+          errorMessage = 'Expiry date is required'
+        } else {
+          const today = new Date()
+          const expiry = new Date(value + '-01')
+          isValid = expiry > today
+          errorMessage = isValid ? '' : 'Card has expired'
+        }
+        break
+    }
+
+    return { isValid, errorMessage }
   }
   
   const validateForm = () => {
@@ -107,15 +226,10 @@ const PayWith = () => {
         newErrors.expiryDate = 'Expiry date is required'
       } else {
         const today = new Date()
-        const expiry = new Date(expiryDate)
+        const expiry = new Date(expiryDate + '-01') // Add day to make valid date
         if (expiry <= today) {
           newErrors.expiryDate = 'Card has expired'
         }
-      }
-      if (!cvv.trim()) {
-        newErrors.cvv = 'CVV is required'
-      } else if (cvv.length < 3 || cvv.length > 4) {
-        newErrors.cvv = 'Please enter a valid CVV'
       }
     }
     
@@ -123,24 +237,80 @@ const PayWith = () => {
     return Object.keys(newErrors).length === 0
   }
   
+  // Real-time validation handlers
+  const handleFieldValidation = (fieldName: keyof ValidationState, value: string, additionalParam?: string) => {
+    const { isValid, errorMessage } = validateField(fieldName, value, additionalParam)
+    
+    setValidationStates(prev => ({
+      ...prev,
+      [fieldName]: isValid ? 'valid' : 'invalid'
+    }))
+    
+    setErrors(prev => ({
+      ...prev,
+      [fieldName]: errorMessage
+    }))
+  }
+
   const handlePhoneChange = (value: string) => {
     const formatted = formatPhoneNumber(value)
     setPhoneNumber(formatted)
-    if (errors.phone) {
-      setErrors(prev => ({ ...prev, phone: undefined }))
-    }
+  }
+  
+  const handlePhoneBlur = () => {
+    handleFieldValidation('phone', phoneNumber, countryCode)
   }
   
   const handleCardNumberChange = (value: string) => {
     const formatted = formatCardNumber(value)
     if (formatted.replace(/\s/g, '').length <= 19) {
       setCardNumber(formatted)
-      if (errors.cardNumber) {
-        setErrors(prev => ({ ...prev, cardNumber: undefined }))
-      }
     }
   }
   
+  const handleCardNumberBlur = () => {
+    handleFieldValidation('cardNumber', cardNumber)
+  }
+  
+  // Helper function to get input CSS classes based on validation state
+  const getInputClasses = (fieldName: keyof ValidationState, hasError: boolean) => {
+    const baseClasses = 'mt-1.5'
+    const state = validationStates[fieldName]
+    
+    if (hasError || state === 'invalid') {
+      return `${baseClasses} border-red-500 focus:border-red-500 focus:ring-red-500`
+    } else if (state === 'valid') {
+      return `${baseClasses} border-green-500 focus:border-green-500 focus:ring-green-500`
+    }
+    
+    return baseClasses
+  }
+
+  // Validation icon component
+  const ValidationIcon = ({ fieldName }: { fieldName: keyof ValidationState }) => {
+    const state = validationStates[fieldName]
+    
+    if (state === 'valid') {
+      return (
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+          <svg className="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+          </svg>
+        </div>
+      )
+    } else if (state === 'invalid') {
+      return (
+        <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+          <svg className="h-5 w-5 text-red-500" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+          </svg>
+        </div>
+      )
+    }
+    
+    return null
+  }
+
   React.useEffect(() => {
     if (firstName && lastName && !cardHolder) {
       setCardHolder(`${firstName} ${lastName}`.toUpperCase())
@@ -203,17 +373,21 @@ const PayWith = () => {
                 <div className="col-span-4">
                   <Field>
                     <Label>First Name *</Label>
-                    <Input
-                      value={firstName}
-                      onChange={(e) => {
-                        setFirstName(e.target.value)
-                        if (errors.firstName) {
-                          setErrors(prev => ({ ...prev, firstName: undefined }))
-                        }
-                      }}
-                      className={`mt-1.5 ${errors.firstName ? 'border-red-500 focus:border-red-500' : ''}`}
-                      placeholder="John"
-                    />
+                    <div className="relative">
+                      <Input
+                        value={firstName}
+                        onChange={(e) => {
+                          setFirstName(e.target.value)
+                          if (errors.firstName) {
+                            setErrors(prev => ({ ...prev, firstName: undefined }))
+                          }
+                        }}
+                        onBlur={() => handleFieldValidation('firstName', firstName)}
+                        className={getInputClasses('firstName', !!errors.firstName)}
+                        placeholder="John"
+                      />
+                      <ValidationIcon fieldName="firstName" />
+                    </div>
                     {errors.firstName && (
                       <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>
                     )}
@@ -222,17 +396,21 @@ const PayWith = () => {
                 <div className="col-span-5">
                   <Field>
                     <Label>Last Name *</Label>
-                    <Input
-                      value={lastName}
-                      onChange={(e) => {
-                        setLastName(e.target.value)
-                        if (errors.lastName) {
-                          setErrors(prev => ({ ...prev, lastName: undefined }))
-                        }
-                      }}
-                      className={`mt-1.5 ${errors.lastName ? 'border-red-500 focus:border-red-500' : ''}`}
-                      placeholder="Doe"
-                    />
+                    <div className="relative">
+                      <Input
+                        value={lastName}
+                        onChange={(e) => {
+                          setLastName(e.target.value)
+                          if (errors.lastName) {
+                            setErrors(prev => ({ ...prev, lastName: undefined }))
+                          }
+                        }}
+                        onBlur={() => handleFieldValidation('lastName', lastName)}
+                        className={getInputClasses('lastName', !!errors.lastName)}
+                        placeholder="Doe"
+                      />
+                      <ValidationIcon fieldName="lastName" />
+                    </div>
                     {errors.lastName && (
                       <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>
                     )}
@@ -243,18 +421,22 @@ const PayWith = () => {
               {/* Email */}
               <Field>
                 <Label>Email Address *</Label>
-                <Input
-                  type="email"
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value)
-                    if (errors.email) {
-                      setErrors(prev => ({ ...prev, email: undefined }))
-                    }
-                  }}
-                  className={`mt-1.5 ${errors.email ? 'border-red-500 focus:border-red-500' : ''}`}
-                  placeholder="john.doe@example.com"
-                />
+                <div className="relative">
+                  <Input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      if (errors.email) {
+                        setErrors(prev => ({ ...prev, email: undefined }))
+                      }
+                    }}
+                    onBlur={() => handleFieldValidation('email', email)}
+                    className={getInputClasses('email', !!errors.email)}
+                    placeholder="john.doe@example.com"
+                  />
+                  <ValidationIcon fieldName="email" />
+                </div>
                 {errors.email && (
                   <p className="mt-1 text-sm text-red-600">{errors.email}</p>
                 )}
@@ -275,13 +457,17 @@ const PayWith = () => {
                       </option>
                     ))}
                   </select>
-                  <Input
-                    type="tel"
-                    value={phoneNumber}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
-                    className={`flex-1 ${errors.phone ? 'border-red-500 focus:border-red-500' : ''}`}
-                    placeholder="5551234567"
-                  />
+                  <div className="relative flex-1">
+                    <Input
+                      type="tel"
+                      value={phoneNumber}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      onBlur={handlePhoneBlur}
+                      className={getInputClasses('phone', !!errors.phone)}
+                      placeholder="5551234567"
+                    />
+                    <ValidationIcon fieldName="phone" />
+                  </div>
                 </div>
                 {errors.phone && (
                   <p className="mt-1 text-sm text-red-600">{errors.phone}</p>
@@ -300,15 +486,22 @@ const PayWith = () => {
                   <Input
                     value={cardNumber}
                     onChange={(e) => handleCardNumberChange(e.target.value)}
-                    className={`mt-1.5 pr-20 ${errors.cardNumber ? 'border-red-500 focus:border-red-500' : ''}`}
+                    onBlur={handleCardNumberBlur}
+                    className={`${getInputClasses('cardNumber', !!errors.cardNumber)} pr-20`}
                     placeholder="1234 5678 9012 3456"
                     maxLength={23}
                   />
-                  {cardNumber && (
-                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs font-medium text-neutral-500">
+                  {cardNumber && validationStates.cardNumber !== 'valid' && (
+                    <div className="absolute right-12 top-1/2 transform -translate-y-1/2 text-xs font-medium text-neutral-500">
                       {getCardVendor(cardNumber)}
                     </div>
                   )}
+                  {cardNumber && validationStates.cardNumber === 'valid' && (
+                    <div className="absolute right-12 top-1/2 transform -translate-y-1/2 text-xs font-medium text-green-600">
+                      {getCardVendor(cardNumber)} ✓
+                    </div>
+                  )}
+                  <ValidationIcon fieldName="cardNumber" />
                 </div>
                 {errors.cardNumber && (
                   <p className="mt-1 text-sm text-red-600">{errors.cardNumber}</p>
@@ -318,64 +511,53 @@ const PayWith = () => {
               {/* Card Holder */}
               <Field>
                 <Label>Cardholder Name *</Label>
-                <Input
-                  value={cardHolder}
-                  onChange={(e) => {
-                    setCardHolder(e.target.value)
-                    if (errors.cardHolder) {
-                      setErrors(prev => ({ ...prev, cardHolder: undefined }))
-                    }
-                  }}
-                  className={`mt-1.5 ${errors.cardHolder ? 'border-red-500 focus:border-red-500' : ''}`}
-                  placeholder="JOHN DOE"
-                  style={{ textTransform: 'uppercase' }}
-                />
+                <div className="relative">
+                  <Input
+                    value={cardHolder}
+                    onChange={(e) => {
+                      setCardHolder(e.target.value)
+                      if (errors.cardHolder) {
+                        setErrors(prev => ({ ...prev, cardHolder: undefined }))
+                      }
+                    }}
+                    onBlur={() => handleFieldValidation('cardHolder', cardHolder)}
+                    className={getInputClasses('cardHolder', !!errors.cardHolder)}
+                    placeholder="JOHN DOE"
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                  <ValidationIcon fieldName="cardHolder" />
+                </div>
                 {errors.cardHolder && (
                   <p className="mt-1 text-sm text-red-600">{errors.cardHolder}</p>
                 )}
               </Field>
 
-              {/* Expiry Date and CVV */}
-              <div className="flex gap-x-5">
+              {/* Expiry Date */}
+              <div className="max-w-xs">
                 <Field>
                   <Label>Expiry Date *</Label>
-                  <Input
-                    type="month"
-                    value={expiryDate}
-                    onChange={(e) => {
-                      setExpiryDate(e.target.value)
-                      if (errors.expiryDate) {
-                        setErrors(prev => ({ ...prev, expiryDate: undefined }))
-                      }
-                    }}
-                    className={`mt-1.5 ${errors.expiryDate ? 'border-red-500 focus:border-red-500' : ''}`}
-                    min={new Date().toISOString().slice(0, 7)}
-                  />
+                  <div className="relative">
+                    <Input
+                      type="month"
+                      value={expiryDate}
+                      onChange={(e) => {
+                        setExpiryDate(e.target.value)
+                        if (errors.expiryDate) {
+                          setErrors(prev => ({ ...prev, expiryDate: undefined }))
+                        }
+                      }}
+                      onBlur={() => handleFieldValidation('expiryDate', expiryDate)}
+                      className={getInputClasses('expiryDate', !!errors.expiryDate)}
+                      min={new Date().toISOString().slice(0, 7)}
+                    />
+                    <ValidationIcon fieldName="expiryDate" />
+                  </div>
                   {errors.expiryDate && (
                     <p className="mt-1 text-sm text-red-600">{errors.expiryDate}</p>
                   )}
-                </Field>
-                <Field>
-                  <Label>CVV *</Label>
-                  <Input
-                    type="password"
-                    value={cvv}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, '')
-                      if (value.length <= 4) {
-                        setCvv(value)
-                        if (errors.cvv) {
-                          setErrors(prev => ({ ...prev, cvv: undefined }))
-                        }
-                      }
-                    }}
-                    className={`mt-1.5 ${errors.cvv ? 'border-red-500 focus:border-red-500' : ''}`}
-                    placeholder="123"
-                    maxLength={4}
-                  />
-                  {errors.cvv && (
-                    <p className="mt-1 text-sm text-red-600">{errors.cvv}</p>
-                  )}
+                  <Description className="mt-1.5">
+                    CVV not required - secure processing through Amadeus
+                  </Description>
                 </Field>
               </div>
             </div>
@@ -393,7 +575,6 @@ const PayWith = () => {
       <input type="hidden" name="cardNumber" value={cardNumber.replace(/\s/g, '')} />
       <input type="hidden" name="cardHolder" value={cardHolder} />
       <input type="hidden" name="expiryDate" value={expiryDate} />
-      <input type="hidden" name="cvv" value={cvv} />
       <input type="hidden" name="cardVendor" value={getCardVendor(cardNumber)} />
       
       {/* Expose validation function */}

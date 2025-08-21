@@ -112,14 +112,28 @@ export async function GET(
     const hotelInfo = hotelOffer.hotel
     const offers = hotelOffer.offers || []
     
-    // Find the specific offer by ID, or get the first available one
-    let selectedOffer = offers.find((offer: any) => offer.id === offerId) || offers[0]
+    // Find the specific offer by ID - with graceful fallback
+    let selectedOffer = offers.find((offer: any) => offer.id === offerId)
+    let offerFallback = false
     
     if (!selectedOffer) {
-      return NextResponse.json({
-        success: false,
-        error: 'Offer not found or no longer available'
-      }, { status: 404 })
+      console.warn(`⚠️ Specific offer ${offerId} not found in available offers:`, offers.map((o: any) => o.id))
+      
+      // Graceful fallback: Use first available offer if any exists
+      if (offers.length > 0) {
+        selectedOffer = offers[0]
+        offerFallback = true
+        console.log(`🔄 Using fallback offer ${selectedOffer.id} instead of expired ${offerId}`)
+      } else {
+        return NextResponse.json({
+          success: false,
+          error: `No offers available for this hotel and dates. Please try different dates.`,
+          availableOffers: 0,
+          requestedOfferId: offerId
+        }, { status: 404 })
+      }
+    } else {
+      console.log(`✅ Found specific offer ${offerId} in available offers`)
     }
 
     // Step 2: Get detailed hotel information for amenities and images
@@ -249,11 +263,19 @@ export async function GET(
       }
     }
 
-    console.log(`✅ Checkout data prepared for offer ${offerId}`)
+    console.log(`✅ Checkout data prepared for offer ${selectedOffer.id}`)
 
     return NextResponse.json({
       success: true,
-      data: checkoutData
+      data: checkoutData,
+      meta: {
+        offerFallback,
+        requestedOfferId: offerId,
+        actualOfferId: selectedOffer.id,
+        message: offerFallback ? 
+          `Original offer ${offerId} expired. Using best available offer ${selectedOffer.id}.` : 
+          `Using requested offer ${offerId}.`
+      }
     })
 
   } catch (error) {

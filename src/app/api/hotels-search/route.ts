@@ -455,7 +455,28 @@ export async function GET(request: NextRequest) {
         })() : [],
         
         // Add detailed board type info for the lowest price offer
-        lowestOfferBoardType: lowestPriceOffer?.boardType || null
+        lowestOfferBoardType: lowestPriceOffer?.boardType || null,
+        
+        // ✅ Add available offers with IDs for booking flow
+        availableOffers: offers.map((offer: any) => ({
+          id: offer.id,
+          checkInDate: offer.checkInDate,
+          checkOutDate: offer.checkOutDate,
+          price: {
+            total: offer.price?.total,
+            currency: offer.price?.currency || 'USD'
+          },
+          room: {
+            category: offer.room?.typeEstimated?.category,
+            bedType: offer.room?.typeEstimated?.bedType,
+            description: offer.room?.description?.text
+          },
+          boardType: offer.boardType,
+          policies: offer.policies
+        })),
+        
+        // ✅ Add primary offer ID for easy booking navigation
+        primaryOfferId: lowestPriceOffer?.id || null
       }
     }) || []
 

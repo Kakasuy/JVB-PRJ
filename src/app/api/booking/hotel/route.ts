@@ -16,7 +16,6 @@ interface BookingRequest {
   cardNumber?: string
   cardHolder?: string
   expiryDate?: string
-  cvv?: string
   cardVendor?: string
   
   // Booking Details
@@ -52,54 +51,68 @@ async function getAmadeusToken() {
 }
 
 function transformToAmadeusFormat(bookingData: BookingRequest) {
-  // Parse expiry date (YYYY-MM format to MM/YY)
-  const [year, month] = bookingData.expiryDate?.split('-') || ['', '']
-  const expiryFormatted = year && month ? `${month}/${year.slice(2)}` : ''
-
-  return {
-    data: {
-      type: "hotel-order",
-      offerId: bookingData.offerId,
-      guests: [
-        {
-          id: 1,
-          name: {
-            title: bookingData.title,
-            firstName: bookingData.firstName,
-            lastName: bookingData.lastName
-          },
-          contact: {
-            phone: bookingData.phone,
-            email: bookingData.email
-          }
-        }
-      ],
-      payments: [
-        {
-          id: 1,
-          method: bookingData.paymentMethod === 'creditCard' ? 'creditCard' : 'paypal',
-          card: bookingData.paymentMethod === 'creditCard' ? {
-            cardNumber: bookingData.cardNumber?.replace(/\s/g, ''),
-            expiryDate: expiryFormatted,
-            cardHolder: {
-              name: bookingData.cardHolder
-            },
-            vendorCode: bookingData.cardVendor
-          } : undefined
-        }
-      ],
-      rooms: Array.from({ length: bookingData.rooms }, (_, i) => ({
-        guestIds: [1], // Primary booker for all rooms
-        paymentId: 1,
-        specialRequest: null
-      }))
+  // Parse expiry date - Amadeus may expect MM/YY or MMYY format
+  let expiryFormatted = ''
+  if (bookingData.expiryDate) {
+    const [year, month] = bookingData.expiryDate.split('-')
+    if (year && month) {
+      // Try MMYY format (no separator)
+      expiryFormatted = `${month}${year.slice(2)}`
     }
   }
+
+  // Correct structure: hotelOfferId should be inside roomAssociations
+  const payload = {
+    data: {
+      type: "hotel-order",
+      guests: [
+        {
+          tid: 1,
+          title: bookingData.title,
+          firstName: bookingData.firstName,
+          lastName: bookingData.lastName,
+          phone: bookingData.phone,
+          email: bookingData.email
+        }
+      ],
+      travelAgent: {
+        contact: {
+          email: bookingData.email
+        }
+      },
+      roomAssociations: Array.from({ length: bookingData.rooms }, (_, i) => ({
+        guestReferences: [
+          {
+            guestReference: "1"
+          }
+        ],
+        hotelOfferId: bookingData.offerId,
+        hotelReward: {}
+      })),
+      payment: {
+        method: "CREDIT_CARD",
+        paymentCard: {
+          paymentCardInfo: {
+            vendorCode: bookingData.cardVendor,
+            cardNumber: bookingData.cardNumber?.replace(/\s/g, ''),
+            expiryDate: expiryFormatted,
+            holderName: bookingData.cardHolder
+          }
+        }
+      }
+    }
+  }
+
+  console.log('🔄 Correct structure: hotelOfferId inside roomAssociations')
+  console.log('💳 Expiry date format:', bookingData.expiryDate, '->', expiryFormatted)
+  return payload
 }
 
 export async function POST(request: NextRequest) {
   try {
     const bookingData: BookingRequest = await request.json()
+    
+    console.log('🔥 BOOKING API CALLED - Raw Request Body:', JSON.stringify(bookingData, null, 2))
     
     console.log('🏨 Hotel booking request received:', {
       offerId: bookingData.offerId,
@@ -128,7 +141,7 @@ export async function POST(request: NextRequest) {
 
     // Validate payment method specific fields
     if (bookingData.paymentMethod === 'creditCard') {
-      const requiredCardFields = ['cardNumber', 'cardHolder', 'expiryDate', 'cvv']
+      const requiredCardFields = ['cardNumber', 'cardHolder', 'expiryDate', 'cardVendor']
       const missingCardFields = requiredCardFields.filter(field => !bookingData[field])
       
       if (missingCardFields.length > 0) {
@@ -140,16 +153,45 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    console.log('🔍 Before validation - offerId:', bookingData.offerId)
+    
     // Get Amadeus access token
     const accessToken = await getAmadeusToken()
     
+    console.log('🔄 Starting transformation...')
     // Transform booking data to Amadeus format
     const amadeusPayload = transformToAmadeusFormat(bookingData)
+    console.log('✅ Transformation complete')
     
-    console.log('🔄 Sending booking to Amadeus:', JSON.stringify(amadeusPayload, null, 2))
+    console.log('🔄 Booking Data Received:', JSON.stringify(bookingData, null, 2))
+    console.log('🔄 Transformed Amadeus Payload:', JSON.stringify(amadeusPayload, null, 2))
+    console.log('🔍 hotelOfferId in payload:', amadeusPayload.data.hotelOfferId)
+    console.log('🔍 hotelId in payload:', amadeusPayload.data.hotelId)
+    console.log('🔍 type in payload:', amadeusPayload.data.type)
+    console.log('🔍 Original offerId:', bookingData.offerId)
+    console.log('🔍 Payload structure:', Object.keys(amadeusPayload.data))
 
-    // Make booking request to Amadeus
+    // Optional: Try to verify offer exists first (for debugging)
+    console.log('🔍 Verifying offer exists before booking...')
+    try {
+      const offerCheckUrl = `https://test.api.amadeus.com/v3/shopping/hotel-offers/${bookingData.offerId}`
+      const offerCheckResponse = await fetch(offerCheckUrl, {
+        headers: { 'Authorization': `Bearer ${accessToken}` }
+      })
+      console.log('🔍 Offer verification status:', offerCheckResponse.status)
+      if (!offerCheckResponse.ok) {
+        const errorData = await offerCheckResponse.json()
+        console.log('⚠️ Offer verification failed:', errorData)
+      } else {
+        console.log('✅ Offer verification passed')
+      }
+    } catch (e) {
+      console.log('⚠️ Offer verification error:', e.message)
+    }
+
+    // Make booking request to Amadeus - back to v2 with offerId instead of hotelOfferId
     const bookingUrl = 'https://test.api.amadeus.com/v2/booking/hotel-orders'
+    console.log('🌐 Amadeus API URL (back to v2):', bookingUrl)
     
     const response = await fetch(bookingUrl, {
       method: 'POST',
@@ -167,6 +209,12 @@ export async function POST(request: NextRequest) {
         status: response.status,
         statusText: response.statusText,
         error: responseData
+      })
+      console.error('🔥 Full Amadeus Response:', JSON.stringify(responseData, null, 2))
+      console.error('🔥 Request URL:', bookingUrl)
+      console.error('🔥 Request Headers:', {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json'
       })
       
       // Handle specific Amadeus errors
@@ -204,13 +252,16 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Amadeus booking successful:', responseData.data)
 
+    // Handle Amadeus API v2 response format
+    const hotelBooking = responseData.data?.hotelBookings?.[0] || responseData.data
+    
     // Return successful booking response
     return NextResponse.json({
       success: true,
       data: {
-        bookingId: responseData.data.id,
-        confirmationNumber: responseData.data.associatedRecords?.[0]?.reference,
-        status: responseData.data.bookingStatus,
+        bookingId: hotelBooking?.id || responseData.data?.id,
+        confirmationNumber: hotelBooking?.providerConfirmationId || responseData.data?.associatedRecords?.[0]?.reference,
+        status: hotelBooking?.bookingStatus || responseData.data?.bookingStatus || 'confirmed',
         hotel: {
           id: bookingData.hotelId,
           checkIn: bookingData.checkInDate,

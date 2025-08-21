@@ -120,6 +120,16 @@ const Page = () => {
           setCheckoutData(data.data)
           setOriginalCheckoutData(data.data) // Store original for revert
           console.log('✅ Checkout data loaded:', data.data)
+          console.log('🔍 Original URL offerId:', offerId)
+          console.log('🔍 Returned offer ID:', data.data.offer.id)
+          
+          // Show fallback notification if offer was changed
+          if (data.meta?.offerFallback) {
+            console.log('🔄 Offer fallback applied:', data.meta.message)
+            // You could show a toast notification here if desired
+          } else if (offerId !== data.data.offer.id) {
+            console.warn('⚠️ Offer ID mismatch! URL had:', offerId, 'but got:', data.data.offer.id)
+          }
         } else {
           setError(data.error || 'Failed to load checkout data')
         }
@@ -250,7 +260,7 @@ const Page = () => {
     
     if (paymentMethod === 'creditCard') {
       // Basic client-side validation
-      const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'cardNumber', 'cardHolder', 'expiryDate', 'cvv']
+      const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'cardNumber', 'cardHolder', 'expiryDate']
       const missingFields = requiredFields.filter(field => !formObject[field]?.toString().trim())
       
       if (missingFields.length > 0) {
@@ -289,13 +299,6 @@ const Page = () => {
           return
         }
       }
-      
-      // Validate CVV
-      const cvv = formObject.cvv as string
-      if (cvv.length < 3 || cvv.length > 4) {
-        setBookingError('Please enter a valid CVV')
-        return
-      }
     }
     
     if (!checkoutData) {
@@ -325,7 +328,6 @@ const Page = () => {
         cardNumber: formObject.cardNumber as string,
         cardHolder: formObject.cardHolder as string,
         expiryDate: formObject.expiryDate as string,
-        cvv: formObject.cvv as string,
         cardVendor: formObject.cardVendor as string,
         
         // Booking Details
@@ -336,6 +338,10 @@ const Page = () => {
       }
       
       console.log('🔄 Submitting booking to API:', bookingPayload)
+      console.log('📤 Request Payload:', JSON.stringify(bookingPayload, null, 2))
+      console.log('🔍 URL offerId:', offerId)
+      console.log('🔍 Checkout data offerId:', checkoutData.offer.id)
+      console.log('🔍 Booking payload offerId:', bookingPayload.offerId)
       
       const response = await fetch('/api/booking/hotel', {
         method: 'POST',
@@ -345,10 +351,16 @@ const Page = () => {
         body: JSON.stringify(bookingPayload),
       })
       
+      console.log('📥 Response Status:', response.status, response.statusText)
       const result = await response.json()
+      console.log('📥 Response Body:', JSON.stringify(result, null, 2))
       
       if (result.success) {
         console.log('✅ Booking successful:', result.data)
+        console.log('📋 Full API Response:', JSON.stringify(result, null, 2))
+        
+        // Show success alert
+        alert(`🎉 Booking Successful!\n\nBooking ID: ${result.data.bookingId}\nConfirmation: ${result.data.confirmationNumber || 'N/A'}\nStatus: ${result.data.status}\n\nCheck console for full response details.`)
         
         // Redirect to success page with booking details
         const successUrl = new URL('/pay-done', window.location.origin)
@@ -356,9 +368,18 @@ const Page = () => {
         successUrl.searchParams.set('confirmationNumber', result.data.confirmationNumber || '')
         successUrl.searchParams.set('hotelName', checkoutData.hotel.name)
         
-        router.push(successUrl.toString())
+        // Add delay to allow user to see the alert before redirect
+        setTimeout(() => {
+          router.push(successUrl.toString())
+        }, 3000)
       } else {
         console.error('❌ Booking failed:', result.error)
+        console.error('❌ Error Code:', result.code)
+        console.error('❌ Error Details:', result.details)
+        console.error('❌ Full Error Response:', JSON.stringify(result, null, 2))
+        
+        // Show error alert for debugging
+        alert(`❌ Booking Failed!\n\nError: ${result.error}\nCode: ${result.code || 'N/A'}\n\nCheck console for full error details.`)
         
         // Handle specific error codes
         if (result.code === 'OFFER_UNAVAILABLE') {
@@ -373,6 +394,11 @@ const Page = () => {
       }
     } catch (error) {
       console.error('❌ Booking submission error:', error)
+      console.error('❌ Network/Parse Error Details:', JSON.stringify(error, null, 2))
+      
+      // Show network error alert
+      alert(`❌ Network Error!\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}\n\nCheck console for full error details.`)
+      
       setBookingError('Network error. Please check your connection and try again.')
     } finally {
       setIsSubmitting(false)
