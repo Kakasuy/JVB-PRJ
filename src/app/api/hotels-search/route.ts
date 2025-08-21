@@ -155,12 +155,13 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Step 2: Batch processing - Query multiple batches of 50 hotels each
-    const BATCH_SIZE = 50
-    const MAX_BATCHES = 3 // Query up to 150 hotels total (3 batches of 50)
+    // Step 2: Batch processing - Query multiple batches of 40 hotels each with parallel processing
+    const BATCH_SIZE = 40
+    const MAX_BATCHES = 5 // Query up to 200 hotels total (5 batches of 40)
     const totalHotelsToQuery = Math.min(MAX_BATCHES * BATCH_SIZE, hotelListData.data.length)
+    const actualBatches = Math.ceil(totalHotelsToQuery / BATCH_SIZE)
     
-    console.log(`Processing ${totalHotelsToQuery} hotels in ${Math.ceil(totalHotelsToQuery / BATCH_SIZE)} batches`)
+    console.log(`🚀 Processing ${totalHotelsToQuery} hotels in ${actualBatches} batches (PARALLEL)`)
     
     // Helper function to query offers for a batch of hotels
     const queryHotelBatch = async (batchHotels: any[], batchIndex: number) => {
@@ -180,7 +181,7 @@ export async function GET(request: NextRequest) {
         console.log(`🍽️ Filtering offers by board types: ${boardTypes.join(', ')}`)
       }
 
-      console.log(`Querying batch ${batchIndex + 1} with ${batchHotels.length} hotels`)
+      console.log(`⚡ Batch ${batchIndex + 1}: Querying ${batchHotels.length} hotels (parallel)`)
       
       const hotelResponse = await fetch(hotelOffersUrl.toString(), {
         headers: {
@@ -195,7 +196,7 @@ export async function GET(request: NextRequest) {
       }
 
       const batchData = await hotelResponse.json()
-      console.log(`Batch ${batchIndex + 1} found ${batchData.data?.length || 0} hotels with offers`)
+      console.log(`✅ Batch ${batchIndex + 1} complete: ${batchData.data?.length || 0} hotels with offers`)
       
       return batchData
     }
@@ -227,7 +228,7 @@ export async function GET(request: NextRequest) {
       meta: batchResults[0]?.meta || {}
     }
     
-    console.log(`Total hotels with offers from ${batches.length} batches: ${hotelData.data?.length || 0}`)
+    console.log(`🎉 PARALLEL COMPLETE: ${hotelData.data?.length || 0} hotels with offers from ${batches.length} batches`)
 
     // Helper function to check if hotel is a test property
     const isTestHotel = (hotelName: string, address?: string) => {
