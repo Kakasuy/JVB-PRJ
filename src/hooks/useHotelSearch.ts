@@ -115,7 +115,6 @@ export const useHotelSearch = (): UseHotelSearchResult => {
     }
 
     // Need to make API call for server-side filters
-    console.log('🌐 Making API call for server-side filters')
     setLoading(true)
     setError(null)
 

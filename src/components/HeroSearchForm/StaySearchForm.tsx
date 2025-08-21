@@ -23,14 +23,6 @@ export const StaySearchForm = ({ className, formStyle = 'default' }: Props) => {
     const formDataEntries = Object.fromEntries(formData.entries())
     console.log('Form submitted - Raw FormData:', formDataEntries)
     
-    // Debug: Log individual fields
-    console.log('Location:', formDataEntries['location'])
-    console.log('CityCode:', formDataEntries['cityCode']) // New field
-    console.log('CheckInDate:', formDataEntries['checkInDate'])
-    console.log('CheckOutDate:', formDataEntries['checkOutDate'])
-    console.log('Adults:', formDataEntries['adults'])
-    console.log('Rooms:', formDataEntries['rooms'])
-
     // Get form values or set defaults
     const location = formDataEntries['location'] as string || 'New York'
     const cityCode = formDataEntries['cityCode'] as string // Get cityCode from form

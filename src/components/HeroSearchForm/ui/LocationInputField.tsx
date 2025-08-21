@@ -133,11 +133,6 @@ export const LocationInputField: FC<Props> = ({
     const locationParam = searchParams.get('location')
     const cityCodeParam = searchParams.get('cityCode')
     
-    console.log('LocationInputField - URL params:', {
-      location: locationParam,
-      cityCode: cityCodeParam,
-      allParams: Object.fromEntries(searchParams.entries())
-    })
     
     // Try to get the display name for the city
     const getDisplayName = (param: string) => {
@@ -191,14 +186,12 @@ export const LocationInputField: FC<Props> = ({
     
     if (cityCodeParam) {
       const displayName = getDisplayName(cityCodeParam)
-      console.log('Using cityCode param:', cityCodeParam, '-> display:', displayName)
       return {
         id: 'url-param',
         name: displayName
       }
     }
     
-    console.log('No location params found, using empty default')
     return { 
       id: 'default',
       name: '' // Empty by default, will show placeholder
@@ -208,10 +201,6 @@ export const LocationInputField: FC<Props> = ({
   const [selected, setSelected] = useState<Suggest | null>(getInitialLocation())
   const [isSearching, setIsSearching] = useState(false)
   
-  // Debug effect to monitor searchParams changes
-  useEffect(() => {
-    console.log('LocationInputField - searchParams changed:', Object.fromEntries(searchParams.entries()))
-  }, [searchParams])
   
   // Hook for Amadeus location search
   const { suggestions, loading, error, searchLocations, clearSuggestions } = useLocationSearch()
@@ -219,7 +208,6 @@ export const LocationInputField: FC<Props> = ({
   // Update location when URL parameters change
   useEffect(() => {
     const newLocation = getInitialLocation()
-    console.log('LocationInputField useEffect - updating selected:', newLocation)
     setSelected(newLocation)
   }, [getInitialLocation])
   

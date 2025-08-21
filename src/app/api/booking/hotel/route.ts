@@ -103,8 +103,6 @@ function transformToAmadeusFormat(bookingData: BookingRequest) {
     }
   }
 
-  console.log('🔄 Correct structure: hotelOfferId inside roomAssociations')
-  console.log('💳 Expiry date format:', bookingData.expiryDate, '->', expiryFormatted)
   return payload
 }
 
@@ -112,20 +110,6 @@ export async function POST(request: NextRequest) {
   try {
     const bookingData: BookingRequest = await request.json()
     
-    console.log('🔥 BOOKING API CALLED - Raw Request Body:', JSON.stringify(bookingData, null, 2))
-    
-    console.log('🏨 Hotel booking request received:', {
-      offerId: bookingData.offerId,
-      hotelId: bookingData.hotelId,
-      guest: `${bookingData.title} ${bookingData.firstName} ${bookingData.lastName}`,
-      email: bookingData.email,
-      phone: bookingData.phone,
-      checkIn: bookingData.checkInDate,
-      checkOut: bookingData.checkOutDate,
-      rooms: bookingData.rooms,
-      adults: bookingData.adults,
-      paymentMethod: bookingData.paymentMethod
-    })
 
     // Validate required fields
     const requiredFields = ['offerId', 'hotelId', 'firstName', 'lastName', 'email', 'phone']
@@ -153,45 +137,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log('🔍 Before validation - offerId:', bookingData.offerId)
-    
     // Get Amadeus access token
     const accessToken = await getAmadeusToken()
     
-    console.log('🔄 Starting transformation...')
     // Transform booking data to Amadeus format
     const amadeusPayload = transformToAmadeusFormat(bookingData)
-    console.log('✅ Transformation complete')
     
-    console.log('🔄 Booking Data Received:', JSON.stringify(bookingData, null, 2))
     console.log('🔄 Transformed Amadeus Payload:', JSON.stringify(amadeusPayload, null, 2))
-    console.log('🔍 hotelOfferId in payload:', amadeusPayload.data.hotelOfferId)
-    console.log('🔍 hotelId in payload:', amadeusPayload.data.hotelId)
-    console.log('🔍 type in payload:', amadeusPayload.data.type)
-    console.log('🔍 Original offerId:', bookingData.offerId)
-    console.log('🔍 Payload structure:', Object.keys(amadeusPayload.data))
 
-    // Optional: Try to verify offer exists first (for debugging)
-    console.log('🔍 Verifying offer exists before booking...')
-    try {
-      const offerCheckUrl = `https://test.api.amadeus.com/v3/shopping/hotel-offers/${bookingData.offerId}`
-      const offerCheckResponse = await fetch(offerCheckUrl, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      })
-      console.log('🔍 Offer verification status:', offerCheckResponse.status)
-      if (!offerCheckResponse.ok) {
-        const errorData = await offerCheckResponse.json()
-        console.log('⚠️ Offer verification failed:', errorData)
-      } else {
-        console.log('✅ Offer verification passed')
-      }
-    } catch (e) {
-      console.log('⚠️ Offer verification error:', e.message)
-    }
 
-    // Make booking request to Amadeus - back to v2 with offerId instead of hotelOfferId
+    // Make booking request to Amadeus
     const bookingUrl = 'https://test.api.amadeus.com/v2/booking/hotel-orders'
-    console.log('🌐 Amadeus API URL (back to v2):', bookingUrl)
     
     const response = await fetch(bookingUrl, {
       method: 'POST',
@@ -250,7 +206,7 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    console.log('✅ Amadeus booking successful:', responseData.data)
+    console.log('✅ Amadeus booking successful:', responseData.data?.hotelBookings?.[0]?.bookingStatus || 'confirmed')
 
     // Handle Amadeus API v2 response format
     const hotelBooking = responseData.data?.hotelBookings?.[0] || responseData.data

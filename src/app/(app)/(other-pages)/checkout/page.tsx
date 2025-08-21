@@ -357,10 +357,6 @@ const Page = () => {
       
       if (result.success) {
         console.log('✅ Booking successful:', result.data)
-        console.log('📋 Full API Response:', JSON.stringify(result, null, 2))
-        
-        // Show success alert
-        alert(`🎉 Booking Successful!\n\nBooking ID: ${result.data.bookingId}\nConfirmation: ${result.data.confirmationNumber || 'N/A'}\nStatus: ${result.data.status}\n\nCheck console for full response details.`)
         
         // Redirect to success page with booking details
         const successUrl = new URL('/pay-done', window.location.origin)
@@ -378,8 +374,6 @@ const Page = () => {
         console.error('❌ Error Details:', result.details)
         console.error('❌ Full Error Response:', JSON.stringify(result, null, 2))
         
-        // Show error alert for debugging
-        alert(`❌ Booking Failed!\n\nError: ${result.error}\nCode: ${result.code || 'N/A'}\n\nCheck console for full error details.`)
         
         // Handle specific error codes
         if (result.code === 'OFFER_UNAVAILABLE') {
@@ -396,8 +390,6 @@ const Page = () => {
       console.error('❌ Booking submission error:', error)
       console.error('❌ Network/Parse Error Details:', JSON.stringify(error, null, 2))
       
-      // Show network error alert
-      alert(`❌ Network Error!\n\nError: ${error instanceof Error ? error.message : 'Unknown error'}\n\nCheck console for full error details.`)
       
       setBookingError('Network error. Please check your connection and try again.')
     } finally {
