@@ -19,6 +19,10 @@
 .DS_Store
 *.pem
 
+# hotel cache files
+/cache/hotels/
+!/cache/.gitkeep
+
 # debug
 npm-debug.log*
 yarn-debug.log*
