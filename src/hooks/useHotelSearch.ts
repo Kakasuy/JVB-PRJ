@@ -54,7 +54,6 @@ export const useHotelSearch = (): UseHotelSearchResult => {
       beds: params.beds,
       bedrooms: params.bedrooms,
       bathrooms: params.bathrooms,
-      room_types: params.room_types,
       free_cancellation: params.free_cancellation,
       refundable_only: params.refundable_only,
       payment_types: params.payment_types
@@ -71,7 +70,8 @@ export const useHotelSearch = (): UseHotelSearchResult => {
       rooms: params.rooms,
       radius: params.radius,
       amenities: params.amenities,
-      board_types: params.board_types
+      board_types: params.board_types,
+      room_types: params.room_types
     }
   }
 
@@ -137,6 +137,9 @@ export const useHotelSearch = (): UseHotelSearchResult => {
       }
       if (serverParams.board_types) {
         searchParams.append('board_types', serverParams.board_types)
+      }
+      if (serverParams.room_types) {
+        searchParams.append('room_types', serverParams.room_types)
       }
       
       console.log('🔧 API call with server-side params:', Object.fromEntries(searchParams.entries()))

@@ -7,7 +7,6 @@ export interface ClientSideFilterParams {
   beds?: string | null
   bedrooms?: string | null
   bathrooms?: string | null
-  room_types?: string | null
   free_cancellation?: string | null
   refundable_only?: string | null
   payment_types?: string | null
@@ -16,14 +15,14 @@ export interface ClientSideFilterParams {
 // Define which filters can be handled client-side
 export const CLIENT_SIDE_FILTERS = [
   'price_min', 'price_max', 'hotel_stars', 
-  'beds', 'bedrooms', 'bathrooms', 'room_types',
+  'beds', 'bedrooms', 'bathrooms',
   'free_cancellation', 'refundable_only', 'payment_types'
 ]
 
 // Define which filters require server-side API calls
 export const SERVER_SIDE_FILTERS = [
   'cityCode', 'checkInDate', 'checkOutDate', 
-  'adults', 'rooms', 'radius', 'amenities', 'board_types'
+  'adults', 'rooms', 'radius', 'amenities', 'board_types', 'room_types'
 ]
 
 // Check if a filter change requires API call
@@ -179,6 +178,7 @@ export function applyClientSideFilters(
     
     console.log(`🚿 Bathrooms filter (${minBathrooms}+): ${filteredHotels.length} hotels remaining`)
   }
+
 
   // Free cancellation filter
   if (filters.free_cancellation === 'true') {
