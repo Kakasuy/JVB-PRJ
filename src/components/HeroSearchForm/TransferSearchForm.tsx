@@ -137,6 +137,9 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
 
         sessionStorage.setItem('transferSearchData', JSON.stringify(searchData))
         
+        // Trigger custom event to notify components of data change
+        window.dispatchEvent(new CustomEvent('transferSearchUpdated'))
+        
         // Navigate to car categories to display results
         const urlParams = new URLSearchParams({
           from: searchData.searchParams.from,

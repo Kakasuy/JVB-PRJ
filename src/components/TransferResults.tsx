@@ -116,7 +116,32 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
       }
     }
 
+    // Initial load
     loadTransferData()
+
+    // Listen for storage changes (from other tabs/windows)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'transferSearchData') {
+        console.log('🔄 Detected sessionStorage change, reloading...')
+        setLoading(true)
+        loadTransferData()
+      }
+    }
+
+    // Listen for custom event (from same tab)
+    const handleCustomStorageChange = () => {
+      console.log('🔄 Detected new search, reloading...')
+      setLoading(true)
+      loadTransferData()
+    }
+
+    window.addEventListener('storage', handleStorageChange)
+    window.addEventListener('transferSearchUpdated', handleCustomStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('transferSearchUpdated', handleCustomStorageChange)
+    }
   }, [])
 
   if (loading) {
