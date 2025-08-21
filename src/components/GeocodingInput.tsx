@@ -140,7 +140,7 @@ const GeocodingInput: React.FC<GeocodingInputProps> = ({
       setSelectedLocation(location)
       onLocationSelect(locationData)
       setQuery(location.display_name)
-      console.log('📍 Location selected:', locationData)
+      console.log('📍 Location selected:', locationData.cityName)
     } else {
       setSelectedLocation(null)
       setQuery('')

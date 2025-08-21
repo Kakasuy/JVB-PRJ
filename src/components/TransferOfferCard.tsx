@@ -71,6 +71,43 @@ const TransferOfferCard: FC<TransferOfferCardProps> = ({ className = '', data })
     return `${currency === 'EUR' ? '€' : '$'}${amount}`
   }
 
+  // Vehicle category mapping
+  const getCategoryInfo = (category: string) => {
+    const categoryMap: Record<string, { label: string; color: 'blue' | 'green' | 'purple' | 'yellow' | 'red' | 'gray' }> = {
+      'ST': { label: 'Standard', color: 'blue' },
+      'EC': { label: 'Economy', color: 'green' },
+      'LX': { label: 'Luxury', color: 'purple' },
+      'PR': { label: 'Premium', color: 'yellow' },
+      'VN': { label: 'Van', color: 'gray' },
+      'SV': { label: 'SUV', color: 'red' },
+      'LM': { label: 'Limousine', color: 'purple' }
+    }
+    return categoryMap[category]
+  }
+
+  const categoryInfo = vehicle?.category ? getCategoryInfo(vehicle.category) : null
+
+  // Vehicle code mapping for tooltips
+  const getVehicleCodeInfo = (code: string) => {
+    const codeMap: Record<string, string> = {
+      'SDN': 'Sedan',
+      'SUV': 'SUV',
+      'VAN': 'Van',
+      'LIM': 'Limousine',
+      'BUS': 'Bus',
+      'MPV': 'Multi-Purpose Vehicle',
+      'HBK': 'Hatchback',
+      'EST': 'Estate/Wagon',
+      'CNV': 'Convertible',
+      'CUP': 'Coupe',
+      'MIN': 'Mini',
+      'CMP': 'Compact',
+      'ECO': 'Economy',
+      'LUX': 'Luxury'
+    }
+    return codeMap[code] || code
+  }
+
   const listingHref = `/transfer-details/${id}`
 
   const renderSliderGallery = () => {
@@ -91,11 +128,18 @@ const TransferOfferCard: FC<TransferOfferCardProps> = ({ className = '', data })
           isLiked={false}
           className="absolute end-3 top-3 z-1"
         />
-        {transferType === 'PRIVATE' && (
-          <Badge color="green" className="absolute start-3 top-3">
-            {transferType}
-          </Badge>
-        )}
+        <div className="absolute start-3 top-3 flex flex-col gap-2">
+          {transferType === 'PRIVATE' && (
+            <Badge color="green">
+              {transferType}
+            </Badge>
+          )}
+          {categoryInfo && (
+            <Badge color={categoryInfo.color}>
+              {categoryInfo.label}
+            </Badge>
+          )}
+        </div>
       </div>
     )
   }
@@ -118,6 +162,16 @@ const TransferOfferCard: FC<TransferOfferCardProps> = ({ className = '', data })
                 {start?.locationCode || 'Pickup'} → {end?.address?.cityName || 'Destination'}
               </span>
             </div>
+            {vehicle?.code && (
+              <div className="flex items-center gap-1">
+                <span 
+                  className="text-xs font-medium text-neutral-600 dark:text-neutral-300 cursor-help border-b border-dotted border-neutral-400"
+                  title={getVehicleCodeInfo(vehicle.code)}
+                >
+                  {vehicle.code}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

@@ -88,7 +88,7 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
         const storedData = sessionStorage.getItem('transferSearchData')
         if (storedData) {
           const searchData = JSON.parse(storedData)
-          console.log('📦 Loaded transfer search data:', searchData)
+          console.log(`📦 Displaying ${searchData.results?.length || 0} transfer offers`)
           
           setOffers(searchData.results || [])
           setSearchInfo(searchData.searchParams)
@@ -100,7 +100,6 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
             (fallbackElement as HTMLElement).style.display = 'none'
           }
         } else {
-          console.log('⚠️ No transfer search data found')
           setOffers([])
           
           // Show default car listings when no transfer data

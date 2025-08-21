@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     }
 
     const airportData = await airportResponse.json()
-    console.log('✅ Airport search successful:', airportData)
+    console.log(`✅ Found ${airportData.data?.length || 0} airports for "${keyword}"`)
 
     return NextResponse.json(airportData)
   } catch (error) {

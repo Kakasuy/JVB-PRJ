@@ -62,19 +62,16 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
 
   const handleAirportSelect = (airport: AirportData | null) => {
     setStartAirport(airport)
-    console.log('🛫 Start airport selected:', airport)
+    console.log('🛫 Airport selected:', airport?.iataCode)
   }
 
   const handleLocationSelect = (location: LocationData) => {
     setEndLocation(location)
-    console.log('📍 End location selected:', location)
+    console.log('📍 Destination selected:', location?.cityName)
   }
 
   const handleFormSubmit = async () => {
-    console.log('🚗 Transfer search form submitted')
-    console.log('🛫 Start airport:', startAirport)
-    console.log('📍 End location:', endLocation)
-    console.log('📅 Date/Time:', pickupDate, pickupTime)
+    console.log('🚗 Transfer search:', startAirport?.iataCode, '→', endLocation?.cityName)
 
     // Validate required fields
     if (!startAirport) {
@@ -107,7 +104,7 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
       currencyCode: 'USD'
     }
 
-    console.log('📤 API Request Data:', requestData)
+    console.log('📤 Calling transfer search API...')
 
     try {
       // Call API to get transfer offers
@@ -120,10 +117,9 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
       })
 
       const result = await response.json()
-      console.log('📥 API Response:', result)
 
       if (response.ok) {
-        console.log('🎉 Transfer offers found:', result.data?.length || 0)
+        console.log('🎉 Search complete! Navigating to results...')
         
         // Store search data and results in sessionStorage
         const searchData = {
@@ -140,8 +136,7 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
         }
 
         sessionStorage.setItem('transferSearchData', JSON.stringify(searchData))
-        console.log('💾 Search data stored:', searchData)
-
+        
         // Navigate to car categories to display results
         const urlParams = new URLSearchParams({
           from: searchData.searchParams.from,
@@ -152,7 +147,6 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
         })
 
         const resultsUrl = `/car-categories/all?${urlParams.toString()}`
-        console.log('🔄 Navigating to:', resultsUrl)
         router.push(resultsUrl)
         
       } else {

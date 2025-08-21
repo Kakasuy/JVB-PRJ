@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    console.log('📥 Received request body:', JSON.stringify(body, null, 2))
+    console.log('📥 Transfer search request received')
     
     const { 
       startLocationCode, 
@@ -105,7 +105,7 @@ export async function POST(request: NextRequest) {
       transferSearchBody.endLocationCode = endLocationCode
     }
 
-    console.log('🚗 Transfer search request:', transferSearchBody)
+    console.log('🚗 Searching transfers from', startLocationCode || startAddressLine, 'to', endCityName)
 
     // Call Amadeus Transfer Search API
     const transferResponse = await fetch('https://test.api.amadeus.com/v1/shopping/transfer-offers', {
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
     }
 
     const transferData = await transferResponse.json()
-    console.log('✅ Transfer search successful:', transferData)
+    console.log(`✅ Found ${transferData.data?.length || 0} transfer offers`)
 
     return NextResponse.json(transferData)
   } catch (error) {
