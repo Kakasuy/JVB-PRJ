@@ -106,9 +106,6 @@ export function applyClientSideFilters(
     filteredHotels = filteredHotels.filter(hotel => {
       const price = getHotelPrice(hotel)
       const inRange = price >= minPrice && price <= maxPrice
-      if (!inRange) {
-        console.log(`💰 Filtered out ${hotel.title}: $${price} not in range $${minPrice}-$${maxPrice}`)
-      }
       return inRange
     })
     
@@ -122,9 +119,6 @@ export function applyClientSideFilters(
     filteredHotels = filteredHotels.filter(hotel => {
       const stars = getHotelStars(hotel)
       const matches = selectedStars.includes(stars)
-      if (!matches) {
-        console.log(`⭐ Filtered out ${hotel.title}: ${stars} stars not in ${selectedStars}`)
-      }
       return matches
     })
     
@@ -138,9 +132,6 @@ export function applyClientSideFilters(
     filteredHotels = filteredHotels.filter(hotel => {
       const beds = hotel.beds || 1
       const hasEnough = beds >= minBeds
-      if (!hasEnough) {
-        console.log(`🛏️ Filtered out ${hotel.title}: ${beds} beds < ${minBeds}`)
-      }
       return hasEnough
     })
     
@@ -154,9 +145,6 @@ export function applyClientSideFilters(
     filteredHotels = filteredHotels.filter(hotel => {
       const bedrooms = hotel.bedrooms || 1
       const hasEnough = bedrooms >= minBedrooms
-      if (!hasEnough) {
-        console.log(`🏠 Filtered out ${hotel.title}: ${bedrooms} bedrooms < ${minBedrooms}`)
-      }
       return hasEnough
     })
     
@@ -170,9 +158,6 @@ export function applyClientSideFilters(
     filteredHotels = filteredHotels.filter(hotel => {
       const bathrooms = hotel.bathrooms || 1
       const hasEnough = bathrooms >= minBathrooms
-      if (!hasEnough) {
-        console.log(`🚿 Filtered out ${hotel.title}: ${bathrooms} bathrooms < ${minBathrooms}`)
-      }
       return hasEnough
     })
     
@@ -184,9 +169,6 @@ export function applyClientSideFilters(
   if (filters.free_cancellation === 'true') {
     filteredHotels = filteredHotels.filter(hotel => {
       const hasFreeCancellation = hasFreeCancel(hotel)
-      if (!hasFreeCancellation) {
-        console.log(`❌ Filtered out ${hotel.title}: No free cancellation`)
-      }
       return hasFreeCancellation
     })
     
@@ -197,9 +179,6 @@ export function applyClientSideFilters(
   if (filters.refundable_only === 'true') {
     filteredHotels = filteredHotels.filter(hotel => {
       const refundable = isRefundable(hotel)
-      if (!refundable) {
-        console.log(`💳 Filtered out ${hotel.title}: Not refundable`)
-      }
       return refundable
     })
     
