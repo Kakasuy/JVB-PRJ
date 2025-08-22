@@ -360,9 +360,42 @@ const Page = () => {
         
         // Redirect to success page with booking details
         const successUrl = new URL('/pay-done', window.location.origin)
+        
+        // Basic booking information
         successUrl.searchParams.set('bookingId', result.data.bookingId)
         successUrl.searchParams.set('confirmationNumber', result.data.confirmationNumber || '')
         successUrl.searchParams.set('hotelName', checkoutData.hotel.name)
+        
+        // Additional hotel details
+        successUrl.searchParams.set('hotelImage', checkoutData.hotel.featuredImage || '')
+        successUrl.searchParams.set('location', checkoutData.hotel.address || '')
+        successUrl.searchParams.set('checkInDate', checkoutData.offer.checkInDate)
+        successUrl.searchParams.set('checkOutDate', checkoutData.offer.checkOutDate)
+        successUrl.searchParams.set('adults', checkoutData.offer.guests.adults.toString())
+        successUrl.searchParams.set('rooms', checkoutData.offer.guests.rooms.toString())
+        
+        // Pricing information
+        successUrl.searchParams.set('totalPrice', checkoutData.offer.price.total || '0')
+        successUrl.searchParams.set('currency', checkoutData.offer.price.currency || 'USD')
+        successUrl.searchParams.set('paymentMethod', formObject.paymentMethod as string)
+        
+        // Guest information from booking response
+        if (result.data.guest) {
+          successUrl.searchParams.set('guestTitle', result.data.guest.title || '')
+          successUrl.searchParams.set('guestFirstName', result.data.guest.firstName || '')
+          successUrl.searchParams.set('guestLastName', result.data.guest.lastName || '')
+          successUrl.searchParams.set('guestEmail', result.data.guest.email || '')
+        }
+        
+        // Room details (but not hotel rating)
+        if (checkoutData.hotel.beds) {
+          successUrl.searchParams.set('beds', checkoutData.hotel.beds.toString())
+        }
+        if (checkoutData.hotel.bathrooms) {
+          successUrl.searchParams.set('bathrooms', checkoutData.hotel.bathrooms.toString())
+        }
+        
+        console.log('🔗 Redirecting to success page:', successUrl.toString())
         
         // Add delay to allow user to see the alert before redirect
         setTimeout(() => {
