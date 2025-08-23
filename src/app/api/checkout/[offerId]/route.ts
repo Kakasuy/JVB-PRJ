@@ -10,13 +10,16 @@ function getDefaultCoordinates(city: string) {
   return defaults[city] || defaults['NYC']
 }
 
-function getDefaultAddress(city: string) {
-  const defaults: { [key: string]: string } = {
-    'NYC': 'New York, NY, United States',
-    'LON': 'London, United Kingdom', 
-    'PAR': 'Paris, France',
+function getDynamicAddress(cityCode: string, countryCode?: string): string {
+  // Use available API data to construct meaningful address (same as hotel detail)
+  if (countryCode) {
+    return `${cityCode}, ${countryCode}`
   }
-  return defaults[city] || defaults['NYC']
+  if (cityCode) {
+    return `${cityCode}`
+  }
+  // Honest fallback instead of fake addresses
+  return 'Address not available'
 }
 
 export async function GET(
@@ -111,6 +114,10 @@ export async function GET(
     const hotelOffer = hotelOffersData.data[0]
     const hotelInfo = hotelOffer.hotel
     const offers = hotelOffer.offers || []
+
+    // Extract cityCode from hotel data (same as hotel detail)
+    const hotelCityCode = hotelInfo.cityCode || 'NYC'
+    console.log(`🌍 Checkout - Hotel cityCode detected: ${hotelCityCode}`)
     
     // Find the specific offer by ID - with graceful fallback
     let selectedOffer = offers.find((offer: any) => offer.id === offerId)
@@ -136,12 +143,13 @@ export async function GET(
       console.log(`✅ Found specific offer ${offerId} in available offers`)
     }
 
-    // Step 2: Get detailed hotel information for amenities and images
+    // Step 2: Get detailed hotel information including accurate address
+    // Use hotels/by-city API with detected cityCode (same as hotel detail & Stay Categories)
     let detailedHotelInfo = null
     try {
-      const cityCode = 'NYC' // Default - could be inferred from coordinates
+      console.log(`🔍 Checkout - Fetching detailed info for hotels in ${hotelCityCode}...`)
       const hotelSearchUrl = new URL('https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city')
-      hotelSearchUrl.searchParams.append('cityCode', cityCode)
+      hotelSearchUrl.searchParams.append('cityCode', hotelCityCode)
       hotelSearchUrl.searchParams.append('radius', '50')
       hotelSearchUrl.searchParams.append('radiusUnit', 'KM')
       hotelSearchUrl.searchParams.append('hotelSource', 'ALL')
@@ -238,11 +246,29 @@ export async function GET(
       hotel: {
         id: hotelId,
         name: hotelInfo.name || 'Hotel',
-        address: hotelInfo.address?.lines?.join(', ') || getDefaultAddress('NYC'),
+        address: (() => {
+          // Priority 1: Use accurate address from hotels/by-city API
+          if (detailedHotelInfo?.address?.lines && detailedHotelInfo.address.lines.length > 0) {
+            const accurateAddress = detailedHotelInfo.address.lines.join(', ')
+            console.log(`✅ Checkout - Found accurate address: ${accurateAddress}`)
+            return accurateAddress
+          }
+          
+          // Priority 2: Use basic address from hotel offers
+          if (hotelInfo.address?.lines && hotelInfo.address.lines.length > 0) {
+            return hotelInfo.address.lines.join(', ')
+          }
+          
+          // Priority 3: Dynamic fallback with available API data
+          const countryCode = hotelInfo.address?.countryCode
+          const fallbackAddress = getDynamicAddress(hotelCityCode, countryCode)
+          console.log(`⚠️ Checkout - Using dynamic fallback: ${fallbackAddress}`)
+          return fallbackAddress
+        })(),
         location: hotelInfo.geoCode ? {
           lat: parseFloat(hotelInfo.geoCode.latitude),
           lng: parseFloat(hotelInfo.geoCode.longitude)
-        } : getDefaultCoordinates('NYC'),
+        } : getDefaultCoordinates(hotelCityCode),
         rating: Math.round((Math.random() * 2 + 3) * 10) / 10, // 3.0-5.0
         reviewCount: Math.floor(Math.random() * 500 + 20), // 20-520
         featuredImage,
