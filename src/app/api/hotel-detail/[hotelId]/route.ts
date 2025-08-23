@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 // Helper function to get default address for fallback
-function getDefaultAddress(cityCode: string): string {
-  const addressMap: Record<string, string> = {
-    'NYC': 'New York, NY, USA',
-    'TYO': 'Tokyo, Japan',
-    'PAR': 'Paris, France',
-    'LON': 'London, UK', 
-    'BCN': 'Barcelona, Spain'
+function getDynamicAddress(cityCode: string, countryCode?: string): string {
+  // Use available API data to construct meaningful address
+  if (countryCode) {
+    return `${cityCode}, ${countryCode}`
   }
-  return addressMap[cityCode] || `${cityCode}, Unknown`
+  if (cityCode) {
+    return `${cityCode}`
+  }
+  // Honest fallback instead of fake addresses
+  return 'Address not available'
 }
 
 // Helper function to get default coordinates
@@ -110,14 +111,17 @@ export async function GET(
     const hotelInfo = hotelOffer.hotel
     const offers = hotelOffer.offers || []
 
-    // Step 2: Try to get more detailed hotel information (optional enhancement)
-    // We can use the hotel search API to get amenities info if needed
+    // Extract cityCode from hotel data (Step 1 of 2-step address process)
+    const hotelCityCode = hotelInfo.cityCode || 'NYC'
+    console.log(`🌍 Hotel cityCode detected: ${hotelCityCode}`)
+
+    // Step 2: Get detailed hotel information including accurate address
+    // Use hotels/by-city API with the detected cityCode (same as Stay Categories)
     let detailedHotelInfo = null
     try {
-      // Try to find this hotel in a broader search to get amenities
-      const cityCode = 'NYC' // Default - we could infer this from coordinates
+      console.log(`🔍 Fetching detailed info for hotels in ${hotelCityCode}...`)
       const hotelSearchUrl = new URL('https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city')
-      hotelSearchUrl.searchParams.append('cityCode', cityCode)
+      hotelSearchUrl.searchParams.append('cityCode', hotelCityCode)
       hotelSearchUrl.searchParams.append('radius', '50')
       hotelSearchUrl.searchParams.append('radiusUnit', 'KM')
       hotelSearchUrl.searchParams.append('hotelSource', 'ALL')
@@ -204,15 +208,25 @@ export async function GET(
 
     const roomInfo = extractRoomInfo()
 
-    // Get address (prefer detailed info if available)
+    // Get address using 2-step process (same as Stay Categories)
     const getAddress = () => {
+      // Priority 1: Use detailed address from hotels/by-city API (most accurate)
       if (detailedHotelInfo?.address?.lines && detailedHotelInfo.address.lines.length > 0) {
-        return detailedHotelInfo.address.lines.join(', ')
+        const accurateAddress = detailedHotelInfo.address.lines.join(', ')
+        console.log(`✅ Found accurate address from hotels/by-city: ${accurateAddress}`)
+        return accurateAddress
       }
+      
+      // Priority 2: Try basic address from hotel offers (less detailed)
       if (hotelInfo.address?.lines && hotelInfo.address.lines.length > 0) {
         return hotelInfo.address.lines.join(', ')
       }
-      return getDefaultAddress('NYC') // Fallback
+      
+      // Priority 3: Use dynamic fallback with available API data
+      const countryCode = hotelInfo.address?.countryCode
+      const fallbackAddress = getDynamicAddress(hotelCityCode, countryCode)
+      console.log(`⚠️ Using dynamic fallback address: ${fallbackAddress}`)
+      return fallbackAddress
     }
 
     // Create comprehensive hotel detail response
@@ -277,7 +291,7 @@ export async function GET(
       // Host information (mock for now - could be enhanced with chain info)
       host: {
         displayName: hotelInfo.chainCode || 'Hotel Management',
-        avatarUrl: '/images/avatars/hotel-default.jpg',
+        avatarUrl: 'https://images.pexels.com/photos/6129967/pexels-photo-6129967.jpeg?auto=compress&cs=tinysrgb&w=150',
         handle: (hotelInfo.chainCode || 'hotel-management').toLowerCase(),
         description: `Professional hotel management providing excellent service and comfortable accommodations.`,
         listingsCount: Math.floor(Math.random() * 20 + 5),
