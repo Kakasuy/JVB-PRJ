@@ -265,7 +265,9 @@ const Page = async ({
               <br /><br />
               <div className="rounded-lg bg-neutral-50 p-4 dark:bg-neutral-800">
                 <h4 className="mb-2 font-medium text-neutral-900 dark:text-neutral-100">
-                  Detailed Room Information:
+                  {enhancedOfferDetails?.meta?.usingRoomDescription ? 
+                    'Detailed Room Information:' : 
+                    'Offer Information:'}
                 </h4>
                 <span className="text-sm leading-relaxed">
                   {enhancedDescription}
@@ -289,7 +291,7 @@ const Page = async ({
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-4 text-xs text-gray-500">
             {hasEnhancedData ? 
-              `Using enhanced description from offerId API` :
+              `Using enhanced description from offerId API (${enhancedOfferDetails?.meta?.descriptionType || 'unknown'} info)` :
               'Using base description'
             }
           </div>
@@ -299,13 +301,8 @@ const Page = async ({
   }
 
   const renderSectionAmenities = () => {
-    // Enhanced amenities from detailed API (priority over base amenities)
-    const enhancedAmenities = enhancedOfferDetails?.enhancedAmenities || []
-    const baseAmenities = (listing as any)?.amenities || []
-    
-    // Use enhanced amenities if available, otherwise fallback to base amenities
-    const apiAmenities = enhancedAmenities.length > 0 ? enhancedAmenities : baseAmenities
-    const usingEnhancedData = enhancedAmenities.length > 0
+    // Get amenities from Amadeus API data (back to original logic)
+    const apiAmenities = (listing as any)?.amenities || []
     
     // Complete Amadeus amenities mapping with readable names
     const amenityNames: { [key: string]: string } = {
@@ -527,15 +524,10 @@ const Page = async ({
           </>
         )}
         
-        {/* Debug: Show data source */}
+        {/* Debug: Show if using API data */}
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-4 text-xs text-gray-500">
-            {usingEnhancedData ? 
-              `Using enhanced amenities from offerId API (${apiAmenities.length})` :
-              apiAmenities.length > 0 ? 
-                `Using base API amenities (${apiAmenities.length})` : 
-                'Using fallback amenities'
-            }
+            {apiAmenities.length > 0 ? `Using API amenities (${apiAmenities.length})` : 'Using fallback amenities'}
           </div>
         )}
         
