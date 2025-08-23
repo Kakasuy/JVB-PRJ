@@ -306,22 +306,18 @@ const HotelDetailClient: React.FC<HotelDetailClientProps> = ({
 
         {/* PRICE BREAKDOWN */}
         <DescriptionList>
-          {perNightPrice && (
+          {basePrice && (
             <>
-              <DescriptionTerm>{currency} {perNightPrice.toFixed(2)} x {numberOfNights} night{numberOfNights !== 1 ? 's' : ''}</DescriptionTerm>
-              <DescriptionDetails className="sm:text-right">{currency} {(perNightPrice * numberOfNights).toFixed(2)}</DescriptionDetails>
+              <DescriptionTerm>Base Price ({numberOfNights} night{numberOfNights !== 1 ? 's' : ''})</DescriptionTerm>
+              <DescriptionDetails className="sm:text-right">{currency} {basePrice.toFixed(2)}</DescriptionDetails>
             </>
           )}
           
-          {totalPrice && perNightPrice && totalPrice !== (perNightPrice * numberOfNights) && (
+          {totalPrice && basePrice && totalPrice !== basePrice && (
             <>
               <DescriptionTerm>Taxes & fees</DescriptionTerm>
               <DescriptionDetails className="sm:text-right">
-                {taxesAmount > 0 ? (
-                  `${currency} ${taxesAmount.toFixed(2)}`
-                ) : (
-                  `${currency} ${(totalPrice - (perNightPrice * numberOfNights)).toFixed(2)}`
-                )}
+                {currency} {(totalPrice - basePrice).toFixed(2)}
               </DescriptionDetails>
             </>
           )}
