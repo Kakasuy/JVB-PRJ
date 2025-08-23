@@ -251,6 +251,8 @@ const Page = async ({
     // Enhanced description from detailed API
     const enhancedDescription = enhancedOfferDetails?.enhancedDescription
     const hasEnhancedData = !!enhancedDescription
+    const offerDetails = enhancedOfferDetails?.offerDetails
+    const hasOfferDetails = enhancedOfferDetails?.meta?.hasOfferDetails
     
     return (
       <div className="listingSection__wrap">
@@ -275,6 +277,44 @@ const Page = async ({
               </div>
             </>
           )}
+
+          {/* Additional offer details */}
+          {hasOfferDetails && (
+            <>
+              <br /><br />
+              <div className="rounded-lg bg-blue-50 p-4 dark:bg-blue-900/20">
+                <h4 className="mb-3 font-medium text-neutral-900 dark:text-neutral-100">
+                  Offer Details:
+                </h4>
+                <div className="space-y-2 text-sm">
+                  {offerDetails?.boardType && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-blue-700 dark:text-blue-300">Board Type:</span>
+                      <span className="capitalize">{offerDetails.boardType.replace(/_/g, ' ').toLowerCase()}</span>
+                    </div>
+                  )}
+                  {offerDetails?.roomCategory && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-blue-700 dark:text-blue-300">Room Category:</span>
+                      <span className="capitalize">{offerDetails.roomCategory}</span>
+                    </div>
+                  )}
+                  {offerDetails?.bedType && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-blue-700 dark:text-blue-300">Bed Type:</span>
+                      <span className="capitalize">{offerDetails.bedType.replace(/_/g, ' ').toLowerCase()}</span>
+                    </div>
+                  )}
+                  {offerDetails?.beds && (
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-blue-700 dark:text-blue-300">Number of Beds:</span>
+                      <span>{offerDetails.beds}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
           
           {/* Fallback: Show existing room description if no enhanced data */}
           {!hasEnhancedData && (listing as any)?.amadeus?.offers?.[0]?.roomDescription && (
@@ -294,6 +334,7 @@ const Page = async ({
               `Using enhanced description from offerId API (${enhancedOfferDetails?.meta?.descriptionType || 'unknown'} info)` :
               'Using base description'
             }
+            {hasOfferDetails && <span> | Additional offer details available</span>}
           </div>
         )}
       </div>

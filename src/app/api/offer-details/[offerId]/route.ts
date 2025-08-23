@@ -70,12 +70,19 @@ export async function GET(
     }
 
     // Extract enhanced data for UI with priority logic
-    const roomDescription = offerData.data.offers?.[0]?.roomInformation?.description
-    const offerDescription = offerData.data.offers?.[0]?.description?.text
+    const offer = offerData.data.offers?.[0]
+    const roomDescription = offer?.roomInformation?.description
+    const offerDescription = offer?.description?.text
     
     // Priority: Room description → Offer description
     const enhancedDescription = roomDescription || offerDescription
     const enhancedAmenities = offerData.data.hotel?.amenities || []
+    
+    // Extract additional offer details
+    const boardType = offer?.boardType
+    const roomCategory = offer?.room?.typeEstimated?.category
+    const bedType = offer?.room?.typeEstimated?.bedType
+    const beds = offer?.room?.typeEstimated?.beds
 
     console.log(`✅ Offer details retrieved for ${offerId}`)
     console.log(`🏠 Room description available: ${!!roomDescription}`)
@@ -91,6 +98,13 @@ export async function GET(
         // Extracted enhanced data
         enhancedDescription,
         enhancedAmenities,
+        // Additional offer details
+        offerDetails: {
+          boardType,
+          roomCategory,
+          bedType,
+          beds
+        },
         // Metadata
         meta: {
           offerId,
@@ -98,7 +112,8 @@ export async function GET(
           hasOfferDescription: !!offerDescription,
           usingRoomDescription: !!roomDescription,
           descriptionType: roomDescription ? 'room' : offerDescription ? 'offer' : 'none',
-          amenitiesCount: enhancedAmenities.length
+          amenitiesCount: enhancedAmenities.length,
+          hasOfferDetails: !!(boardType || roomCategory || bedType || beds)
         }
       }
     })
