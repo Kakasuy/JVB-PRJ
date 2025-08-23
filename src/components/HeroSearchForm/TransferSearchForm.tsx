@@ -23,6 +23,8 @@ interface AirportData {
   }
 }
 
+type TransferType = 'PRIVATE' | 'SHARED' | 'TAXI' | 'HOURLY' | 'AIRPORT_EXPRESS' | 'AIRPORT_BUS'
+
 interface Props {
   className?: string
   formStyle: 'default' | 'small'
@@ -31,11 +33,14 @@ interface Props {
 const TRANSFER_TYPES = [
   { value: 'PRIVATE', label: 'Private Transfer', description: 'Dedicated vehicle for you' },
   { value: 'SHARED', label: 'Shared Transfer', description: 'Share with other passengers' },
-  { value: 'TAXI', label: 'Taxi', description: 'Standard taxi service' }
+  { value: 'TAXI', label: 'Taxi', description: 'Standard taxi service' },
+  { value: 'HOURLY', label: 'Hourly Services', description: 'Book by hour with flexible stops' },
+  { value: 'AIRPORT_EXPRESS', label: 'Airport Express', description: 'Fast direct airport connection' },
+  { value: 'AIRPORT_BUS', label: 'Airport Buses', description: 'Scheduled bus service to airport' }
 ]
 
 export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default' }) => {
-  const [transferType, setTransferType] = useState<'PRIVATE' | 'SHARED' | 'TAXI'>('PRIVATE')
+  const [transferType, setTransferType] = useState<TransferType>('PRIVATE')
   const [passengers, setPassengers] = useState(2)
   const [pickupDate, setPickupDate] = useState('')
   const [pickupTime, setPickupTime] = useState('')
@@ -199,10 +204,10 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
       </Headless.RadioGroup>
 
       {/* LOCATION AND DATE/TIME INPUTS */}
-      <div className="relative flex flex-wrap lg:flex-nowrap pr-20 sm:pr-24 xl:pr-28">
+      <div className="relative flex flex-wrap xl:flex-nowrap pr-16 sm:pr-20 xl:pr-24">
         {/* FROM Airport */}
         <div className={clsx(
-          "w-full lg:flex-1 relative z-10 cursor-pointer flex items-center focus:outline-hidden text-start",
+          "w-full lg:w-[38%] xl:w-[35%] relative z-10 cursor-pointer flex items-center focus:outline-hidden text-start",
           formStyle === 'default' && 'px-4 py-4 sm:px-7 xl:px-8 xl:py-6',
           formStyle === 'small' && 'px-4 py-3 sm:px-7 xl:px-8'
         )}>
@@ -221,7 +226,7 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
         
         {/* TO Location */}
         <div className={clsx(
-          "w-full lg:flex-1 relative z-10 cursor-pointer flex items-center focus:outline-hidden text-start",
+          "w-full lg:w-[38%] xl:w-[35%] relative z-10 cursor-pointer flex items-center focus:outline-hidden text-start",
           formStyle === 'default' && 'px-4 py-4 sm:px-7 xl:px-8 xl:py-6',
           formStyle === 'small' && 'px-4 py-3 sm:px-7 xl:px-8'
         )}>
@@ -240,46 +245,42 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
 
         {/* DATE AND TIME */}
         <div className={clsx(
-          "w-full sm:w-auto sm:flex-1 relative z-10 shrink-0 cursor-pointer flex items-center gap-x-3 focus:outline-hidden text-start",
-          formStyle === 'default' && 'px-4 py-4 sm:px-7 xl:px-8 xl:py-6',
-          formStyle === 'small' && 'px-4 py-3 sm:px-7 xl:px-8'
+          "w-full lg:w-[14%] xl:w-[18%] relative z-10 shrink-0 cursor-pointer flex items-center gap-x-3 focus:outline-hidden text-start",
+          formStyle === 'default' && 'px-3 py-4 sm:px-4 xl:px-5 xl:py-6',
+          formStyle === 'small' && 'px-3 py-3 sm:px-4 xl:px-5'
         )}>
-          <div className="grow">
-            <div className="flex gap-2">
+          <div className="w-full">
+            <div className="flex flex-col gap-1">
               {/* Date Input */}
-              <div className="flex-1 min-w-0">
-                <input
-                  type="date"
-                  name="pickup-date"
-                  value={pickupDate}
-                  onChange={(e) => setPickupDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                  className={clsx(
-                    "block w-full truncate border-none bg-transparent p-0 font-semibold focus:ring-0 focus:outline-hidden text-neutral-800 dark:text-neutral-200",
-                    formStyle === 'default' && 'text-sm sm:text-base xl:text-lg',
-                    formStyle === 'small' && 'text-sm sm:text-base'
-                  )}
-                  required
-                />
-              </div>
+              <input
+                type="date"
+                name="pickup-date"
+                value={pickupDate}
+                onChange={(e) => setPickupDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+                className={clsx(
+                  "block w-full border-none bg-transparent p-0 font-semibold focus:ring-0 focus:outline-hidden text-neutral-800 dark:text-neutral-200",
+                  formStyle === 'default' && 'text-sm xl:text-base',
+                  formStyle === 'small' && 'text-xs sm:text-sm'
+                )}
+                required
+              />
               
               {/* Time Input */}
-              <div className="flex-1 min-w-0">
-                <input
-                  type="time"
-                  name="pickup-time"
-                  value={pickupTime}
-                  onChange={(e) => setPickupTime(e.target.value)}
-                  className={clsx(
-                    "block w-full truncate border-none bg-transparent p-0 font-semibold focus:ring-0 focus:outline-hidden text-neutral-800 dark:text-neutral-200",
-                    formStyle === 'default' && 'text-sm sm:text-base xl:text-lg',
-                    formStyle === 'small' && 'text-sm sm:text-base'
-                  )}
-                  required
-                />
-              </div>
+              <input
+                type="time"
+                name="pickup-time"
+                value={pickupTime}
+                onChange={(e) => setPickupTime(e.target.value)}
+                className={clsx(
+                  "block w-full border-none bg-transparent p-0 font-semibold focus:ring-0 focus:outline-hidden text-neutral-800 dark:text-neutral-200",
+                  formStyle === 'default' && 'text-sm xl:text-base',
+                  formStyle === 'small' && 'text-xs sm:text-sm'
+                )}
+                required
+              />
             </div>
-            <div className="mt-0.5 text-start text-sm font-light text-neutral-400">
+            <div className="mt-0.5 text-start text-xs font-light text-neutral-400">
               <span className="line-clamp-1">Pickup date & time</span>
             </div>
           </div>
@@ -289,37 +290,37 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
 
         {/* PASSENGERS */}
         <div className={clsx(
-          "w-full sm:w-auto sm:flex-shrink-0 relative z-10 cursor-pointer flex items-center gap-x-3 focus:outline-hidden text-start sm:min-w-[120px] md:min-w-[140px] lg:min-w-[160px]",
-          formStyle === 'default' && 'px-4 py-4 sm:px-5 md:px-6 lg:px-7 xl:px-8 xl:py-6',
-          formStyle === 'small' && 'px-4 py-3 sm:px-5 md:px-6 lg:px-7 xl:px-8'
+          "w-full lg:w-[10%] xl:w-[12%] relative z-10 cursor-pointer flex items-center gap-x-3 focus:outline-hidden text-start",
+          formStyle === 'default' && 'px-2 py-4 sm:px-3 md:px-4 lg:px-5 xl:px-6 xl:py-6',
+          formStyle === 'small' && 'px-2 py-3 sm:px-3 md:px-4 lg:px-5 xl:px-6'
         )}>
-          <div className="grow sm:grow-0 w-full">
-            <div className="flex items-center justify-center gap-3 mb-1">
+          <div className="w-full">
+            <div className="flex items-center justify-center gap-1 mb-1">
               <button
                 type="button"
                 onClick={() => setPassengers(Math.max(1, passengers - 1))}
-                className="w-8 h-8 rounded-full border border-neutral-300 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-400 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-6 h-6 rounded-full border border-neutral-300 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-400 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                 disabled={passengers <= 1}
               >
                 -
               </button>
               <span className={clsx(
-                "font-semibold min-w-[2.5rem] text-center text-neutral-800 dark:text-neutral-200",
-                formStyle === 'default' && 'text-sm sm:text-base xl:text-lg',
-                formStyle === 'small' && 'text-sm sm:text-base'
+                "font-semibold min-w-[1.5rem] text-center text-neutral-800 dark:text-neutral-200",
+                formStyle === 'default' && 'text-sm xl:text-base',
+                formStyle === 'small' && 'text-xs sm:text-sm'
               )}>
                 {passengers}
               </span>
               <button
                 type="button"
                 onClick={() => setPassengers(Math.min(8, passengers + 1))}
-                className="w-8 h-8 rounded-full border border-neutral-300 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-400 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-6 h-6 rounded-full border border-neutral-300 flex items-center justify-center text-neutral-600 hover:bg-neutral-100 dark:border-neutral-600 dark:text-neutral-400 dark:hover:bg-neutral-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs"
                 disabled={passengers >= 8}
               >
                 +
               </button>
             </div>
-            <div className="text-center sm:text-start text-sm font-light text-neutral-400">
+            <div className="text-center text-xs font-light text-neutral-400">
               <span className="line-clamp-1">Passengers</span>
             </div>
           </div>
@@ -333,7 +334,7 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
           type="button"
           onClick={handleFormSubmit}
           className={clsx(
-            "absolute inset-y-0 end-4 flex h-full w-12 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:end-6 sm:h-12 sm:w-12",
+            "absolute top-1/2 -translate-y-1/2 end-4 flex w-12 h-12 shrink-0 items-center justify-center rounded-full bg-primary-600 text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:end-6 sm:h-12 sm:w-12",
             formStyle === 'small' && 'sm:end-5 sm:h-10 sm:w-10'
           )}
         >
