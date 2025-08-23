@@ -117,6 +117,35 @@ export async function generateMetadata({
   }
 }
 
+// Helper function to fetch enhanced offer details
+async function getEnhancedOfferDetails(offerId: string) {
+  if (!offerId) return null
+  
+  try {
+    console.log(`🔍 Fetching enhanced details for offer: ${offerId}`)
+    
+    // Call our API endpoint to get enhanced details
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/offer-details/${offerId}`)
+    
+    if (!response.ok) {
+      console.warn(`⚠️ Could not fetch enhanced details for offer ${offerId}`)
+      return null
+    }
+    
+    const result = await response.json()
+    
+    if (result.success) {
+      console.log(`✅ Enhanced details loaded for ${offerId}`)
+      return result.data
+    }
+    
+    return null
+  } catch (error) {
+    console.error('❌ Error fetching enhanced offer details:', error)
+    return null
+  }
+}
+
 const Page = async ({ 
   params, 
   searchParams 
@@ -173,6 +202,10 @@ const Page = async ({
   } = listing
   const reviews = (await getListingReviews(handle)).slice(0, 3) // Fetching only the first 3 reviews for display
 
+  // Get enhanced offer details if available
+  const firstOfferId = (listing as any)?.amadeus?.offers?.[0]?.id
+  const enhancedOfferDetails = firstOfferId ? await getEnhancedOfferDetails(firstOfferId) : null
+
   // Server action to handle form submission
   const handleSubmitForm = async (formData: FormData) => {
     'use server'
@@ -215,14 +248,34 @@ const Page = async ({
   }
 
   const renderSectionInfo = () => {
+    // Enhanced description from detailed API
+    const enhancedDescription = enhancedOfferDetails?.enhancedDescription
+    const hasEnhancedData = !!enhancedDescription
+    
     return (
       <div className="listingSection__wrap">
         <SectionHeading>Stay information</SectionHeading>
         <div className="leading-relaxed text-neutral-700 dark:text-neutral-300">
+          {/* Base description */}
           <span>{description}</span>
           
-          {/* Show Amadeus-specific room details if available */}
-          {(listing as any)?.amadeus?.offers?.[0]?.roomDescription && (
+          {/* Enhanced room details from offerId API */}
+          {hasEnhancedData && (
+            <>
+              <br /><br />
+              <div className="rounded-lg bg-neutral-50 p-4 dark:bg-neutral-800">
+                <h4 className="mb-2 font-medium text-neutral-900 dark:text-neutral-100">
+                  Detailed Room Information:
+                </h4>
+                <span className="text-sm leading-relaxed">
+                  {enhancedDescription}
+                </span>
+              </div>
+            </>
+          )}
+          
+          {/* Fallback: Show existing room description if no enhanced data */}
+          {!hasEnhancedData && (listing as any)?.amadeus?.offers?.[0]?.roomDescription && (
             <>
               <br /><br />
               <span>
@@ -232,13 +285,27 @@ const Page = async ({
           )}
         </div>
 
+        {/* Debug info */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 text-xs text-gray-500">
+            {hasEnhancedData ? 
+              `Using enhanced description from offerId API` :
+              'Using base description'
+            }
+          </div>
+        )}
       </div>
     )
   }
 
   const renderSectionAmenities = () => {
-    // Get amenities from Amadeus API data
-    const apiAmenities = (listing as any)?.amenities || []
+    // Enhanced amenities from detailed API (priority over base amenities)
+    const enhancedAmenities = enhancedOfferDetails?.enhancedAmenities || []
+    const baseAmenities = (listing as any)?.amenities || []
+    
+    // Use enhanced amenities if available, otherwise fallback to base amenities
+    const apiAmenities = enhancedAmenities.length > 0 ? enhancedAmenities : baseAmenities
+    const usingEnhancedData = enhancedAmenities.length > 0
     
     // Complete Amadeus amenities mapping with readable names
     const amenityNames: { [key: string]: string } = {
@@ -460,10 +527,15 @@ const Page = async ({
           </>
         )}
         
-        {/* Debug: Show if using API data */}
+        {/* Debug: Show data source */}
         {process.env.NODE_ENV === 'development' && (
           <div className="mt-4 text-xs text-gray-500">
-            {apiAmenities.length > 0 ? `Using API amenities (${apiAmenities.length})` : 'Using fallback amenities'}
+            {usingEnhancedData ? 
+              `Using enhanced amenities from offerId API (${apiAmenities.length})` :
+              apiAmenities.length > 0 ? 
+                `Using base API amenities (${apiAmenities.length})` : 
+                'Using fallback amenities'
+            }
           </div>
         )}
         
