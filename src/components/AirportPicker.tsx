@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { Combobox } from '@headlessui/react'
-import { ChevronUpDownIcon, MapPinIcon } from '@heroicons/react/24/outline'
+import { ClearDataButton } from '@/components/HeroSearchForm/ui/ClearDataButton'
+import clsx from 'clsx'
 
 interface AirportData {
   iataCode: string
@@ -137,10 +138,18 @@ const AirportPicker: React.FC<AirportPickerProps> = ({
     }
   }
 
+  const handleClearInput = () => {
+    setQuery('')
+    setInputValue('')
+    setSelectedAirport(null)
+    setAirports([])
+    onAirportSelect(null)
+  }
+
   return (
     <div className={`relative ${className}`}>
       <Combobox value={selectedAirport} onChange={handleAirportSelect}>
-        <div className="relative">
+        <div className="relative group" data-open={inputValue ? true : false}>
           <Combobox.Input
             className="w-full border-none bg-transparent p-0 text-sm font-semibold placeholder-neutral-400 focus:outline-none focus:ring-0 text-neutral-800 dark:text-neutral-200 sm:text-base xl:text-lg"
             placeholder={placeholder}
@@ -160,9 +169,10 @@ const AirportPicker: React.FC<AirportPickerProps> = ({
             required={required}
           />
           
-          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-            <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
-          </Combobox.Button>
+          <ClearDataButton
+            className={clsx(!inputValue && 'sr-only')}
+            onClick={handleClearInput}
+          />
         </div>
 
         <Combobox.Options 

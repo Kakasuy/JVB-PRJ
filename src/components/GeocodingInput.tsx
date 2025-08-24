@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { Combobox } from '@headlessui/react'
-import { ChevronUpDownIcon, MapPinIcon } from '@heroicons/react/24/outline'
+import { ClearDataButton } from '@/components/HeroSearchForm/ui/ClearDataButton'
+import clsx from 'clsx'
 
 interface LocationResult {
   place_id: string
@@ -157,6 +158,13 @@ const GeocodingInput: React.FC<GeocodingInputProps> = ({
     }
   }
 
+  const handleClearInput = () => {
+    setQuery('')
+    setInputValue('')
+    setSelectedLocation(null)
+    setLocations([])
+  }
+
   // Create a virtual location from inputValue to prevent clearing
   const getComboboxValue = () => {
     if (selectedLocation) return selectedLocation
@@ -181,7 +189,7 @@ const GeocodingInput: React.FC<GeocodingInputProps> = ({
   return (
     <div className={`relative ${className}`}>
       <Combobox value={getComboboxValue()} onChange={(location: LocationResult) => handleLocationSelect(location)}>
-        <div className="relative">
+        <div className="relative group" data-open={inputValue ? true : false}>
           <Combobox.Input
             className="w-full border-none bg-transparent p-0 text-sm font-semibold placeholder-neutral-400 focus:outline-none focus:ring-0 text-neutral-800 dark:text-neutral-200 sm:text-base xl:text-lg"
             placeholder={placeholder}
@@ -194,9 +202,10 @@ const GeocodingInput: React.FC<GeocodingInputProps> = ({
             required={required}
           />
           
-          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-            <ChevronUpDownIcon className="h-4 w-4 text-neutral-400" />
-          </Combobox.Button>
+          <ClearDataButton
+            className={clsx(!inputValue && 'sr-only')}
+            onClick={handleClearInput}
+          />
         </div>
 
         <Combobox.Options 
