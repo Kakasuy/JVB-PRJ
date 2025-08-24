@@ -35,6 +35,7 @@ const AirportPicker: React.FC<AirportPickerProps> = ({
   className = ""
 }) => {
   const [query, setQuery] = useState('')
+  const [inputValue, setInputValue] = useState('')
   const [airports, setAirports] = useState<AirportData[]>([])
   const [selectedAirport, setSelectedAirport] = useState<AirportData | null>(null)
   const [loading, setLoading] = useState(false)
@@ -90,7 +91,9 @@ const AirportPicker: React.FC<AirportPickerProps> = ({
     setSelectedAirport(airport)
     onAirportSelect(airport)
     if (airport) {
-      setQuery(`${airport.iataCode} - ${airport.name}`)
+      const airportText = `${airport.iataCode} - ${airport.name}`
+      setQuery(airportText)
+      setInputValue(airportText)
     }
   }
 
@@ -102,9 +105,12 @@ const AirportPicker: React.FC<AirportPickerProps> = ({
             className="w-full border-none bg-transparent p-0 text-sm font-semibold placeholder-neutral-400 focus:outline-none focus:ring-0 text-neutral-800 dark:text-neutral-200 sm:text-base xl:text-lg"
             placeholder={placeholder}
             displayValue={(airport: AirportData) => 
-              airport ? `${airport.iataCode} - ${airport.name}` : ''
+              airport ? `${airport.iataCode} - ${airport.name}` : inputValue
             }
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              setInputValue(event.target.value)
+              setQuery(event.target.value)
+            }}
             name={name}
             required={required}
           />
@@ -114,7 +120,10 @@ const AirportPicker: React.FC<AirportPickerProps> = ({
           </Combobox.Button>
         </div>
 
-        <Combobox.Options className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-neutral-800 sm:text-sm">
+        <Combobox.Options 
+          static={false}
+          className="absolute start-0 top-full z-40 mt-12 hidden-scrollbar max-h-96 overflow-y-auto rounded-3xl bg-white py-3 shadow-xl transition duration-150 data-closed:translate-y-1 data-closed:opacity-0 dark:bg-neutral-800 w-full sm:py-6 pointer-events-auto"
+        >
           {loading && (
             <div className="px-4 py-2 text-neutral-500">
               <div className="flex items-center gap-2">
@@ -133,34 +142,22 @@ const AirportPicker: React.FC<AirportPickerProps> = ({
           {airports.map((airport) => (
             <Combobox.Option
               key={`${airport.iataCode}-${airport.name}`}
-              className={({ active }) =>
-                `relative cursor-pointer select-none py-2 pl-3 pr-9 ${
-                  active ? 'bg-primary-100 text-primary-900 dark:bg-primary-800 dark:text-primary-100' : 'text-neutral-900 dark:text-neutral-100'
-                }`
-              }
+              className="flex items-center gap-3 p-4 data-focus:bg-neutral-100 sm:gap-4.5 sm:px-8 dark:data-focus:bg-neutral-700"
               value={airport}
             >
-              {({ selected }) => (
-                <div className="flex items-start gap-3">
-                  <MapPinIcon className="h-4 w-4 mt-0.5 text-neutral-400" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <span className={`font-semibold text-sm ${selected ? 'text-primary-600' : ''}`}>
-                        {airport.iataCode}
-                      </span>
-                      <span className="text-xs text-neutral-500">
-                        {airport.address?.cityName}
-                      </span>
-                    </div>
-                    <div className="text-sm text-neutral-600 dark:text-neutral-300 truncate">
-                      {airport.name}
-                    </div>
-                    <div className="text-xs text-neutral-400">
-                      {airport.address?.countryName}
-                    </div>
-                  </div>
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-4 text-neutral-400 sm:size-6 dark:text-neutral-500">
+                  <path d="M17.8 19.2L16 11l3.5-3.5C20 7 20 6.5 19.5 6.5s-1.5.5-1.5.5L12 9 6 2H4l2 7-2 1-2-2H0l2 4 2 4h2l2-2 2 1 7 2h2z" />
+                </svg>
+                <div className="flex flex-col">
+                  <span className="block font-medium text-neutral-700 dark:text-neutral-200">
+                    {airport.iataCode} - {airport.name}
+                  </span>
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Airport
+                  </span>
                 </div>
-              )}
+              </>
             </Combobox.Option>
           ))}
         </Combobox.Options>

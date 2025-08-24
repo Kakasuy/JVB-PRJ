@@ -433,11 +433,9 @@ export const LocationInputField: FC<Props> = ({
                     <span className="block font-medium text-neutral-700 dark:text-neutral-200">
                       {item.name}
                     </span>
-                    {item.type && (
-                      <span className="text-xs text-neutral-500 dark:text-neutral-400">
-                        {item.type === 'AIRPORT' ? 'Airport' : 'City'}
-                      </span>
-                    )}
+                    <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                      {item.type === 'AIRPORT' ? 'Airport' : 'City'}
+                    </span>
                   </div>
                 </Headless.ComboboxOption>
               ))}

@@ -52,6 +52,7 @@ const GeocodingInput: React.FC<GeocodingInputProps> = ({
   className = ""
 }) => {
   const [query, setQuery] = useState('')
+  const [inputValue, setInputValue] = useState('')
   const [locations, setLocations] = useState<LocationResult[]>([])
   const [selectedLocation, setSelectedLocation] = useState<LocationResult | null>(null)
   const [loading, setLoading] = useState(false)
@@ -135,27 +136,46 @@ const GeocodingInput: React.FC<GeocodingInputProps> = ({
   }, [query])
 
   const handleLocationSelect = (location: LocationResult | null) => {
-    if (location) {
+    if (location && location.place_id !== -1) { // Check if it's a real location, not virtual one
       const locationData = convertNominatimToLocationData(location)
       setSelectedLocation(location)
       onLocationSelect(locationData)
       setQuery(location.display_name)
+      setInputValue(location.display_name)
       console.log('📍 Location selected:', locationData.cityName)
     } else {
+      // Don't clear everything when selecting virtual location or null
       setSelectedLocation(null)
-      setQuery('')
     }
+  }
+
+  // Create a virtual location from inputValue to prevent clearing
+  const getComboboxValue = () => {
+    if (selectedLocation) return selectedLocation
+    if (inputValue) {
+      return {
+        place_id: -1, // Virtual ID to identify this as user input
+        display_name: inputValue,
+        lat: '0',
+        lon: '0',
+        address: {}
+      } as LocationResult
+    }
+    return null
   }
 
   return (
     <div className={`relative ${className}`}>
-      <Combobox value={selectedLocation} onChange={(location: LocationResult) => handleLocationSelect(location)}>
+      <Combobox value={getComboboxValue()} onChange={(location: LocationResult) => handleLocationSelect(location)}>
         <div className="relative">
           <Combobox.Input
             className="w-full border-none bg-transparent p-0 text-sm font-semibold placeholder-neutral-400 focus:outline-none focus:ring-0 text-neutral-800 dark:text-neutral-200 sm:text-base xl:text-lg"
             placeholder={placeholder}
-            displayValue={(location: LocationResult) => location ? location.display_name : query}
-            onChange={(event) => setQuery(event.target.value)}
+            displayValue={(location: LocationResult) => location ? location.display_name : inputValue}
+            onChange={(event) => {
+              setInputValue(event.target.value)
+              setQuery(event.target.value)
+            }}
             name={name}
             required={required}
           />
@@ -165,7 +185,10 @@ const GeocodingInput: React.FC<GeocodingInputProps> = ({
           </Combobox.Button>
         </div>
 
-        <Combobox.Options className="absolute z-50 mt-1 max-h-60 w-full overflow-auto rounded-lg bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none dark:bg-neutral-800 sm:text-sm">
+        <Combobox.Options 
+          static={false}
+          className="absolute start-0 top-full z-40 mt-12 hidden-scrollbar max-h-96 overflow-y-auto rounded-3xl bg-white py-3 shadow-xl transition duration-150 data-closed:translate-y-1 data-closed:opacity-0 dark:bg-neutral-800 w-full sm:py-6 pointer-events-auto"
+        >
           {loading && (
             <div className="px-4 py-2 text-neutral-500">
               <div className="flex items-center gap-2">
@@ -184,29 +207,23 @@ const GeocodingInput: React.FC<GeocodingInputProps> = ({
           {locations.map((location) => (
             <Combobox.Option
               key={location.place_id}
-              className={({ active }) =>
-                `relative cursor-pointer select-none py-2 pl-3 pr-9 ${
-                  active ? 'bg-primary-100 text-primary-900 dark:bg-primary-800 dark:text-primary-100' : 'text-neutral-900 dark:text-neutral-100'
-                }`
-              }
+              className="flex items-center gap-3 p-4 data-focus:bg-neutral-100 sm:gap-4.5 sm:px-8 dark:data-focus:bg-neutral-700"
               value={location}
             >
-              {({ selected }) => (
-                <div className="flex items-start gap-3">
-                  <MapPinIcon className="h-4 w-4 mt-0.5 text-neutral-400" />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">
-                      {location.display_name.split(',')[0]}
-                    </div>
-                    <div className="text-xs text-neutral-500 truncate">
-                      {location.display_name}
-                    </div>
-                    <div className="text-xs text-neutral-400">
-                      {location.address?.country || 'Unknown Country'}
-                    </div>
-                  </div>
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="size-4 text-neutral-400 sm:size-6 dark:text-neutral-500">
+                  <path d="M13.6177 21.367C13.1841 21.773 12.6044 22 12.0011 22C11.3978 22 10.8182 21.773 10.3845 21.367C6.41302 17.626 1.09076 13.4469 3.68627 7.37966C5.08963 4.09916 8.45834 2 12.0011 2C15.5439 2 18.9126 4.09916 20.316 7.37966C22.9082 13.4393 17.599 17.6389 13.6177 21.367Z"/>
+                  <path d="M15.5 11C15.5 12.933 13.933 14.5 12 14.5C10.067 14.5 8.5 12.933 8.5 11C8.5 9.067 10.067 7.5 12 7.5C13.933 7.5 15.5 9.067 15.5 11Z"/>
+                </svg>
+                <div className="flex flex-col">
+                  <span className="block font-medium text-neutral-700 dark:text-neutral-200">
+                    {location.display_name.split(',')[0]}
+                  </span>
+                  <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                    City
+                  </span>
                 </div>
-              )}
+              </>
             </Combobox.Option>
           ))}
         </Combobox.Options>
