@@ -157,7 +157,7 @@ export async function GET(request: NextRequest) {
 
     // Step 2: Batch processing - Query multiple batches of 40 hotels each with parallel processing
     const BATCH_SIZE = 40
-    const MAX_BATCHES = 5 // Query up to 200 hotels total (5 batches of 40)
+    const MAX_BATCHES = 4 // Query up to 160 hotels total (4 batches of 40)
     const totalHotelsToQuery = Math.min(MAX_BATCHES * BATCH_SIZE, hotelListData.data.length)
     const actualBatches = Math.ceil(totalHotelsToQuery / BATCH_SIZE)
     

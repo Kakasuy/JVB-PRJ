@@ -528,10 +528,45 @@ const Page = () => {
               {hotel.beds} bed{hotel.beds !== 1 ? 's' : ''} · {hotel.bathrooms} bath{hotel.bathrooms !== 1 ? 's' : ''}
             </p>
             <Divider className="w-10!" />
-            <div className="flex items-center gap-2">
-              <StartRating reviewCount={hotel.reviewCount} point={hotel.rating} />
-              <span className="text-sm text-neutral-500">({hotel.reviewCount} reviews)</span>
-            </div>
+            {/* Board Type Information - Replacing Rating/Reviews */}
+            {offer.boardType && (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-900/20 dark:text-blue-300 dark:ring-blue-300/20">
+                    {(() => {
+                      const boardTypeMap: { [key: string]: { name: string; description: string } } = {
+                        'ROOM_ONLY': { name: 'Room Only', description: 'No meals included' },
+                        'BREAKFAST': { name: 'Breakfast', description: 'Breakfast included' },
+                        'HALF_BOARD': { name: 'Half Board', description: 'Breakfast & dinner included' },
+                        'FULL_BOARD': { name: 'Full Board', description: 'All meals included' },
+                        'ALL_INCLUSIVE': { name: 'All Inclusive', description: 'All meals & drinks included' },
+                        'SELF_CATERING': { name: 'Self Catering', description: 'Kitchen facilities available' },
+                        'AMERICAN': { name: 'American Plan', description: 'All meals included' },
+                        'CONTINENTAL': { name: 'Continental', description: 'Continental breakfast' },
+                        'ENGLISH': { name: 'English Breakfast', description: 'Full English breakfast' }
+                      };
+                      return boardTypeMap[offer.boardType]?.name || offer.boardType.replace(/_/g, ' ');
+                    })()}
+                  </span>
+                </div>
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                  {(() => {
+                    const boardTypeMap: { [key: string]: { name: string; description: string } } = {
+                      'ROOM_ONLY': { name: 'Room Only', description: 'No meals included' },
+                      'BREAKFAST': { name: 'Breakfast', description: 'Breakfast included' },
+                      'HALF_BOARD': { name: 'Half Board', description: 'Breakfast & dinner included' },
+                      'FULL_BOARD': { name: 'Full Board', description: 'All meals included' },
+                      'ALL_INCLUSIVE': { name: 'All Inclusive', description: 'All meals & drinks included' },
+                      'SELF_CATERING': { name: 'Self Catering', description: 'Kitchen facilities available' },
+                      'AMERICAN': { name: 'American Plan', description: 'All meals included' },
+                      'CONTINENTAL': { name: 'Continental', description: 'Continental breakfast' },
+                      'ENGLISH': { name: 'English Breakfast', description: 'Full English breakfast' }
+                    };
+                    return boardTypeMap[offer.boardType]?.description || 'Meal plan included';
+                  })()}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
