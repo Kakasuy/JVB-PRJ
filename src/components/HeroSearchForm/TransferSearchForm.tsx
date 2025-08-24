@@ -96,6 +96,24 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
 
     const pickupDateTime = `${pickupDate}T${pickupTime}:00`
 
+    // Prepare search info for URL and display
+    const searchInfo = {
+      from: `${startAirport.iataCode} - ${startAirport.name}`,
+      to: endLocation.formatted_address,
+      datetime: pickupDateTime,
+      type: transferType,
+      passengers: passengers.toString()
+    }
+
+    // Clear any existing search data to ensure loading state shows
+    sessionStorage.removeItem('transferSearchData')
+    localStorage.removeItem('transferSearchData')
+    
+    // Navigate to car categories IMMEDIATELY to show loading state
+    const urlParams = new URLSearchParams(searchInfo)
+    const resultsUrl = `/car-categories/all?${urlParams.toString()}`
+    router.push(resultsUrl)
+
     // Prepare API request data
     const requestData = {
       startLocationCode: startAirport.iataCode,
@@ -109,10 +127,10 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
       currencyCode: 'USD'
     }
 
-    console.log('📤 Calling transfer search API...')
+    console.log('📤 Calling transfer search API in background...')
 
+    // Call API in background after navigation
     try {
-      // Call API to get transfer offers
       const response = await fetch('/api/transfer-search', {
         method: 'POST',
         headers: {
@@ -124,48 +142,49 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
       const result = await response.json()
 
       if (response.ok) {
-        console.log('🎉 Search complete! Navigating to results...')
+        console.log('🎉 API complete! Storing results...')
         
-        // Store search data and results in sessionStorage
         const searchData = {
-          searchParams: {
-            from: `${startAirport.iataCode} - ${startAirport.name}`,
-            to: endLocation.formatted_address,
-            datetime: pickupDateTime,
-            type: transferType,
-            passengers: passengers.toString()
-          },
+          searchParams: searchInfo,
           apiData: requestData,
           results: result.data || [],
           searchTimestamp: Date.now()
         }
 
-        // Store in both sessionStorage and localStorage for tab compatibility
+        // Store search data and results
         sessionStorage.setItem('transferSearchData', JSON.stringify(searchData))
         localStorage.setItem('transferSearchData', JSON.stringify(searchData))
         
         // Trigger custom event to notify components of data change
         window.dispatchEvent(new CustomEvent('transferSearchUpdated'))
         
-        // Navigate to car categories to display results
-        const urlParams = new URLSearchParams({
-          from: searchData.searchParams.from,
-          to: searchData.searchParams.to,
-          datetime: pickupDateTime,
-          type: transferType,
-          passengers: passengers.toString()
-        })
-
-        const resultsUrl = `/car-categories/all?${urlParams.toString()}`
-        router.push(resultsUrl)
-        
       } else {
-        alert(`❌ API Error: ${result.error}`)
-        console.error('API Error:', result)
+        console.error('API Error:', result.error)
+        // Store empty results to stop loading state
+        const searchData = {
+          searchParams: searchInfo,
+          apiData: requestData,
+          results: [],
+          error: result.error,
+          searchTimestamp: Date.now()
+        }
+        sessionStorage.setItem('transferSearchData', JSON.stringify(searchData))
+        localStorage.setItem('transferSearchData', JSON.stringify(searchData))
+        window.dispatchEvent(new CustomEvent('transferSearchUpdated'))
       }
     } catch (error) {
       console.error('Request failed:', error)
-      alert(`❌ Request failed: ${error}`)
+      // Store empty results to stop loading state
+      const searchData = {
+        searchParams: searchInfo,
+        apiData: requestData,
+        results: [],
+        error: error.message,
+        searchTimestamp: Date.now()
+      }
+      sessionStorage.setItem('transferSearchData', JSON.stringify(searchData))
+      localStorage.setItem('transferSearchData', JSON.stringify(searchData))
+      window.dispatchEvent(new CustomEvent('transferSearchUpdated'))
     }
   }
 

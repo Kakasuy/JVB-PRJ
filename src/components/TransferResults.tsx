@@ -62,6 +62,30 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
   const [hasSearched, setHasSearched] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [searchInfo, setSearchInfo] = useState<any>(null)
+  
+  // Check if we have fresh search parameters (indicates user just searched)  
+  const hasSearchParams = searchParams.get('from') || searchParams.get('to') || searchParams.get('datetime')
+  
+  // Function to check stored data
+  const hasStoredData = () => {
+    return sessionStorage.getItem('transferSearchData') || localStorage.getItem('transferSearchData')
+  }
+  
+  const isActiveSearch = hasSearchParams && !hasStoredData()
+  
+  // Debug logs
+  console.log('🔍 TransferResults Debug:', {
+    hasSearchParams,
+    isActiveSearch,
+    loading,
+    from: searchParams.get('from'),
+    to: searchParams.get('to'),
+    datetime: searchParams.get('datetime'),
+    storedData: !!sessionStorage.getItem('transferSearchData') || !!localStorage.getItem('transferSearchData')
+  })
+  
+  // Timeout for loading state
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
 
   // Paginate offers
   const paginatedOffers = useMemo(() => {
@@ -89,6 +113,25 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
         if (!storedData) {
           storedData = localStorage.getItem('transferSearchData')
         }
+        
+        // If we have search params but no data yet, keep loading (active search)
+        if (hasSearchParams && !storedData) {
+          console.log('🔄 Active search detected, showing skeleton loading...')
+          if (!loading) {
+            setLoading(true)
+          }
+          
+          // Set timeout to stop loading after 30 seconds
+          if (searchTimeout) clearTimeout(searchTimeout)
+          const timeout = setTimeout(() => {
+            console.log('⏰ Search timeout reached, stopping loading...')
+            setLoading(false)
+          }, 30000)
+          setSearchTimeout(timeout)
+          
+          return // Keep loading state
+        }
+        
         if (storedData) {
           const searchData = JSON.parse(storedData)
           console.log(`📦 Displaying ${searchData.results?.length || 0} transfer offers`)
@@ -96,6 +139,12 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
           setOffers(searchData.results || [])
           setSearchInfo(searchData.searchParams)
           setHasSearched(true)
+          
+          // Clear timeout when data arrives
+          if (searchTimeout) {
+            clearTimeout(searchTimeout)
+            setSearchTimeout(null)
+          }
           
           // Hide default car listings when we have transfer results
           const fallbackElement = document.querySelector('.transfer-fallback')
@@ -115,7 +164,10 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
         console.error('Error loading transfer data:', error)
         setOffers([])
       } finally {
-        setLoading(false)
+        // Only stop loading if we're not in active search state
+        if (!isActiveSearch) {
+          setLoading(false)
+        }
       }
     }
 
@@ -144,19 +196,80 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
     return () => {
       window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('transferSearchUpdated', handleCustomStorageChange)
+      // Clear timeout on cleanup
+      if (searchTimeout) {
+        clearTimeout(searchTimeout)
+      }
     }
-  }, [])
+  }, [hasSearchParams, isActiveSearch])
 
   if (loading) {
+    console.log('🎭 Showing skeleton loading state')
+    const fromLocation = searchParams.get('from') || (searchInfo?.from)
+    const toLocation = searchParams.get('to') || (searchInfo?.to)
+    
     return (
-      <div className={`${className}`}>
-        <div className="flex items-center justify-center py-16">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-            <p className="text-lg text-neutral-600 dark:text-neutral-400">
-              Loading transfer offers...
-            </p>
+      <div className={className}>
+        {/* Results header skeleton */}
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <div className="h-7 w-48 bg-neutral-200 rounded animate-pulse dark:bg-neutral-700"></div>
+            <div className="h-4 w-64 bg-neutral-200 rounded animate-pulse mt-2 dark:bg-neutral-700"></div>
           </div>
+        </div>
+
+        {/* Transfer listings skeleton */}
+        <div className="grid grid-cols-1 gap-x-6 gap-y-7 xl:grid-cols-2">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <div key={index} className="rounded-3xl border border-neutral-200 bg-white p-6 dark:border-neutral-700 dark:bg-neutral-900">
+              {/* Header skeleton */}
+              <div className="flex items-center justify-between mb-4">
+                <div className="h-6 w-32 bg-neutral-200 rounded animate-pulse dark:bg-neutral-700"></div>
+                <div className="h-8 w-20 bg-neutral-200 rounded-full animate-pulse dark:bg-neutral-700"></div>
+              </div>
+              
+              {/* Route info skeleton */}
+              <div className="flex items-center gap-4 mb-4">
+                <div className="h-4 w-24 bg-neutral-200 rounded animate-pulse dark:bg-neutral-700"></div>
+                <div className="h-0.5 flex-1 bg-neutral-200 animate-pulse dark:bg-neutral-700"></div>
+                <div className="h-4 w-24 bg-neutral-200 rounded animate-pulse dark:bg-neutral-700"></div>
+              </div>
+              
+              {/* Vehicle info skeleton */}
+              <div className="flex items-center gap-4 mb-4">
+                <div className="h-12 w-16 bg-neutral-200 rounded animate-pulse dark:bg-neutral-700"></div>
+                <div className="flex-1">
+                  <div className="h-5 w-40 bg-neutral-200 rounded animate-pulse dark:bg-neutral-700 mb-2"></div>
+                  <div className="h-4 w-32 bg-neutral-200 rounded animate-pulse dark:bg-neutral-700"></div>
+                </div>
+              </div>
+              
+              {/* Features skeleton */}
+              <div className="flex gap-2 mb-4">
+                <div className="h-6 w-16 bg-neutral-200 rounded-full animate-pulse dark:bg-neutral-700"></div>
+                <div className="h-6 w-20 bg-neutral-200 rounded-full animate-pulse dark:bg-neutral-700"></div>
+                <div className="h-6 w-18 bg-neutral-200 rounded-full animate-pulse dark:bg-neutral-700"></div>
+              </div>
+              
+              {/* Price and button skeleton */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="h-6 w-24 bg-neutral-200 rounded animate-pulse dark:bg-neutral-700"></div>
+                </div>
+                <div className="h-10 w-24 bg-neutral-200 rounded-full animate-pulse dark:bg-neutral-700"></div>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        {/* Loading status text */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-neutral-500 dark:text-neutral-400">
+            {isActiveSearch && fromLocation && toLocation 
+              ? `Searching transfers from ${fromLocation} to ${toLocation}...`
+              : 'Loading transfer offers...'
+            }
+          </p>
         </div>
       </div>
     )
