@@ -5,23 +5,21 @@ import { Combobox } from '@headlessui/react'
 import { ChevronUpDownIcon, MapPinIcon } from '@heroicons/react/24/outline'
 
 interface LocationResult {
-  place_id: number
+  place_id: string
   display_name: string
-  lat: string
-  lon: string
-  address: {
-    house_number?: string
-    road?: string
-    suburb?: string
-    city?: string
-    town?: string
-    village?: string
-    county?: string
-    state?: string
-    country?: string
-    country_code?: string
-    postcode?: string
+  formatted_address: string
+  geometry: {
+    location: {
+      lat: number
+      lng: number
+    }
   }
+  address_components: Array<{
+    long_name: string
+    short_name: string
+    types: string[]
+  }>
+  name: string
 }
 
 export interface LocationData {
@@ -60,33 +58,42 @@ const GeocodingInput: React.FC<GeocodingInputProps> = ({
   // Custom debounce hook
   const [debounceTimer, setDebounceTimer] = useState<NodeJS.Timeout | null>(null)
 
-  // Convert Nominatim result to our LocationData format
-  const convertNominatimToLocationData = (result: LocationResult): LocationData => {
-    const address = result.address
+  // Convert Google Places result to our LocationData format
+  const convertGooglePlacesToLocationData = (result: LocationResult): LocationData => {
+    // Extract address components
+    const getAddressComponent = (types: string[]) => {
+      const component = result.address_components.find(comp => 
+        types.some(type => comp.types.includes(type))
+      )
+      return component
+    }
     
-    // Build address line from components
-    const addressParts = []
-    if (address.house_number) addressParts.push(address.house_number)
-    if (address.road) addressParts.push(address.road)
-    if (address.suburb) addressParts.push(address.suburb)
+    const streetNumber = getAddressComponent(['street_number'])?.long_name || ''
+    const route = getAddressComponent(['route'])?.long_name || ''
+    const locality = getAddressComponent(['locality'])?.long_name || ''
+    const adminLevel1 = getAddressComponent(['administrative_area_level_1'])?.long_name || ''
+    const country = getAddressComponent(['country'])?.short_name || ''
     
-    const addressLine = addressParts.length > 0 ? addressParts.join(' ') : result.display_name.split(',')[0]
-    const cityName = address.city || address.town || address.village || address.county || address.state || ''
-    const countryCode = address.country_code?.toUpperCase() || ''
-    const geoCode = `${result.lat},${result.lon}`
+    // Build address line from street components
+    const addressParts = [streetNumber, route].filter(Boolean)
+    const addressLine = addressParts.length > 0 ? addressParts.join(' ') : result.name || result.display_name.split(',')[0]
+    
+    const cityName = locality || adminLevel1 || ''
+    const countryCode = country.toUpperCase()
+    const geoCode = `${result.geometry.location.lat},${result.geometry.location.lng}`
     
     return {
       addressLine,
       cityName,
       countryCode,
       geoCode,
-      name: addressLine,
-      formatted_address: result.display_name,
-      place_id: result.place_id.toString()
+      name: result.name || addressLine,
+      formatted_address: result.formatted_address,
+      place_id: result.place_id
     }
   }
 
-  // Search function using OpenStreetMap Nominatim
+  // Search function using Google Places API
   const searchLocations = async (searchTerm: string) => {
     if (searchTerm.length < 3) {
       setLocations([])
@@ -96,18 +103,19 @@ const GeocodingInput: React.FC<GeocodingInputProps> = ({
     setLoading(true)
     try {
       const response = await fetch(
-        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(searchTerm)}&format=json&addressdetails=1&limit=8&countrycodes=&accept-language=en`
+        `/api/google-places?input=${encodeURIComponent(searchTerm)}`
       )
       
       if (response.ok) {
-        const data = await response.json()
-        setLocations(data || [])
+        const result = await response.json()
+        setLocations(result.data || [])
+        console.log(`✅ Found ${result.data?.length || 0} places for "${searchTerm}"`)
       } else {
-        console.error('Geocoding search failed')
+        console.error('Google Places search failed:', await response.text())
         setLocations([])
       }
     } catch (error) {
-      console.error('Geocoding search error:', error)
+      console.error('Google Places search error:', error)
       setLocations([])
     } finally {
       setLoading(false)
@@ -136,8 +144,8 @@ const GeocodingInput: React.FC<GeocodingInputProps> = ({
   }, [query])
 
   const handleLocationSelect = (location: LocationResult | null) => {
-    if (location && location.place_id !== -1) { // Check if it's a real location, not virtual one
-      const locationData = convertNominatimToLocationData(location)
+    if (location && location.place_id !== 'virtual') { // Check if it's a real location, not virtual one
+      const locationData = convertGooglePlacesToLocationData(location)
       setSelectedLocation(location)
       onLocationSelect(locationData)
       setQuery(location.display_name)
@@ -154,11 +162,17 @@ const GeocodingInput: React.FC<GeocodingInputProps> = ({
     if (selectedLocation) return selectedLocation
     if (inputValue) {
       return {
-        place_id: -1, // Virtual ID to identify this as user input
+        place_id: 'virtual', // Virtual ID to identify this as user input
         display_name: inputValue,
-        lat: '0',
-        lon: '0',
-        address: {}
+        formatted_address: inputValue,
+        geometry: {
+          location: {
+            lat: 0,
+            lng: 0
+          }
+        },
+        address_components: [],
+        name: inputValue
       } as LocationResult
     }
     return null
