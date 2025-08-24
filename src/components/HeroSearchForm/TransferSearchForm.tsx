@@ -4,7 +4,7 @@ import T from '@/utils/getT'
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
 import Form from 'next/form'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { FC, useEffect, useState } from 'react'
 import { ButtonSubmit, VerticalDividerLine } from './ui'
 import AirportPicker from '@/components/AirportPicker'
@@ -50,6 +50,7 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
   const [endLocation, setEndLocation] = useState<LocationData | null>(null)
 
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Prefetch the car categories page to improve performance
   useEffect(() => {
@@ -64,6 +65,59 @@ export const TransferSearchForm: FC<Props> = ({ className, formStyle = 'default'
     setPickupDate(defaultDate)
     setPickupTime('10:00')
   }, [])
+
+  // Restore form state from URL parameters
+  useEffect(() => {
+    const from = searchParams.get('from')
+    const to = searchParams.get('to')
+    const datetime = searchParams.get('datetime')
+    const type = searchParams.get('type') as TransferType
+    const passengersParam = searchParams.get('passengers')
+
+    if (from) {
+      // Parse airport info from "AMS - Amsterdam Airport Schiphol" format
+      const [iataCode, ...nameParts] = from.split(' - ')
+      if (iataCode && nameParts.length > 0) {
+        const name = nameParts.join(' - ')
+        setStartAirport({
+          iataCode,
+          name,
+          address: { cityName: '', countryName: '' },
+          geoCode: { latitude: 0, longitude: 0 }
+        })
+      }
+    }
+
+    if (to) {
+      // Parse location info - this is the formatted_address
+      setEndLocation({
+        addressLine: to.split(',')[0] || to,
+        cityName: to.split(',')[1]?.trim() || '',
+        countryCode: '',
+        geoCode: '0,0',
+        name: to.split(',')[0] || to,
+        formatted_address: to,
+        place_id: 'restored'
+      })
+    }
+
+    if (datetime) {
+      const [date, time] = datetime.split('T')
+      if (date) setPickupDate(date)
+      if (time) setPickupTime(time.slice(0, 5)) // Remove seconds
+    }
+
+    if (type && TRANSFER_TYPES.some(t => t.value === type)) {
+      setTransferType(type)
+    }
+
+    if (passengersParam) {
+      const passengerCount = parseInt(passengersParam)
+      if (passengerCount > 0 && passengerCount <= 8) {
+        setPassengers(passengerCount)
+      }
+    }
+  }, [searchParams])
 
   const handleAirportSelect = (airport: AirportData | null) => {
     setStartAirport(airport)
