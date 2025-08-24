@@ -36,28 +36,55 @@ export async function GET(request: NextRequest) {
     const tokenData = await tokenResponse.json()
     const accessToken = tokenData.access_token
 
-    // Search for airports using Amadeus Airport API
-    const airportSearchUrl = `https://test.api.amadeus.com/v1/reference-data/locations?subType=AIRPORT&keyword=${encodeURIComponent(keyword)}&page%5Blimit%5D=10`
+    // Search for both airports and cities using Amadeus Location API
+    const airportSearchUrl = `https://test.api.amadeus.com/v1/reference-data/locations?subType=AIRPORT&keyword=${encodeURIComponent(keyword)}&page%5Blimit%5D=8`
+    const citySearchUrl = `https://test.api.amadeus.com/v1/reference-data/locations?subType=CITY&keyword=${encodeURIComponent(keyword)}&page%5Blimit%5D=5`
     
-    const airportResponse = await fetch(airportSearchUrl, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
-    })
+    // Fetch both airports and cities concurrently
+    const [airportResponse, cityResponse] = await Promise.all([
+      fetch(airportSearchUrl, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      }),
+      fetch(citySearchUrl, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      })
+    ])
 
-    if (!airportResponse.ok) {
-      const errorText = await airportResponse.text()
-      console.error('Airport search failed:', errorText)
-      return NextResponse.json(
-        { error: 'Failed to search airports', details: errorText },
-        { status: airportResponse.status }
-      )
+    // Handle airport response
+    let airports = []
+    if (airportResponse.ok) {
+      const airportData = await airportResponse.json()
+      airports = airportData.data || []
+    } else {
+      console.error('Airport search failed:', await airportResponse.text())
     }
 
-    const airportData = await airportResponse.json()
-    console.log(`✅ Found ${airportData.data?.length || 0} airports for "${keyword}"`)
+    // Handle city response
+    let cities = []
+    if (cityResponse.ok) {
+      const cityData = await cityResponse.json()
+      cities = cityData.data || []
+    } else {
+      console.error('City search failed:', await cityResponse.text())
+    }
 
-    return NextResponse.json(airportData)
+    // Combine results with airports first, then cities
+    const combinedResults = [...airports, ...cities]
+    
+    console.log(`✅ Found ${airports.length} airports and ${cities.length} cities for "${keyword}"`)
+
+    return NextResponse.json({
+      data: combinedResults,
+      meta: {
+        count: combinedResults.length,
+        airports: airports.length,
+        cities: cities.length
+      }
+    })
   } catch (error) {
     console.error('Airport search API error:', error)
     return NextResponse.json(
