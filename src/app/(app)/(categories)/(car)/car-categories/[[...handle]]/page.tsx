@@ -1,3 +1,4 @@
+import AutoTransferSearch from '@/components/AutoTransferSearch'
 import CarCardH from '@/components/CarCardH'
 import HeroSectionWithSearchForm1 from '@/components/hero-sections/HeroSectionWithSearchForm1'
 import { TransferSearchForm } from '@/components/HeroSearchForm/TransferSearchForm'
@@ -40,6 +41,8 @@ const Page = async ({ params }: { params: Promise<{ handle?: string[] }> }) => {
 
   return (
     <div className="pb-28">
+      {/* Auto-trigger search on page refresh if params exist */}
+      <AutoTransferSearch />
       {/* Hero section */}
       <div className="container">
         <HeroSectionWithSearchForm1

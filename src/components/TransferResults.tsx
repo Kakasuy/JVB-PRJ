@@ -62,27 +62,31 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
   const [hasSearched, setHasSearched] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [searchInfo, setSearchInfo] = useState<any>(null)
+  const [isMounted, setIsMounted] = useState(false)
   
   // Check if we have fresh search parameters (indicates user just searched)  
   const hasSearchParams = searchParams.get('from') || searchParams.get('to') || searchParams.get('datetime')
   
   // Function to check stored data
   const hasStoredData = () => {
+    if (typeof window === 'undefined') return false
     return sessionStorage.getItem('transferSearchData') || localStorage.getItem('transferSearchData')
   }
   
-  const isActiveSearch = hasSearchParams && !hasStoredData()
+  const isActiveSearch = isMounted && hasSearchParams && !hasStoredData()
   
-  // Debug logs
-  console.log('🔍 TransferResults Debug:', {
-    hasSearchParams,
-    isActiveSearch,
-    loading,
-    from: searchParams.get('from'),
-    to: searchParams.get('to'),
-    datetime: searchParams.get('datetime'),
-    storedData: !!sessionStorage.getItem('transferSearchData') || !!localStorage.getItem('transferSearchData')
-  })
+  // Debug logs (only after mount to avoid hydration issues)
+  if (isMounted) {
+    console.log('🔍 TransferResults Debug:', {
+      hasSearchParams,
+      isActiveSearch,
+      loading,
+      from: searchParams.get('from'),
+      to: searchParams.get('to'),
+      datetime: searchParams.get('datetime'),
+      storedData: !!sessionStorage.getItem('transferSearchData') || !!localStorage.getItem('transferSearchData')
+    })
+  }
   
   // Timeout for loading state
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
@@ -100,6 +104,11 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
     return Math.min(calculated, MAX_PAGES)
   }, [offers.length])
 
+  // Mount effect
+  useEffect(() => {
+    setIsMounted(true)
+  }, [])
+
   // Reset to first page when offers change
   useEffect(() => {
     setCurrentPage(1)
@@ -109,9 +118,12 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
     const loadTransferData = () => {
       try {
         // Check if we have search results in sessionStorage or localStorage
-        let storedData = sessionStorage.getItem('transferSearchData')
-        if (!storedData) {
-          storedData = localStorage.getItem('transferSearchData')
+        let storedData = null
+        if (typeof window !== 'undefined') {
+          storedData = sessionStorage.getItem('transferSearchData')
+          if (!storedData) {
+            storedData = localStorage.getItem('transferSearchData')
+          }
         }
         
         // If we have search params but no data yet, keep loading (active search)
@@ -171,6 +183,9 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
       }
     }
 
+    // Only run after component is mounted
+    if (!isMounted) return
+    
     // Initial load
     loadTransferData()
 
@@ -201,7 +216,7 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
         clearTimeout(searchTimeout)
       }
     }
-  }, [hasSearchParams, isActiveSearch])
+  }, [hasSearchParams, isActiveSearch, isMounted])
 
   if (loading) {
     console.log('🎭 Showing skeleton loading state')
@@ -265,7 +280,7 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
         {/* Loading status text */}
         <div className="mt-8 text-center">
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            {isActiveSearch && fromLocation && toLocation 
+            {isMounted && isActiveSearch && fromLocation && toLocation 
               ? `Searching transfers from ${fromLocation} to ${toLocation}...`
               : 'Loading transfer offers...'
             }
