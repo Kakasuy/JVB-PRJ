@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
+import GoogleSignInButton from '@/components/GoogleSignInButton'
 import ButtonPrimary from '@/shared/ButtonPrimary'
 import { Field, Label } from '@/shared/fieldset'
 import Input from '@/shared/Input'
@@ -50,14 +51,13 @@ export default function Page() {
       </div>
 
       <div className="mx-auto max-w-md space-y-6">
-        {/* Social login placeholder for now */}
-        <div className="grid gap-3">
-          <div className="text-center text-sm text-neutral-500">
-            Social login coming soon...
-          </div>
-        </div>
+        {/* Google Sign-In */}
+        <GoogleSignInButton 
+          onError={(error) => setError(error)}
+          onSuccess={() => router.push('/')}
+        />
 
-        {/* OR */}
+        {/* OR Divider */}
         <div className="relative text-center">
           <span className="relative z-10 inline-block bg-white px-4 text-sm font-medium dark:bg-neutral-900 dark:text-neutral-400">
             OR

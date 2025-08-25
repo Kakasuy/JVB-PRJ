@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import EmailLinkSignIn from '@/components/EmailLinkSignIn'
+import GoogleSignInButton from '@/components/GoogleSignInButton'
 import ButtonPrimary from '@/shared/ButtonPrimary'
 import { Field, Label } from '@/shared/fieldset'
 import Input from '@/shared/Input'
@@ -44,6 +45,20 @@ export default function Page() {
       </div>
 
       <div className="mx-auto max-w-md space-y-6">
+        {/* Google Sign-In */}
+        <GoogleSignInButton 
+          onError={(error) => setError(error)}
+          onSuccess={() => router.push('/')}
+        />
+
+        {/* OR Divider */}
+        <div className="relative text-center">
+          <span className="relative z-10 inline-block bg-white px-4 text-sm font-medium dark:bg-neutral-900 dark:text-neutral-400">
+            OR
+          </span>
+          <div className="absolute top-1/2 left-0 w-full -translate-y-1/2 border border-neutral-100 dark:border-neutral-800"></div>
+        </div>
+
         {/* Login Method Tabs */}
         <div className="flex rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800">
           <button

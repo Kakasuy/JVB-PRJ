@@ -11,7 +11,9 @@ import {
   updateProfile,
   sendSignInLinkToEmail,
   isSignInWithEmailLink,
-  signInWithEmailLink
+  signInWithEmailLink,
+  GoogleAuthProvider,
+  signInWithPopup
 } from 'firebase/auth'
 import { createContext, useContext, useEffect, useState } from 'react'
 
@@ -23,6 +25,7 @@ interface AuthContextType {
   resetPassword: (email: string) => Promise<void>
   sendMagicLink: (email: string) => Promise<void>
   completeMagicLinkSignIn: (email?: string) => Promise<any>
+  signInWithGoogle: () => Promise<any>
   loading: boolean
 }
 
@@ -95,6 +98,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     throw new Error('Invalid sign-in link')
   }
 
+  function signInWithGoogle() {
+    const provider = new GoogleAuthProvider()
+    // Optional: Add scopes for additional user info
+    provider.addScope('profile')
+    provider.addScope('email')
+    
+    return signInWithPopup(auth, provider).then((result) => {
+      // User signed in successfully
+      const user = result.user
+      console.log('Google sign-in successful:', user.displayName)
+      return result
+    })
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user)
@@ -112,6 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     resetPassword,
     sendMagicLink,
     completeMagicLinkSignIn,
+    signInWithGoogle,
     loading
   }
 
