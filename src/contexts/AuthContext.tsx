@@ -8,7 +8,10 @@ import {
   signOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink
 } from 'firebase/auth'
 import { createContext, useContext, useEffect, useState } from 'react'
 
@@ -18,6 +21,8 @@ interface AuthContextType {
   signup: (email: string, password: string, name?: string) => Promise<any>
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
+  sendMagicLink: (email: string) => Promise<void>
+  completeMagicLinkSignIn: (email?: string) => Promise<any>
   loading: boolean
 }
 
@@ -56,6 +61,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return sendPasswordResetEmail(auth, email)
   }
 
+  function sendMagicLink(email: string) {
+    const actionCodeSettings = {
+      url: `${window.location.origin}/complete-signin`,
+      handleCodeInApp: true,
+    }
+    
+    return sendSignInLinkToEmail(auth, email, actionCodeSettings).then(() => {
+      // Store email locally so user doesn't need to re-enter it
+      window.localStorage.setItem('emailForSignIn', email)
+    })
+  }
+
+  function completeMagicLinkSignIn(email?: string) {
+    if (isSignInWithEmailLink(auth, window.location.href)) {
+      let emailForSignIn = email
+      
+      // Get email from localStorage if not provided
+      if (!emailForSignIn) {
+        emailForSignIn = window.localStorage.getItem('emailForSignIn')
+      }
+      
+      if (!emailForSignIn) {
+        throw new Error('Email is required to complete sign-in')
+      }
+
+      return signInWithEmailLink(auth, emailForSignIn, window.location.href).then((result) => {
+        // Clear the stored email
+        window.localStorage.removeItem('emailForSignIn')
+        return result
+      })
+    }
+    throw new Error('Invalid sign-in link')
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user)
@@ -71,6 +110,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signup,
     logout,
     resetPassword,
+    sendMagicLink,
+    completeMagicLinkSignIn,
     loading
   }
 

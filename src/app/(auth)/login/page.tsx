@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
+import EmailLinkSignIn from '@/components/EmailLinkSignIn'
 import ButtonPrimary from '@/shared/ButtonPrimary'
 import { Field, Label } from '@/shared/fieldset'
 import Input from '@/shared/Input'
@@ -15,6 +16,7 @@ export default function Page() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [loginMethod, setLoginMethod] = useState<'password' | 'magic-link'>('password')
   const { login } = useAuth()
   const router = useRouter()
 
@@ -42,60 +44,78 @@ export default function Page() {
       </div>
 
       <div className="mx-auto max-w-md space-y-6">
-        {/* Social login placeholder for now */}
-        <div className="grid gap-3">
-          <div className="text-center text-sm text-neutral-500">
-            Social login coming soon...
-          </div>
+        {/* Login Method Tabs */}
+        <div className="flex rounded-lg bg-neutral-100 p-1 dark:bg-neutral-800">
+          <button
+            type="button"
+            onClick={() => setLoginMethod('password')}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              loginMethod === 'password'
+                ? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-900 dark:text-white'
+                : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
+            }`}
+          >
+            🔐 Password
+          </button>
+          <button
+            type="button"
+            onClick={() => setLoginMethod('magic-link')}
+            className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+              loginMethod === 'magic-link'
+                ? 'bg-white text-neutral-900 shadow-sm dark:bg-neutral-900 dark:text-white'
+                : 'text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-white'
+            }`}
+          >
+            ✨ Magic Link
+          </button>
         </div>
 
-        {/* OR */}
-        <div className="relative text-center">
-          <span className="relative z-10 inline-block bg-white px-4 text-sm font-medium dark:bg-neutral-900 dark:text-neutral-400">
-            OR
-          </span>
-          <div className="absolute top-1/2 left-0 w-full -translate-y-1/2 border border-neutral-100 dark:border-neutral-800"></div>
-        </div>
+        {/* Login Forms */}
+        {loginMethod === 'password' ? (
+          <div className="space-y-6">
+            {/* Error message */}
+            {error && (
+              <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
+                {error}
+              </div>
+            )}
 
-        {/* Error message */}
-        {error && (
-          <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600 dark:bg-red-900/20 dark:text-red-400">
-            {error}
+            {/* Password Form */}
+            <form className="grid grid-cols-1 gap-6" onSubmit={handleSubmit}>
+              <Field className="block">
+                <Label className="text-neutral-800 dark:text-neutral-200">{T['login']['Email address']}</Label>
+                <Input
+                  type="email"
+                  placeholder="example@example.com"
+                  className="mt-1"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </Field>
+              <Field className="block">
+                <div className="flex items-center justify-between text-neutral-800 dark:text-neutral-200">
+                  <Label>{T['login']['Password']}</Label>
+                  <Link href="/forgot-password" className="text-sm font-medium underline">
+                    {T['login']['Forgot password?']}
+                  </Link>
+                </div>
+                <Input
+                  type="password"
+                  className="mt-1"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </Field>
+              <ButtonPrimary type="submit" disabled={loading}>
+                {loading ? 'Logging in...' : 'Login'}
+              </ButtonPrimary>
+            </form>
           </div>
+        ) : (
+          <EmailLinkSignIn />
         )}
-
-        {/* FORM */}
-        <form className="grid grid-cols-1 gap-6" onSubmit={handleSubmit}>
-          <Field className="block">
-            <Label className="text-neutral-800 dark:text-neutral-200">{T['login']['Email address']}</Label>
-            <Input
-              type="email"
-              placeholder="example@example.com"
-              className="mt-1"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </Field>
-          <Field className="block">
-            <div className="flex items-center justify-between text-neutral-800 dark:text-neutral-200">
-              <Label>{T['login']['Password']}</Label>
-              <Link href="/forgot-password" className="text-sm font-medium underline">
-                {T['login']['Forgot password?']}
-              </Link>
-            </div>
-            <Input
-              type="password"
-              className="mt-1"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </Field>
-          <ButtonPrimary type="submit" disabled={loading}>
-            {loading ? 'Logging in...' : 'Login'}
-          </ButtonPrimary>
-        </form>
 
         {/* ==== */}
         <div className="block text-center text-sm text-neutral-700 dark:text-neutral-300">
