@@ -13,6 +13,7 @@ import {
   isSignInWithEmailLink,
   signInWithEmailLink,
   GoogleAuthProvider,
+  FacebookAuthProvider,
   signInWithPopup
 } from 'firebase/auth'
 import { createContext, useContext, useEffect, useState } from 'react'
@@ -26,6 +27,7 @@ interface AuthContextType {
   sendMagicLink: (email: string) => Promise<void>
   completeMagicLinkSignIn: (email?: string) => Promise<any>
   signInWithGoogle: () => Promise<any>
+  signInWithFacebook: () => Promise<any>
   loading: boolean
 }
 
@@ -112,6 +114,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
+  function signInWithFacebook() {
+    const provider = new FacebookAuthProvider()
+    // Optional: Add scopes for additional user info
+    provider.addScope('email')
+    provider.addScope('public_profile')
+    
+    return signInWithPopup(auth, provider).then((result) => {
+      // User signed in successfully
+      const user = result.user
+      console.log('Facebook sign-in successful:', user.displayName)
+      return result
+    })
+  }
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user)
@@ -130,6 +146,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     sendMagicLink,
     completeMagicLinkSignIn,
     signInWithGoogle,
+    signInWithFacebook,
     loading
   }
 

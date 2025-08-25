@@ -3,6 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import EmailLinkSignIn from '@/components/EmailLinkSignIn'
 import GoogleSignInButton from '@/components/GoogleSignInButton'
+import FacebookSignInButton from '@/components/FacebookSignInButton'
 import ButtonPrimary from '@/shared/ButtonPrimary'
 import { Field, Label } from '@/shared/fieldset'
 import Input from '@/shared/Input'
@@ -44,12 +45,18 @@ export default function Page() {
         <Logo className="w-32" />
       </div>
 
-      <div className="mx-auto max-w-md space-y-6">
-        {/* Google Sign-In */}
-        <GoogleSignInButton 
-          onError={(error) => setError(error)}
-          onSuccess={() => router.push('/')}
-        />
+      <div className="mx-auto max-w-md space-y-4">
+        {/* Social Sign-In Options */}
+        <div className="space-y-3">
+          <GoogleSignInButton 
+            onError={(error) => setError(error)}
+            onSuccess={() => router.push('/')}
+          />
+          <FacebookSignInButton 
+            onError={(error) => setError(error)}
+            onSuccess={() => router.push('/')}
+          />
+        </div>
 
         {/* OR Divider */}
         <div className="relative text-center">
