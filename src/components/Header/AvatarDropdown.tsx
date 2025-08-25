@@ -1,5 +1,6 @@
 'use client'
 
+import { useAuth } from '@/contexts/AuthContext'
 import avatarImage from '@/images/avatars/Image-1.png'
 import Avatar from '@/shared/Avatar'
 import { Divider } from '@/shared/divider'
@@ -15,12 +16,39 @@ import {
   UserIcon,
 } from '@hugeicons/core-free-icons'
 import { HugeiconsIcon } from '@hugeicons/react'
+import { useRouter } from 'next/navigation'
 
 interface Props {
   className?: string
 }
 
 export default function AvatarDropdown({ className }: Props) {
+  const { currentUser, logout } = useAuth()
+  const router = useRouter()
+
+  async function handleLogout() {
+    try {
+      await logout()
+      router.push('/')
+    } catch (error) {
+      console.error('Failed to log out:', error)
+    }
+  }
+
+  // Show login button if user is not authenticated
+  if (!currentUser) {
+    return (
+      <div className={className}>
+        <Link 
+          href="/login" 
+          className="rounded-full bg-primary-6000 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+        >
+          Login
+        </Link>
+      </div>
+    )
+  }
+
   return (
     <div className={className}>
       <Popover>
@@ -38,11 +66,11 @@ export default function AvatarDropdown({ className }: Props) {
         >
           <div className="relative grid grid-cols-1 gap-6 bg-white px-6 py-7 dark:bg-neutral-800">
             <div className="flex items-center space-x-3">
-              <Avatar src={avatarImage.src} className="size-12" />
+              <Avatar src={currentUser.photoURL || avatarImage.src} className="size-12" />
 
               <div className="grow">
-                <h4 className="font-semibold">Eden Smith</h4>
-                <p className="mt-0.5 text-xs">Los Angeles, CA</p>
+                <h4 className="font-semibold">{currentUser.displayName || currentUser.email}</h4>
+                <p className="mt-0.5 text-xs">{currentUser.email}</p>
               </div>
             </div>
 
@@ -107,15 +135,15 @@ export default function AvatarDropdown({ className }: Props) {
             </Link>
 
             {/* ------------------ 2 --------------------- */}
-            <Link
-              href={'#'}
-              className="-m-3 flex items-center rounded-lg p-2 transition duration-150 ease-in-out hover:bg-neutral-100 focus:outline-hidden focus-visible:ring-3 focus-visible:ring-orange-500/50 dark:hover:bg-neutral-700"
+            <button
+              onClick={handleLogout}
+              className="-m-3 flex w-full items-center rounded-lg p-2 text-left transition duration-150 ease-in-out hover:bg-neutral-100 focus:outline-hidden focus-visible:ring-3 focus-visible:ring-orange-500/50 dark:hover:bg-neutral-700"
             >
               <div className="flex shrink-0 items-center justify-center text-neutral-500 dark:text-neutral-300">
                 <HugeiconsIcon icon={Logout01Icon} size={24} strokeWidth={1.5} />
               </div>
               <p className="ms-4 text-sm font-medium">{'Log out'}</p>
-            </Link>
+            </button>
           </div>
         </PopoverPanel>
       </Popover>
