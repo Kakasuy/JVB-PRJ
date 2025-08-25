@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 import { FormEvent, useState } from 'react'
 
 export default function Page() {
+  const [displayName, setDisplayName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -26,10 +27,14 @@ export default function Page() {
       return setError('Passwords do not match')
     }
 
+    if (!displayName.trim()) {
+      return setError('Display name is required')
+    }
+
     try {
       setError('')
       setLoading(true)
-      await signup(email, password)
+      await signup(email, password, displayName.trim())
       router.push('/') // Redirect to home page after successful signup
     } catch (error: any) {
       setError('Failed to create account: ' + error.message)
@@ -69,6 +74,17 @@ export default function Page() {
 
         {/* FORM */}
         <form className="grid grid-cols-1 gap-6" onSubmit={handleSubmit}>
+          <Field className="block">
+            <Label className="text-neutral-800 dark:text-neutral-200">Full Name</Label>
+            <Input
+              type="text"
+              placeholder="John Doe"
+              className="mt-1"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              required
+            />
+          </Field>
           <Field className="block">
             <Label className="text-neutral-800 dark:text-neutral-200">{T['login']['Email address']}</Label>
             <Input

@@ -24,9 +24,11 @@ export default function Page() {
     try {
       setError('')
       setLoading(true)
+      console.log('Attempting login with:', email) // Debug log
       await login(email, password)
       router.push('/') // Redirect to home page after successful login
     } catch (error: any) {
+      console.error('Login error:', error) // Debug log
       setError('Failed to log in: ' + error.message)
     } finally {
       setLoading(false)
