@@ -91,28 +91,57 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
   // Timeout for loading state
   const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null)
 
-  // Paginate offers
+  // Apply filters to offers
+  const filteredOffers = useMemo(() => {
+    if (!offers.length) return offers
+
+    let filtered = [...offers]
+
+    // Price range filter
+    const priceMin = searchParams.get('price_min')
+    const priceMax = searchParams.get('price_max')
+    
+    if (priceMin || priceMax) {
+      filtered = filtered.filter(offer => {
+        const price = parseFloat(offer.quotation.monetaryAmount)
+        const min = priceMin ? parseFloat(priceMin) : 0
+        const max = priceMax ? parseFloat(priceMax) : Infinity
+        return price >= min && price <= max
+      })
+    }
+
+    console.log(`🎯 Filtered ${offers.length} offers down to ${filtered.length} offers`, {
+      priceMin,
+      priceMax,
+      originalCount: offers.length,
+      filteredCount: filtered.length
+    })
+
+    return filtered
+  }, [offers, searchParams])
+
+  // Paginate filtered offers
   const paginatedOffers = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
     const endIndex = startIndex + ITEMS_PER_PAGE
-    return offers.slice(startIndex, endIndex)
-  }, [offers, currentPage])
+    return filteredOffers.slice(startIndex, endIndex)
+  }, [filteredOffers, currentPage])
 
-  // Calculate total pages (max 5)
+  // Calculate total pages (max 5) based on filtered results
   const totalPages = useMemo(() => {
-    const calculated = Math.ceil(offers.length / ITEMS_PER_PAGE)
+    const calculated = Math.ceil(filteredOffers.length / ITEMS_PER_PAGE)
     return Math.min(calculated, MAX_PAGES)
-  }, [offers.length])
+  }, [filteredOffers.length])
 
   // Mount effect
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  // Reset to first page when offers change
+  // Reset to first page when offers or filters change
   useEffect(() => {
     setCurrentPage(1)
-  }, [offers])
+  }, [offers, searchParams])
 
   useEffect(() => {
     const loadTransferData = () => {
@@ -353,7 +382,7 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 sm:text-xl">
-            Over {convertNumbThousand(offers.length)} transfers found
+            Over {convertNumbThousand(filteredOffers.length)} transfers found
             {searchInfo && (
               <span className="text-sm text-neutral-600 dark:text-neutral-400 font-normal ml-2">
                 from <span className="font-medium">{searchInfo.from}</span> to{' '}
@@ -372,7 +401,7 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
       </div>
 
       {/* Pagination */}
-      {offers.length > ITEMS_PER_PAGE && totalPages > 1 && (
+      {filteredOffers.length > ITEMS_PER_PAGE && totalPages > 1 && (
         <div className="mt-16 flex items-center justify-center">
           <div className="flex items-center gap-2">
             <Button
@@ -408,10 +437,10 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
       )}
 
       {/* Show info about pagination limit */}
-      {offers.length > MAX_PAGES * ITEMS_PER_PAGE && (
+      {filteredOffers.length > MAX_PAGES * ITEMS_PER_PAGE && (
         <div className="mt-8 text-center">
           <p className="text-sm text-neutral-500 dark:text-neutral-400">
-            Showing first {MAX_PAGES * ITEMS_PER_PAGE} results out of {offers.length} total transfers found
+            Showing first {MAX_PAGES * ITEMS_PER_PAGE} results out of {filteredOffers.length} filtered transfers found
           </p>
         </div>
       )}
