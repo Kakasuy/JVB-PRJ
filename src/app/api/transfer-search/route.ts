@@ -129,6 +129,24 @@ export async function POST(request: NextRequest) {
     const transferData = await transferResponse.json()
     console.log(`✅ Found ${transferData.data?.length || 0} transfer offers`)
 
+    // Collect all unique vehicle codes and categories from the offers
+    const allVehicleCodes = new Set<string>()
+    const allVehicleCategories = new Set<string>()
+    if (transferData.data && transferData.data.length > 0) {
+      transferData.data.forEach((offer: any) => {
+        const vehicleCode = offer.vehicle?.code
+        const vehicleCategory = offer.vehicle?.category
+        if (vehicleCode) {
+          allVehicleCodes.add(vehicleCode)
+        }
+        if (vehicleCategory) {
+          allVehicleCategories.add(vehicleCategory)
+        }
+      })
+      console.log('🔍 ALL UNIQUE VEHICLE CODES FOUND:', Array.from(allVehicleCodes).sort())
+      console.log('🏷️ ALL UNIQUE VEHICLE CATEGORIES FOUND:', Array.from(allVehicleCategories).sort())
+    }
+
     return NextResponse.json(transferData)
   } catch (error) {
     console.error('Transfer search API error:', error)

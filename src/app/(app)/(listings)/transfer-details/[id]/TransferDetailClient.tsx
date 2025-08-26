@@ -17,6 +17,7 @@ import {
   InformationCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
+import * as Headless from '@headlessui/react'
 
 interface TransferOffer {
   id: string
@@ -150,12 +151,34 @@ export default function TransferDetailClient() {
       'SUV': 'SUV',
       'VAN': 'Van',
       'LIM': 'Limousine',
+      'LMS': 'Limousine',
       'BUS': 'Bus',
       'MPV': 'Multi-Purpose Vehicle',
       'HBK': 'Hatchback',
       'EST': 'Estate/Wagon',
       'CNV': 'Convertible',
-      'CUP': 'Coupe'
+      'CUP': 'Coupe',
+      'MIN': 'Mini',
+      'CMP': 'Compact',
+      'ECO': 'Economy',
+      'LUX': 'Luxury',
+      'ELC': 'Electric Vehicle',
+      'HYB': 'Hybrid Vehicle',
+      'TRK': 'Truck',
+      'PUP': 'Pickup Truck',
+      'CAB': 'Convertible Cabriolet',
+      'ROD': 'Roadster',
+      'SPT': 'Sports Car',
+      'OFF': 'Off-road Vehicle',
+      '4WD': '4-Wheel Drive',
+      'AWD': 'All-Wheel Drive',
+      'MBV': 'Minibus',
+      'CBR': 'Cabriolet',
+      'WGN': 'Wagon',
+      'VIN': 'Vintage Car',
+      'LRG': 'Large Vehicle',
+      'SML': 'Small Vehicle',
+      'MED': 'Medium Vehicle'
     }
     return codeMap[code] || code
   }
@@ -272,12 +295,21 @@ export default function TransferDetailClient() {
                   </div>
                   {offer.vehicle?.code && (
                     <div className="flex items-center gap-1">
-                      <span 
-                        className="text-sm font-medium text-neutral-600 dark:text-neutral-300 cursor-help border-b border-dotted border-neutral-400"
-                        title={getVehicleCodeInfo(offer.vehicle.code)}
-                      >
-                        {offer.vehicle.code}
-                      </span>
+                      <Headless.Popover className="relative">
+                        <Headless.PopoverButton 
+                          className="text-sm font-medium text-neutral-600 dark:text-neutral-300 cursor-help border-b border-dotted border-neutral-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors focus:outline-none focus:ring-0"
+                        >
+                          {offer.vehicle.code}
+                        </Headless.PopoverButton>
+                        <Headless.PopoverPanel 
+                          className="absolute bottom-full left-1/2 z-50 mb-2 -translate-x-1/2 transform"
+                        >
+                          <div className="rounded-lg bg-neutral-900 px-3 py-2 text-sm text-white shadow-lg ring-1 ring-black ring-opacity-5 dark:bg-neutral-800">
+                            <div className="font-medium">{getVehicleCodeInfo(offer.vehicle.code)}</div>
+                            <div className="absolute bottom-[-4px] left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 bg-neutral-900 dark:bg-neutral-800"></div>
+                          </div>
+                        </Headless.PopoverPanel>
+                      </Headless.Popover>
                     </div>
                   )}
                 </div>
