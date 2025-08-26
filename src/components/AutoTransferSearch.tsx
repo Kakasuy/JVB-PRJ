@@ -30,7 +30,6 @@ const AutoTransferSearch: React.FC<AutoTransferSearchProps> = () => {
       return
     }
 
-
     // Always call API when we have URL params (F5 refresh behavior)
     console.log('🔄 Auto-triggering transfer search from URL params (F5 refresh)...')
     
@@ -43,7 +42,7 @@ const AutoTransferSearch: React.FC<AutoTransferSearchProps> = () => {
     }
     
     triggerTransferSearch()
-  }, [searchParams])
+  }, [searchParams.get('from'), searchParams.get('to'), searchParams.get('datetime')])
 
   const triggerTransferSearch = async () => {
     // Get params from URL
