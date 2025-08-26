@@ -110,9 +110,78 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
       })
     }
 
+    // Vehicle Type filter
+    const vehicleCodes = searchParams.get('vehicle_codes')
+    if (vehicleCodes) {
+      const selectedVehicleCodes = vehicleCodes.split(',')
+      filtered = filtered.filter(offer => {
+        const vehicleCode = offer.vehicle.code
+        return selectedVehicleCodes.includes(vehicleCode)
+      })
+    }
+
+    // Vehicle Category (Service Level) filter
+    const vehicleCategories = searchParams.get('vehicle_categories')
+    if (vehicleCategories) {
+      const selectedVehicleCategories = vehicleCategories.split(',')
+      filtered = filtered.filter(offer => {
+        const vehicleCategory = offer.vehicle.category
+        return selectedVehicleCategories.includes(vehicleCategory)
+      })
+    }
+
+    // Extra Services filter
+    const extraServices = searchParams.get('extra_services')
+    if (extraServices) {
+      const selectedServices = extraServices.split(',')
+      // Note: Amadeus API doesn't provide extra services in response
+      // This would need to be implemented based on actual data structure
+      console.log('🔧 Extra services filter not yet implemented:', selectedServices)
+    }
+
+    // Passengers & Baggage filter
+    const passengers = searchParams.get('passengers')
+    const smallBags = searchParams.get('small_bags')
+    const largeBags = searchParams.get('large_bags')
+    
+    if (passengers || smallBags || largeBags) {
+      filtered = filtered.filter(offer => {
+        const vehicleSeats = offer.vehicle.seats?.[0]?.count || 0
+        const vehicleBaggages = offer.vehicle.baggages || []
+        
+        // Check passenger capacity
+        if (passengers) {
+          const requiredPassengers = parseInt(passengers)
+          if (vehicleSeats < requiredPassengers) {
+            return false
+          }
+        }
+        
+        // Check baggage capacity (simplified - check total baggage count)
+        if (smallBags || largeBags) {
+          const requiredSmallBags = smallBags ? parseInt(smallBags) : 0
+          const requiredLargeBags = largeBags ? parseInt(largeBags) : 0
+          const totalRequiredBags = requiredSmallBags + requiredLargeBags
+          
+          const totalVehicleBags = vehicleBaggages.reduce((total, bag) => total + bag.count, 0)
+          if (totalVehicleBags < totalRequiredBags) {
+            return false
+          }
+        }
+        
+        return true
+      })
+    }
+
     console.log(`🎯 Filtered ${offers.length} offers down to ${filtered.length} offers`, {
       priceMin,
       priceMax,
+      vehicleCodes,
+      vehicleCategories,
+      extraServices,
+      passengers,
+      smallBags,
+      largeBags,
       originalCount: offers.length,
       filteredCount: filtered.length
     })

@@ -86,6 +86,12 @@ const demo_filters_options = [
         popular: true,
       },
       {
+        name: 'Car',
+        value: 'CAR',
+        description: 'Standard car vehicles',
+        popular: true,
+      },
+      {
         name: 'Van',
         value: 'VAN',
         description: 'Van and multi-purpose vehicles',
