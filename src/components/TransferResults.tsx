@@ -64,8 +64,14 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
   const [searchInfo, setSearchInfo] = useState<any>(null)
   const [isMounted, setIsMounted] = useState(false)
   
-  // Check if we have fresh search parameters (indicates user just searched)  
-  const hasSearchParams = searchParams.get('from') || searchParams.get('to') || searchParams.get('datetime')
+  // Separate search params from filter params to avoid unnecessary API calls
+  const searchParamsOnly = useMemo(() => ({
+    from: searchParams.get('from'),
+    to: searchParams.get('to'),
+    datetime: searchParams.get('datetime')
+  }), [searchParams.get('from'), searchParams.get('to'), searchParams.get('datetime')])
+  
+  const hasSearchParams = searchParamsOnly.from || searchParamsOnly.to || searchParamsOnly.datetime
   
   // Function to check stored data
   const hasStoredData = () => {
@@ -306,8 +312,9 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
     // Listen for filter changes
     const handleFiltersChanged = (event: any) => {
       console.log('🎯 Filters changed, applying to transfer results...')
-      // Force re-render with current filters
-      loadTransferData()
+      // No need to reload data - filteredOffers useMemo will automatically re-compute
+      // when searchParams change. Just reset to page 1.
+      setCurrentPage(1)
     }
 
     window.addEventListener('storage', handleStorageChange)
@@ -323,7 +330,7 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
         clearTimeout(searchTimeout)
       }
     }
-  }, [hasSearchParams, isActiveSearch, isMounted])
+  }, [searchParamsOnly, isActiveSearch, isMounted])
 
   if (loading) {
     console.log('🎭 Showing skeleton loading state')
