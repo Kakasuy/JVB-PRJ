@@ -171,12 +171,6 @@ const demo_filters_options = [
         description: 'Real-time flight tracking',
         popular: true,
       },
-      {
-        name: 'Free Cancellation',
-        value: 'FREE_CANCEL',
-        description: 'Cancel your booking without penalty',
-        popular: true,
-      },
     ],
   },
   {

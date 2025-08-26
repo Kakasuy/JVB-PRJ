@@ -49,6 +49,39 @@ interface TransferOffer {
     monetaryAmount: string
     currencyCode: string
   }
+  // Additional service information from Amadeus API
+  extraServices?: Array<{
+    code: string
+    itemId: string
+    description: string
+    quotation: {
+      monetaryAmount: string
+      currencyCode: string
+    }
+    isBookable: boolean
+    taxIncluded: boolean
+    includedInTotal: boolean
+  }>
+  equipment?: Array<{
+    code: string
+    itemId: string
+    description: string
+    quotation: {
+      monetaryAmount: string
+      currencyCode: string
+    }
+    isBookable: boolean
+    taxIncluded: boolean
+    includedInTotal: boolean
+  }>
+  cancellationRules?: Array<{
+    ruleDescription: string
+    feeType: string
+    feeValue: string
+    metricType: string
+    metricMin?: string
+    metricMax?: string
+  }>
 }
 
 interface TransferResultsProps {
@@ -136,13 +169,34 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
       })
     }
 
-    // Extra Services filter
+    // Included Services filter
     const extraServices = searchParams.get('extra_services')
     if (extraServices) {
       const selectedServices = extraServices.split(',')
-      // Note: Amadeus API doesn't provide extra services in response
-      // This would need to be implemented based on actual data structure
-      console.log('🔧 Extra services filter not yet implemented:', selectedServices)
+      filtered = filtered.filter(offer => {
+        return selectedServices.every(serviceCode => {
+          
+          if (serviceCode === 'MAG') {
+            // Meet & Greet: Check có service đã included không
+            return offer.extraServices?.some(service => 
+              service.code === 'MAG' && 
+              service.isBookable === false &&
+              service.includedInTotal === true
+            )
+          }
+          
+          if (serviceCode === 'FLM') {
+            // Flight Monitoring: Check có service đã included không
+            return offer.extraServices?.some(service => 
+              service.code === 'FLM' && 
+              service.isBookable === false &&
+              service.includedInTotal === true
+            )
+          }
+          
+          return true
+        })
+      })
     }
 
     // Passengers & Baggage filter
