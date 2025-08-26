@@ -66,7 +66,7 @@ const demo_filters_options = [
     label: 'Price Range',
     tabUIType: 'price-range',
     min: 0,
-    max: 1000, // EUR for transfers
+    max: 15000, // EUR for transfers
   },
   {
     name: 'Vehicle-code',

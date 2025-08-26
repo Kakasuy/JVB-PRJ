@@ -61,14 +61,14 @@ export const PriceRangeSlider = ({
         <div className="flex-1">
           <div className="ps-4 text-xs/6 text-neutral-700 dark:text-neutral-300">Min price</div>
           <div className="relative mt-0.5 w-full rounded-full bg-neutral-100 px-4 py-2 text-sm dark:bg-neutral-800">
-            {currentValue[0] >= 1000 ? `$ ${convertNumbThousand(currentValue[0] / 1000)}k` : `$ ${currentValue[0]}`}
+            {currentValue[0] >= 1000 ? `€ ${convertNumbThousand(currentValue[0] / 1000)}k` : `€ ${currentValue[0]}`}
           </div>
           <input type="hidden" name={inputMinName} value={currentValue[0]} />
         </div>
         <div className="flex-1">
           <div className="ps-4 text-xs/6 text-neutral-700 dark:text-neutral-300">Max price</div>
           <div className="relative mt-0.5 w-full rounded-full bg-neutral-100 px-4 py-2 text-sm dark:bg-neutral-800">
-            {currentValue[1] >= 1000 ? `$ ${convertNumbThousand(currentValue[1] / 1000)}k` : `$ ${currentValue[1]}`}
+            {currentValue[1] >= 1000 ? `€ ${convertNumbThousand(currentValue[1] / 1000)}k` : `€ ${currentValue[1]}`}
           </div>
           <input type="hidden" name={inputMaxName} value={currentValue[1]} />
         </div>
