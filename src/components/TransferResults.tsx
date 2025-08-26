@@ -199,32 +199,38 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
       })
     }
 
-    // Passengers & Baggage filter
-    const passengers = searchParams.get('passengers')
+    // Seats & Baggage filter
+    const seats = searchParams.get('seats')
     const smallBags = searchParams.get('small_bags')
     const largeBags = searchParams.get('large_bags')
     
-    if (passengers || smallBags || largeBags) {
+    if (seats || smallBags || largeBags) {
       filtered = filtered.filter(offer => {
         const vehicleSeats = offer.vehicle.seats?.[0]?.count || 0
         const vehicleBaggages = offer.vehicle.baggages || []
         
-        // Check passenger capacity
-        if (passengers) {
-          const requiredPassengers = parseInt(passengers)
-          if (vehicleSeats < requiredPassengers) {
+        // Check seats capacity
+        if (seats) {
+          const requiredSeats = parseInt(seats)
+          if (vehicleSeats < requiredSeats) {
             return false
           }
         }
         
-        // Check baggage capacity (simplified - check total baggage count)
-        if (smallBags || largeBags) {
-          const requiredSmallBags = smallBags ? parseInt(smallBags) : 0
-          const requiredLargeBags = largeBags ? parseInt(largeBags) : 0
-          const totalRequiredBags = requiredSmallBags + requiredLargeBags
-          
-          const totalVehicleBags = vehicleBaggages.reduce((total, bag) => total + bag.count, 0)
-          if (totalVehicleBags < totalRequiredBags) {
+        // Check Small Bags capacity
+        if (smallBags) {
+          const requiredSmallBags = parseInt(smallBags)
+          const vehicleSmallBags = vehicleBaggages.find(bag => bag.size === 'S')?.count || 0
+          if (vehicleSmallBags < requiredSmallBags) {
+            return false
+          }
+        }
+        
+        // Check Large Bags capacity
+        if (largeBags) {
+          const requiredLargeBags = parseInt(largeBags)
+          const vehicleLargeBags = vehicleBaggages.find(bag => bag.size === 'L')?.count || 0
+          if (vehicleLargeBags < requiredLargeBags) {
             return false
           }
         }
@@ -239,7 +245,7 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
       vehicleCodes,
       vehicleCategories,
       extraServices,
-      passengers,
+      seats,
       smallBags,
       largeBags,
       originalCount: offers.length,

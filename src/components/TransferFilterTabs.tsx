@@ -179,8 +179,8 @@ const demo_filters_options = [
     tabUIType: 'select-number',
     options: [
       {
-        name: 'Passengers',
-        max: 8,
+        name: 'Seats',
+        max: 27,
       },
       {
         name: 'Small Bags',
@@ -313,15 +313,15 @@ const NumberSelectPanel = ({
   return (
     <div className="relative flex flex-col gap-y-5">
       {options.map((option) => {
-        // Default to 1 for passengers, 0 for baggage
-        const defaultValue = currentValues[option.name] || (option.name === 'Passengers' ? 1 : 0)
+        // Default to 3 for seats, 0 for baggage
+        const defaultValue = currentValues[option.name] || (option.name === 'Seats' ? 3 : 0)
         
         return (
           <NcInputNumber 
             key={option.name} 
             inputName={option.name} 
             label={option.name} 
-            min={option.name === 'Passengers' ? 1 : 0}
+            min={option.name === 'Seats' ? 3 : 0}
             max={option.max}
             defaultValue={defaultValue}
             onChange={(value) => onValueChange?.(option.name, value)}
@@ -342,7 +342,7 @@ const TransferFilterTabs = ({
   const [checkedFilters, setCheckedFilters] = useState<Record<string, boolean>>({})
   const [priceRange, setPriceRange] = useState<[number, number] | null>(null)
   const [passengersBedsCount, setPassengersBedsCount] = useState<Record<string, number>>({
-    Passengers: 1,
+    Seats: 3,
     'Small Bags': 0,
     'Large Bags': 0
   })
@@ -421,7 +421,7 @@ const TransferFilterTabs = ({
     // Check what type of form this is based on the data
     const hasCheckboxFilters = Array.from(formData.keys()).some(key => key.includes('[]'))
     const hasPriceRange = formData.has('price-min') || formData.has('price-max')
-    const hasPassengersBaggage = formData.has('Passengers') || formData.has('Small Bags') || formData.has('Large Bags')
+    const hasPassengersBaggage = formData.has('Seats') || formData.has('Small Bags') || formData.has('Large Bags')
 
     // Only update checkbox filters if form contains checkbox data
     if (hasCheckboxFilters) {
@@ -443,15 +443,15 @@ const TransferFilterTabs = ({
       }
     }
 
-    // Only update passengers & baggage if form contains that data
+    // Only update seats & baggage if form contains that data
     if (hasPassengersBaggage) {
       const newPassengersBaggageCount: Record<string, number> = {
-        Passengers: 1,
+        Seats: 3,
         'Small Bags': 0,
         'Large Bags': 0
       }
       for (const [key, value] of formData.entries()) {
-        if ((key === 'Passengers' || key === 'Small Bags' || key === 'Large Bags') && value) {
+        if ((key === 'Seats' || key === 'Small Bags' || key === 'Large Bags') && value) {
           const count = Number(value)
           if (count >= 0) {
             newPassengersBaggageCount[key] = count
@@ -488,15 +488,15 @@ const TransferFilterTabs = ({
         currentUrl.searchParams.delete('price_max')
       }
       
-      // Update passengers & baggage params
-      const passengers = formData.get('Passengers')
+      // Update seats & baggage params
+      const seats = formData.get('Seats')
       const smallBags = formData.get('Small Bags')
       const largeBags = formData.get('Large Bags')
       
-      if (passengers && Number(passengers) > 0) {
-        currentUrl.searchParams.set('passengers', passengers.toString())
+      if (seats && Number(seats) >= 3) {
+        currentUrl.searchParams.set('seats', seats.toString())
       } else {
-        currentUrl.searchParams.delete('passengers')
+        currentUrl.searchParams.delete('seats')
       }
       
       if (smallBags && Number(smallBags) > 0) {
@@ -579,7 +579,7 @@ const TransferFilterTabs = ({
     setCheckedFilters({})
     setPriceRange(null)
     setPassengersBedsCount({
-      Passengers: 1,
+      Seats: 3,
       'Small Bags': 0,
       'Large Bags': 0
     })
@@ -592,7 +592,7 @@ const TransferFilterTabs = ({
       const filterParams = [
         'price_min', 'price_max', 
         'vehicle_codes', 'vehicle_categories', 'extra_services',
-        'passengers', 'small_bags', 'large_bags'
+        'seats', 'small_bags', 'large_bags'
       ]
       
       filterParams.forEach(param => {
@@ -689,7 +689,7 @@ const TransferFilterTabs = ({
           } else if (filterOption.tabUIType === 'select-number') {
             // Only count values different from defaults
             badgeCount = Object.entries(passengersBedsCount).filter(([key, value]) => {
-              const defaultValue = key === 'Passengers' ? 1 : 0
+              const defaultValue = key === 'Seats' ? 3 : 0
               return value !== defaultValue
             }).length
           }
