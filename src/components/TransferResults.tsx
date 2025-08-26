@@ -205,12 +205,21 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
       loadTransferData()
     }
 
+    // Listen for filter changes
+    const handleFiltersChanged = (event: any) => {
+      console.log('🎯 Filters changed, applying to transfer results...')
+      // Force re-render with current filters
+      loadTransferData()
+    }
+
     window.addEventListener('storage', handleStorageChange)
     window.addEventListener('transferSearchUpdated', handleCustomStorageChange)
+    window.addEventListener('filtersChanged', handleFiltersChanged)
 
     return () => {
       window.removeEventListener('storage', handleStorageChange)
       window.removeEventListener('transferSearchUpdated', handleCustomStorageChange)
+      window.removeEventListener('filtersChanged', handleFiltersChanged)
       // Clear timeout on cleanup
       if (searchTimeout) {
         clearTimeout(searchTimeout)
@@ -339,21 +348,19 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
   }
 
   return (
-    <div className={className}>
+    <div className={`${className} mt-8`}>
       {/* Results header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
           <h2 className="text-lg font-semibold text-neutral-900 dark:text-neutral-100 sm:text-xl">
             Over {convertNumbThousand(offers.length)} transfers found
-          </h2>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
             {searchInfo && (
-              <>
-                From <span className="font-medium">{searchInfo.from}</span> to{' '}
+              <span className="text-sm text-neutral-600 dark:text-neutral-400 font-normal ml-2">
+                from <span className="font-medium">{searchInfo.from}</span> to{' '}
                 <span className="font-medium">{searchInfo.to}</span>
-              </>
+              </span>
             )}
-          </p>
+          </h2>
         </div>
       </div>
 
