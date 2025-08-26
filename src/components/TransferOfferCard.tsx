@@ -1,7 +1,7 @@
 import BtnLikeIcon from '@/components/BtnLikeIcon'
 import { Badge } from '@/shared/Badge'
 import { MapPinIcon } from '@heroicons/react/24/outline'
-import { UserIcon, ShieldCheckIcon } from '@heroicons/react/24/outline'
+import { UserIcon, BriefcaseIcon } from '@heroicons/react/24/outline'
 import Image from 'next/image'
 import Link from 'next/link'
 import { FC } from 'react'
@@ -68,6 +68,30 @@ const TransferOfferCard: FC<TransferOfferCardProps> = ({ className = '', data })
   const totalSeats = vehicle.seats?.reduce((sum, seat) => sum + seat.count, 0) || 0
   const totalBags = vehicle.baggages?.reduce((sum, bag) => sum + bag.count, 0) || 0
 
+  // Format baggage info with sizes
+  const formatBaggageInfo = () => {
+    if (!vehicle.baggages || vehicle.baggages.length === 0) return '0 bags'
+    
+    const bagsBySizes = vehicle.baggages.reduce((acc: Record<string, number>, bag) => {
+      const size = bag.size || 'M' // Default to Medium if no size
+      acc[size] = (acc[size] || 0) + bag.count
+      return acc
+    }, {})
+    
+    const sizeLabels: Record<string, string> = {
+      'S': 'Small',
+      'M': 'Medium', 
+      'L': 'Large',
+      'XL': 'Extra Large'
+    }
+    
+    const bagInfo = Object.entries(bagsBySizes)
+      .map(([size, count]) => `${count}${size}`)
+      .join(' + ')
+    
+    return `${totalBags} bags (${bagInfo})`
+  }
+
   const formatPrice = (amount: string, currency: string) => {
     return `${currency === 'EUR' ? '€' : '$'}${amount}`
   }
@@ -79,9 +103,23 @@ const TransferOfferCard: FC<TransferOfferCardProps> = ({ className = '', data })
       'EC': { label: 'Economy', color: 'green' },
       'LX': { label: 'Luxury', color: 'purple' },
       'PR': { label: 'Premium', color: 'yellow' },
+      'BU': { label: 'Business', color: 'purple' },
       'VN': { label: 'Van', color: 'gray' },
       'SV': { label: 'SUV', color: 'red' },
-      'LM': { label: 'Limousine', color: 'purple' }
+      'LM': { label: 'Limousine', color: 'purple' },
+      'EL': { label: 'Electric', color: 'green' },
+      'HY': { label: 'Hybrid', color: 'green' },
+      'SP': { label: 'Sport', color: 'red' },
+      'CM': { label: 'Comfort', color: 'blue' },
+      'EX': { label: 'Executive', color: 'purple' },
+      'FL': { label: 'Full-size', color: 'yellow' },
+      'MD': { label: 'Mid-size', color: 'blue' },
+      'CP': { label: 'Compact', color: 'green' },
+      'MI': { label: 'Mini', color: 'green' },
+      'PU': { label: 'Pickup', color: 'gray' },
+      'CV': { label: 'Convertible', color: 'red' },
+      'WG': { label: 'Wagon', color: 'gray' },
+      'FC': { label: 'First Class', color: 'yellow' }
     }
     return categoryMap[category]
   }
@@ -217,9 +255,9 @@ const TransferOfferCard: FC<TransferOfferCardProps> = ({ className = '', data })
           
           {/* Baggage */}
           <div className="flex items-center gap-x-2">
-            <ShieldCheckIcon className="h-4 w-4" />
+            <BriefcaseIcon className="h-4 w-4" />
             <span className="text-sm text-neutral-500 dark:text-neutral-400">
-              {totalBags} bags
+              {formatBaggageInfo()}
             </span>
           </div>
         </div>

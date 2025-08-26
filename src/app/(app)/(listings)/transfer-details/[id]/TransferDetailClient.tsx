@@ -13,7 +13,7 @@ import {
   ClockIcon, 
   CurrencyDollarIcon,
   UserIcon,
-  ShieldCheckIcon,
+  BriefcaseIcon,
   InformationCircleIcon,
   ExclamationTriangleIcon
 } from '@heroicons/react/24/outline'
@@ -139,7 +139,20 @@ export default function TransferDetailClient() {
       'BU': { label: 'Business', color: 'purple' },
       'VN': { label: 'Van', color: 'gray' },
       'SV': { label: 'SUV', color: 'red' },
-      'LM': { label: 'Limousine', color: 'purple' }
+      'LM': { label: 'Limousine', color: 'purple' },
+      'EL': { label: 'Electric', color: 'green' },
+      'HY': { label: 'Hybrid', color: 'green' },
+      'SP': { label: 'Sport', color: 'red' },
+      'CM': { label: 'Comfort', color: 'blue' },
+      'EX': { label: 'Executive', color: 'purple' },
+      'FL': { label: 'Full-size', color: 'yellow' },
+      'MD': { label: 'Mid-size', color: 'blue' },
+      'CP': { label: 'Compact', color: 'green' },
+      'MI': { label: 'Mini', color: 'green' },
+      'PU': { label: 'Pickup', color: 'gray' },
+      'CV': { label: 'Convertible', color: 'red' },
+      'WG': { label: 'Wagon', color: 'gray' },
+      'FC': { label: 'First Class', color: 'yellow' }
     }
     return categoryMap[category]
   }
@@ -246,6 +259,30 @@ export default function TransferDetailClient() {
   const categoryInfo = offer.vehicle?.category ? getCategoryInfo(offer.vehicle.category) : null
   const totalSeats = offer.vehicle.seats?.reduce((sum, seat) => sum + seat.count, 0) || 0
   const totalBags = offer.vehicle.baggages?.reduce((sum, bag) => sum + bag.count, 0) || 0
+
+  // Format baggage info with sizes
+  const formatBaggageInfo = () => {
+    if (!offer.vehicle.baggages || offer.vehicle.baggages.length === 0) return '0 bags'
+    
+    const bagsBySizes = offer.vehicle.baggages.reduce((acc: Record<string, number>, bag) => {
+      const size = bag.size || 'M' // Default to Medium if no size
+      acc[size] = (acc[size] || 0) + bag.count
+      return acc
+    }, {})
+    
+    const sizeLabels: Record<string, string> = {
+      'S': 'Small',
+      'M': 'Medium', 
+      'L': 'Large',
+      'XL': 'Extra Large'
+    }
+    
+    const bagInfo = Object.entries(bagsBySizes)
+      .map(([size, count]) => `${count}${size}`)
+      .join(' + ')
+    
+    return `${totalBags} bags (${bagInfo})`
+  }
 
   return (
     <div className="pb-28">
@@ -355,8 +392,8 @@ export default function TransferDetailClient() {
                       <span className="text-sm">{totalSeats} seats</span>
                     </div>
                     <div className="flex items-center gap-x-2">
-                      <ShieldCheckIcon className="h-4 w-4" />
-                      <span className="text-sm">{totalBags} bags</span>
+                      <BriefcaseIcon className="h-4 w-4" />
+                      <span className="text-sm">{formatBaggageInfo()}</span>
                     </div>
                   </div>
                 </div>
