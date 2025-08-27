@@ -153,10 +153,170 @@ const Page = () => {
 
   const handleSubmitForm = async (formData: FormData) => {
     const formObject = Object.fromEntries(formData.entries())
-    console.log('🎯 Form submitted (UI only):', formObject)
     
-    // TODO: Implement API logic later
-    alert('Transfer booking form submitted successfully! (API integration will be added later)')
+    // Clear previous errors
+    setBookingError(null)
+    
+    // Validate payment form first
+    const paymentMethod = formObject.paymentMethod as string
+    
+    if (paymentMethod === 'creditCard') {
+      // Basic client-side validation
+      const requiredFields = ['firstName', 'lastName', 'email', 'phone', 'cardNumber', 'cardHolder', 'expiryDate']
+      const missingFields = requiredFields.filter(field => !formObject[field]?.toString().trim())
+      
+      if (missingFields.length > 0) {
+        setBookingError(`Please fill in all required fields: ${missingFields.join(', ')}`)
+        return
+      }
+      
+      // Validate email format
+      const email = formObject.email as string
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setBookingError('Please enter a valid email address')
+        return
+      }
+      
+      // Validate phone number
+      const phone = formObject.phone as string
+      if (phone.replace(/\D/g, '').length < 10) {
+        setBookingError('Please enter a valid phone number')
+        return
+      }
+      
+      // Validate card number
+      const cardNumber = formObject.cardNumber as string
+      if (cardNumber.length < 13 || cardNumber.length > 19) {
+        setBookingError('Please enter a valid card number')
+        return
+      }
+      
+      // Validate expiry date
+      const expiryDate = formObject.expiryDate as string
+      if (expiryDate) {
+        const today = new Date()
+        const expiry = new Date(expiryDate + '-01') // Add day to make valid date
+        if (expiry <= today) {
+          setBookingError('Card has expired. Please use a valid card.')
+          return
+        }
+      }
+    }
+    
+    if (!checkoutData) {
+      setBookingError('Checkout data not available. Please try again.')
+      return
+    }
+    
+    console.log('✅ Form validation passed. Submitting transfer booking...')
+    
+    setIsSubmitting(true)
+    
+    try {
+      // Prepare booking data for transfer API
+      const bookingPayload = {
+        offerId: checkoutData.offer.id,
+        paymentMethod: formObject.paymentMethod as string,
+        
+        // Passenger Information
+        title: formObject.title as string,
+        firstName: formObject.firstName as string,
+        lastName: formObject.lastName as string,
+        email: formObject.email as string,
+        phone: formObject.phone as string,
+        
+        // Payment Information
+        cardNumber: formObject.cardNumber as string,
+        cardHolder: formObject.cardHolder as string,
+        expiryDate: formObject.expiryDate as string,
+        cardVendor: formObject.cardVendor as string,
+        
+        // Transfer Details
+        pickupLocation: checkoutData.offer.start.locationCode,
+        dropoffLocation: checkoutData.offer.end.address.cityName,
+        pickupDateTime: checkoutData.offer.start.dateTime,
+        passengers: checkoutData.searchParams.passengers,
+        vehicleDescription: checkoutData.offer.vehicle.description,
+        serviceProvider: checkoutData.offer.serviceProvider?.name,
+        
+        // Pricing
+        totalPrice: checkoutData.offer.quotation.monetaryAmount,
+        currency: checkoutData.offer.quotation.currencyCode,
+        
+        // Special requests
+        note: formObject.specialRequests as string || ''
+      }
+      
+      console.log('🚗 Submitting transfer booking to API:', bookingPayload)
+      
+      const response = await fetch('/api/booking/transfer', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(bookingPayload),
+      })
+      
+      console.log('📥 Response Status:', response.status, response.statusText)
+      const result = await response.json()
+      console.log('📥 Response Body:', JSON.stringify(result, null, 2))
+      
+      if (result.success) {
+        console.log('✅ Transfer booking successful:', result.data)
+        
+        // Redirect to transfer success page with booking details
+        const successUrl = new URL('/car-pay-done', window.location.origin)
+        
+        // Basic booking information
+        successUrl.searchParams.set('bookingId', result.data.bookingId)
+        successUrl.searchParams.set('confirmationNumber', result.data.confirmationNumber)
+        successUrl.searchParams.set('transferType', 'TRANSFER')
+        
+        // Transfer details
+        successUrl.searchParams.set('vehicleDescription', result.data.transferDetails.vehicleDescription)
+        successUrl.searchParams.set('serviceProvider', result.data.transferDetails.serviceProvider)
+        successUrl.searchParams.set('pickupLocation', result.data.transferDetails.pickupLocation)
+        successUrl.searchParams.set('dropoffLocation', result.data.transferDetails.dropoffLocation)
+        successUrl.searchParams.set('pickupDateTime', result.data.transferDetails.pickupDateTime)
+        successUrl.searchParams.set('passengers', result.data.transferDetails.passengers.toString())
+        
+        // Pricing information
+        successUrl.searchParams.set('totalPrice', result.data.payment.totalPrice)
+        successUrl.searchParams.set('currency', result.data.payment.currency)
+        successUrl.searchParams.set('paymentMethod', result.data.payment.paymentMethod)
+        
+        // Guest information
+        successUrl.searchParams.set('guestTitle', result.data.passenger.title)
+        successUrl.searchParams.set('guestFirstName', result.data.passenger.firstName)
+        successUrl.searchParams.set('guestLastName', result.data.passenger.lastName)
+        successUrl.searchParams.set('guestEmail', result.data.passenger.email)
+        
+        console.log('🔗 Redirecting to transfer success page:', successUrl.toString())
+        
+        // Add delay to show success state
+        setTimeout(() => {
+          router.push(successUrl.toString())
+        }, 1500)
+      } else {
+        console.error('❌ Transfer booking failed:', result.error)
+        
+        // Handle specific error codes
+        if (result.code === 'OFFER_UNAVAILABLE') {
+          setBookingError('This transfer is no longer available. Please select a different option.')
+        } else if (result.code === 'BOOKING_INVALID') {
+          setBookingError('Booking information is invalid. Please check your details and try again.')
+        } else if (result.code === 'MISSING_FIELDS' || result.code === 'MISSING_CARD_FIELDS') {
+          setBookingError(result.error)
+        } else {
+          setBookingError(result.error || 'Booking failed. Please try again.')
+        }
+      }
+    } catch (error) {
+      console.error('❌ Transfer booking submission error:', error)
+      setBookingError('Network error. Please check your connection and try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const renderSidebar = () => {
