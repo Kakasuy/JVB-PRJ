@@ -23,7 +23,7 @@ interface Props {
 }
 
 export default function AvatarDropdown({ className }: Props) {
-  const { currentUser, logout } = useAuth()
+  const { currentUser, loading, logout } = useAuth()
   const router = useRouter()
 
   async function handleLogout() {
@@ -35,13 +35,24 @@ export default function AvatarDropdown({ className }: Props) {
     }
   }
 
+  // Show loading state while checking auth
+  if (loading) {
+    return (
+      <div className={className}>
+        <div className="rounded-full bg-neutral-200 px-4 py-2 text-sm font-medium animate-pulse dark:bg-neutral-700">
+          <div className="h-4 w-12 bg-neutral-300 rounded dark:bg-neutral-600"></div>
+        </div>
+      </div>
+    )
+  }
+
   // Show login button if user is not authenticated
   if (!currentUser) {
     return (
-      <div className={className}>
+      <div className="!opacity-100 !visible !block">
         <Link 
           href="/login" 
-          className="rounded-full bg-primary-6000 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+          className="rounded-full bg-transparent border border-neutral-300 px-4 py-2 text-sm font-medium text-black hover:bg-primary-700 hover:text-white hover:border-primary-700 transition-colors duration-200 dark:text-white dark:border-neutral-600"
         >
           Login
         </Link>

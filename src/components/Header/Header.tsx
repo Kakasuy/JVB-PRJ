@@ -49,7 +49,7 @@ const Header: FC<HeaderProps> = async ({ hasBorderBottom = true, className }) =>
               List your property
             </Button>
             <NotifyDropdown />
-            <AvatarDropdown />
+            <AvatarDropdown className="!opacity-100 !visible !block" />
           </div>
         </div>
       </div>
