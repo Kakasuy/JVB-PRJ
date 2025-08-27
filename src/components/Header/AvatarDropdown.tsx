@@ -1,6 +1,7 @@
 'use client'
 
 import { useAuth } from '@/contexts/AuthContext'
+import { useUserProfile } from '@/hooks/useUserProfile'
 import avatarImage from '@/images/avatars/Image-1.png'
 import Avatar from '@/shared/Avatar'
 import { Divider } from '@/shared/divider'
@@ -24,6 +25,7 @@ interface Props {
 
 export default function AvatarDropdown({ className }: Props) {
   const { currentUser, loading, logout } = useAuth()
+  const { profile, loading: profileLoading } = useUserProfile()
   const router = useRouter()
 
   async function handleLogout() {
@@ -36,11 +38,11 @@ export default function AvatarDropdown({ className }: Props) {
   }
 
   // Show loading state while checking auth
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div className={className}>
-        <div className="rounded-full bg-neutral-200 px-4 py-2 text-sm font-medium animate-pulse dark:bg-neutral-700">
-          <div className="h-4 w-12 bg-neutral-300 rounded dark:bg-neutral-600"></div>
+        <div className="rounded-full bg-neutral-200 animate-pulse dark:bg-neutral-700">
+          <div className="h-8 w-8 bg-neutral-300 rounded-full dark:bg-neutral-600"></div>
         </div>
       </div>
     )
@@ -60,11 +62,19 @@ export default function AvatarDropdown({ className }: Props) {
     )
   }
 
+  // Get avatar and display name from profile or fallback to auth
+  const avatarSrc = profile?.photoURL || currentUser?.photoURL || avatarImage.src
+  const displayName = profile?.displayName || currentUser?.displayName || currentUser?.email || 'User'
+  const userEmail = profile?.email || currentUser?.email || ''
+
+  // Check if profile is incomplete
+  const isProfileIncomplete = !profile?.displayName || !profile?.photoURL
+
   return (
     <div className={className}>
       <Popover>
         <PopoverButton className="-m-1.5 flex cursor-pointer items-center justify-center rounded-full p-1.5 hover:bg-neutral-100 focus-visible:outline-hidden dark:hover:bg-neutral-800">
-          <Avatar src={avatarImage.src} className="size-8" />
+          <Avatar src={avatarSrc} className="size-8" />
         </PopoverButton>
 
         <PopoverPanel
@@ -77,19 +87,32 @@ export default function AvatarDropdown({ className }: Props) {
         >
           <div className="relative grid grid-cols-1 gap-6 bg-white px-6 py-7 dark:bg-neutral-800">
             <div className="flex items-center space-x-3">
-              <Avatar src={currentUser.photoURL || avatarImage.src} className="size-12" />
+              <Avatar src={avatarSrc} className="size-12" />
 
               <div className="grow">
-                <h4 className="font-semibold">{currentUser.displayName || currentUser.email}</h4>
-                <p className="mt-0.5 text-xs">{currentUser.email}</p>
+                <h4 className="font-semibold">{displayName}</h4>
+                <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">{userEmail}</p>
               </div>
             </div>
+
+            {/* Profile completion reminder */}
+            {isProfileIncomplete && (
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-2 w-2 bg-orange-500 rounded-full"></div>
+                  <span className="text-sm text-orange-700">Complete your profile</span>
+                </div>
+                <p className="text-xs text-orange-600 mt-1">
+                  Add your name and photo to get started
+                </p>
+              </div>
+            )}
 
             <Divider />
 
             {/* ------------------ 1 --------------------- */}
             <Link
-              href={'/authors/john-doe'}
+              href={'/account'}
               className="-m-3 flex items-center rounded-lg p-2 transition duration-150 ease-in-out hover:bg-neutral-100 focus:outline-hidden focus-visible:ring-3 focus-visible:ring-orange-500/50 dark:hover:bg-neutral-700"
             >
               <div className="flex shrink-0 items-center justify-center text-neutral-500 dark:text-neutral-300">
@@ -100,13 +123,13 @@ export default function AvatarDropdown({ className }: Props) {
 
             {/* ------------------ 2 --------------------- */}
             <Link
-              href={'/authors/john-doe'}
+              href={profile?.handle ? `/authors/${profile.handle}` : '/authors/my-profile'}
               className="-m-3 flex items-center rounded-lg p-2 transition duration-150 ease-in-out hover:bg-neutral-100 focus:outline-hidden focus-visible:ring-3 focus-visible:ring-orange-500/50 dark:hover:bg-neutral-700"
             >
               <div className="flex shrink-0 items-center justify-center text-neutral-500 dark:text-neutral-300">
                 <HugeiconsIcon icon={Task01Icon} size={24} strokeWidth={1.5} />
               </div>
-              <p className="ms-4 text-sm font-medium">My Listings</p>
+              <p className="ms-4 text-sm font-medium">My Public Profile</p>
             </Link>
 
             {/* ------------------ 2 --------------------- */}

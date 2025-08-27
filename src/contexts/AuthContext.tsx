@@ -129,8 +129,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user)
+      
+      // Auto-create user profile if user exists and profile doesn't exist
+      if (user) {
+        try {
+          const { UserService } = await import('@/services/UserService')
+          const existingProfile = await UserService.getUserProfile(user.uid)
+          if (!existingProfile) {
+            await UserService.createUserProfile(user)
+          }
+        } catch (error) {
+          console.error('Error creating user profile:', error)
+        }
+      }
+      
       setLoading(false)
     })
 
