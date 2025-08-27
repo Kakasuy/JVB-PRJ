@@ -29,8 +29,8 @@ const Page = async ({
     'use server'
     
     console.log('Transfer booking submitted:', Object.fromEntries(formData.entries()))
-    // Redirect to checkout or booking confirmation
-    redirect('/checkout')
+    // Redirect to transfer checkout or booking confirmation
+    redirect('/car-checkout')
   }
 
   return <TransferDetailClient />

@@ -212,9 +212,18 @@ export default function TransferDetailClient() {
   }
 
   const handleBooking = () => {
-    console.log('Booking transfer:', offer?.id)
-    // Implement booking logic
-    alert('Booking functionality will be implemented!')
+    if (!offer?.id) {
+      alert('Transfer offer not available')
+      return
+    }
+    
+    console.log('Redirecting to transfer checkout:', offer.id)
+    
+    // Redirect to car-checkout with offerId
+    const checkoutUrl = new URL('/car-checkout', window.location.origin)
+    checkoutUrl.searchParams.set('offerId', offer.id)
+    
+    window.location.href = checkoutUrl.toString()
   }
 
   if (loading) {
