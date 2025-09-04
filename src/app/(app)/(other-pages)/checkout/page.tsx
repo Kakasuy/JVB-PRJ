@@ -10,6 +10,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useState, useEffect } from 'react'
 import PayWith from './PayWith'
 import YourTrip from './YourTrip'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface CheckoutData {
   offer: {
@@ -63,6 +64,7 @@ interface CheckoutData {
 const Page = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { currentUser } = useAuth()
   
   // State for checkout data
   const [checkoutData, setCheckoutData] = useState<CheckoutData | null>(null)
@@ -317,6 +319,13 @@ const Page = () => {
         hotelId: checkoutData.hotel.id,
         paymentMethod: formObject.paymentMethod as string,
         
+        // Hotel Information for saving
+        hotelName: checkoutData.hotel.name,
+        hotelAddress: checkoutData.hotel.address,
+        hotelImages: [checkoutData.hotel.featuredImage],
+        totalPrice: parseFloat(checkoutData.offer.price.total),
+        currency: checkoutData.offer.price.currency,
+        
         // Guest Information
         title: formObject.title as string,
         firstName: formObject.firstName as string,
@@ -343,10 +352,17 @@ const Page = () => {
       console.log('🔍 Checkout data offerId:', checkoutData.offer.id)
       console.log('🔍 Booking payload offerId:', bookingPayload.offerId)
       
+      // Get Firebase auth token
+      const idToken = await currentUser?.getIdToken()
+      if (!idToken) {
+        throw new Error('Authentication required. Please log in.')
+      }
+      
       const response = await fetch('/api/booking/hotel', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`,
         },
         body: JSON.stringify(bookingPayload),
       })
@@ -357,6 +373,22 @@ const Page = () => {
       
       if (result.success) {
         console.log('✅ Booking successful:', result.data)
+        
+        // Save booking to our database on frontend
+        try {
+          const { BookingService } = await import('@/services/BookingService')
+          
+          const bookingToSave = BookingService.transformAmadeusToBooking(
+            { data: result.data },
+            bookingPayload,
+            currentUser.uid
+          )
+          
+          await BookingService.saveBooking(bookingToSave)
+          console.log('✅ Booking saved to database:', bookingToSave.id)
+        } catch (saveError) {
+          console.error('⚠️ Failed to save booking to database:', saveError)
+        }
         
         // Redirect to success page with booking details
         const successUrl = new URL('/pay-done', window.location.origin)

@@ -51,14 +51,20 @@ async function getAmadeusToken() {
 }
 
 function transformToAmadeusFormat(bookingData: BookingRequest) {
-  // Parse expiry date - Amadeus may expect MM/YY or MMYY format
+  // Parse expiry date - Amadeus expects MMYY format
   let expiryFormatted = ''
   if (bookingData.expiryDate) {
     const [year, month] = bookingData.expiryDate.split('-')
     if (year && month) {
-      // Try MMYY format (no separator)
-      expiryFormatted = `${month}${year.slice(2)}`
+      // Ensure MM format (pad with 0 if needed)
+      const monthPadded = month.padStart(2, '0')
+      expiryFormatted = `${monthPadded}${year.slice(2)}`
     }
+  }
+  
+  // Validate required payment fields
+  if (!bookingData.cardNumber || !bookingData.cardHolder || !expiryFormatted || !bookingData.cardVendor) {
+    throw new Error('Missing required payment card information')
   }
 
   // Correct structure: hotelOfferId should be inside roomAssociations
@@ -93,10 +99,10 @@ function transformToAmadeusFormat(bookingData: BookingRequest) {
         method: "CREDIT_CARD",
         paymentCard: {
           paymentCardInfo: {
-            vendorCode: bookingData.cardVendor,
+            vendorCode: bookingData.cardVendor?.toUpperCase(),
             cardNumber: bookingData.cardNumber?.replace(/\s/g, ''),
             expiryDate: expiryFormatted,
-            holderName: bookingData.cardHolder
+            holderName: bookingData.cardHolder?.toUpperCase()
           }
         }
       }
@@ -109,6 +115,35 @@ function transformToAmadeusFormat(bookingData: BookingRequest) {
 export async function POST(request: NextRequest) {
   try {
     const bookingData: BookingRequest = await request.json()
+    
+    // Get Firebase ID token from Authorization header
+    const authHeader = request.headers.get('authorization')
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({
+        success: false,
+        error: 'Missing authentication token',
+        code: 'AUTH_REQUIRED'
+      }, { status: 401 })
+    }
+    
+    const idToken = authHeader.split('Bearer ')[1]
+    
+    // Import Firebase Admin from lib
+    const { adminAuth } = await import('@/lib/firebase-admin')
+    
+    // Verify the ID token
+    let userId: string
+    try {
+      const decodedToken = await adminAuth.verifyIdToken(idToken)
+      userId = decodedToken.uid
+    } catch (tokenError) {
+      console.error('Invalid Firebase token:', tokenError)
+      return NextResponse.json({
+        success: false,
+        error: 'Invalid authentication token',
+        code: 'INVALID_TOKEN'
+      }, { status: 401 })
+    }
     
 
     // Validate required fields
@@ -144,7 +179,31 @@ export async function POST(request: NextRequest) {
     const amadeusPayload = transformToAmadeusFormat(bookingData)
     
     console.log('🔄 Transformed Amadeus Payload:', JSON.stringify(amadeusPayload, null, 2))
+    console.log('💳 Payment Debug:', {
+      vendorCode: bookingData.cardVendor,
+      cardNumber: bookingData.cardNumber?.substring(0, 4) + '****',
+      expiryDate: bookingData.expiryDate,
+      holderName: bookingData.cardHolder
+    })
 
+    // Validate offer before booking - check if offer is still available
+    const offerUrl = `https://test.api.amadeus.com/v3/shopping/hotel-offers/${bookingData.offerId}`
+    const offerResponse = await fetch(offerUrl, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    })
+    
+    if (!offerResponse.ok) {
+      console.error('❌ Offer validation failed:', offerResponse.status)
+      return NextResponse.json({
+        success: false,
+        error: 'Hotel offer is no longer available. Please search for new offers.',
+        code: 'OFFER_EXPIRED'
+      }, { status: 400 })
+    }
 
     // Make booking request to Amadeus
     const bookingUrl = 'https://test.api.amadeus.com/v2/booking/hotel-orders'
@@ -210,6 +269,10 @@ export async function POST(request: NextRequest) {
 
     // Handle Amadeus API v2 response format
     const hotelBooking = responseData.data?.hotelBookings?.[0] || responseData.data
+    
+    // Note: Booking will be saved to database on frontend after successful response
+    // This avoids server-side Firebase Admin SDK credential issues
+    console.log('ℹ️ Booking successful - frontend will handle database save')
     
     // Return successful booking response
     return NextResponse.json({

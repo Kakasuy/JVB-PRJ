@@ -14,6 +14,7 @@ import { HugeiconsIcon } from '@hugeicons/react'
 import { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import ListingTabs from './ListingTabs'
+import UserBookingsPage from './UserBookingsPage'
 
 export async function generateMetadata({ params }: { params: Promise<{ handle: string }> }): Promise<Metadata> {
   const { handle } = await params
@@ -67,16 +68,11 @@ const Page = async ({ params }: { params: Promise<{ handle: string }> }) => {
 
   const renderSectionListings = () => {
     return (
-      <div className="listingSection__wrap">
-        <div>
-          <h2 className="text-2xl font-semibold">{displayName}&apos;s listings</h2>
-          <span className="mt-2 block text-neutral-500 dark:text-neutral-400">
-            {displayName}&apos;s listings is very rich, 5 star reviews help him to be more branded.
-          </span>
-        </div>
-        <Divider className="w-14!" />
-        <ListingTabs />
-      </div>
+      <UserBookingsPage 
+        handle={handle}
+        displayName={displayName}
+        author={author}
+      />
     )
   }
 
