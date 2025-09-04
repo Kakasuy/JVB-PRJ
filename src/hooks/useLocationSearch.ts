@@ -9,6 +9,12 @@ export interface LocationSuggestion {
   address?: {
     cityName?: string
     countryName?: string
+    countryCode?: string
+    stateCode?: string
+  }
+  geoCode?: {
+    latitude: number
+    longitude: number
   }
   analytics?: {
     travelers?: {

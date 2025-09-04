@@ -29,7 +29,11 @@ type Suggest = {
   icon?: IconSvgElement
   displayName?: string
   type?: 'AIRPORT' | 'CITY'
-  iataCode?: string // Add iataCode for city/airport codes
+  iataCode?: string
+  geoCode?: {
+    latitude: number
+    longitude: number
+  }
 }
 
 const demoInitSuggests: Suggest[] = [
@@ -110,7 +114,8 @@ interface Props {
   initSuggests?: Suggest[]
   searchingSuggests?: Suggest[]
   fieldStyle: 'default' | 'small'
-  category?: 'stays' | 'car' | 'flight' | 'experience' | 'real-estate' // New prop to determine search context
+  category?: 'stays' | 'car' | 'flight' | 'experience' | 'real-estate'
+  onLocationSelect?: (location: Suggest & { geoCode?: { latitude: number; longitude: number } }) => void
 }
 
 export const LocationInputField: FC<Props> = ({
@@ -122,6 +127,7 @@ export const LocationInputField: FC<Props> = ({
   searchingSuggests = demoSearchingSuggests,
   fieldStyle = 'default',
   category = 'stays', // Default to stays
+  onLocationSelect,
 }) => {
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
@@ -262,13 +268,14 @@ export const LocationInputField: FC<Props> = ({
   }, [])
 
   // Convert LocationSuggestion to Suggest format
-  const convertToSuggest = useCallback((suggestion: LocationSuggestion): Suggest => ({
+  const convertToSuggest = useCallback((suggestion: LocationSuggestion): Suggest & { geoCode?: { latitude: number; longitude: number } } => ({
     id: suggestion.id,
     name: suggestion.displayName || suggestion.name,
     displayName: suggestion.displayName,
     type: suggestion.type,
     icon: getLocationIcon(suggestion),
-    iataCode: suggestion.iataCode, // Store the iataCode from API
+    iataCode: suggestion.iataCode,
+    geoCode: suggestion.geoCode, // Preserve geoCode for experience searches
   }), [getLocationIcon])
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -341,6 +348,10 @@ export const LocationInputField: FC<Props> = ({
         value={selected}
         onChange={(value) => {
           setSelected(value || { id: '', name: '' })
+          // Call callback with selected location (includes geoCode for experience)
+          if (value?.id && onLocationSelect) {
+            onLocationSelect(value as Suggest & { geoCode?: { latitude: number; longitude: number } })
+          }
           // Close the popover when a value is selected
           if (value?.id) {
             setShowPopover(false)
