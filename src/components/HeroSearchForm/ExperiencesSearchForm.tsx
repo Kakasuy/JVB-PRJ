@@ -41,20 +41,8 @@ export const ExperiencesSearchForm = ({ className, formStyle = 'default' }: Prop
       return
     }
     
-    // Test API call to Tours & Activities
-    try {
-      const response = await fetch(`/api/tours-search?latitude=${geoCode.latitude}&longitude=${geoCode.longitude}&radius=${radius}`)
-      const data = await response.json()
-      
-      if (data.success) {
-        alert('✅ API call successful! Check F12 Network tab for response data')
-        console.log('Tours & Activities Response:', data)
-      } else {
-        alert('❌ API call failed: ' + data.error)
-      }
-    } catch (error) {
-      alert('❌ Network error: ' + (error instanceof Error ? error.message : 'Unknown error'))
-    }
+    // Log for debugging (optional)
+    console.log('Experience search params:', { location, geoCode, radius, guests, checkInDate, checkOutDate })
     
     // Build URL with all params for future navigation
     const searchParams = new URLSearchParams({
@@ -70,8 +58,8 @@ export const ExperiencesSearchForm = ({ className, formStyle = 'default' }: Prop
     const url = `/experience-categories/all?${searchParams.toString()}`
     console.log('Future URL:', url)
     
-    // For now, don't navigate to let user see the alert
-    // router.push(url)
+    // Navigate to results page
+    router.push(url)
   }
 
   return (

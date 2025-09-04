@@ -31,15 +31,19 @@ const ExperiencesCard: FC<Props> = ({
     price,
     reviewStart,
     reviewCount,
+    durationTime,
     id,
   } = data
 
   const listingHref = `/experience-listings/${listingHandle}`
 
   const renderSliderGallery = () => {
+    // Ensure we have valid gallery images
+    const validGalleryImgs = galleryImgs?.filter(img => img && img.trim() !== '') || ['/placeholder-experience.jpg']
+    
     return (
       <div className="relative w-full overflow-hidden rounded-2xl">
-        <GallerySlider ratioClass={ratioClass} galleryImgs={galleryImgs} href={listingHref} />
+        <GallerySlider ratioClass={ratioClass} galleryImgs={validGalleryImgs} href={listingHref} />
         <BtnLikeIcon isLiked={like} className="absolute top-3 right-3" />
         {saleOff && <SaleOffBadge className="absolute top-3 left-3" />}
       </div>
@@ -70,7 +74,13 @@ const ExperiencesCard: FC<Props> = ({
               </>
             )}
           </div>
-          <StartRating reviewCount={reviewCount} point={reviewStart} />
+          {durationTime ? (
+            <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
+              {durationTime}
+            </span>
+          ) : (
+            <StartRating reviewCount={reviewCount} point={reviewStart} />
+          )}
         </div>
       </div>
     )
