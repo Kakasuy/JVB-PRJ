@@ -31,12 +31,14 @@ interface Props {
   fieldStyle: 'default' | 'small'
   className?: string
   clearDataButtonClassName?: string
+  category?: 'stays' | 'car' | 'flight' | 'experience' | 'real-estate'
 }
 
 export const GuestNumberField: FC<Props> = ({
   fieldStyle = 'default',
   className = 'flex-1',
   clearDataButtonClassName,
+  category = 'stays',
 }) => {
   const searchParams = useSearchParams()
   
@@ -46,11 +48,16 @@ export const GuestNumberField: FC<Props> = ({
     return adultsParam ? parseInt(adultsParam) : 1 // Default to 1 adult
   }, [searchParams])
   
-  // Get initial room count from URL parameters
+  // Get initial room/radius count from URL parameters
   const getInitialRoomCount = useCallback(() => {
-    const roomsParam = searchParams.get('rooms')
-    return roomsParam ? parseInt(roomsParam) : 1 // Default to 1 room
-  }, [searchParams])
+    if (category === 'experience') {
+      const radiusParam = searchParams.get('radius')
+      return radiusParam ? parseInt(radiusParam) : 1 // Default radius 1km
+    } else {
+      const roomsParam = searchParams.get('rooms')
+      return roomsParam ? parseInt(roomsParam) : 1 // Default to 1 room
+    }
+  }, [searchParams, category])
   
   const [guestAdultsInputValue, setGuestAdultsInputValue] = useState(getInitialGuestCount())
   const [roomsInputValue, setRoomsInputValue] = useState(getInitialRoomCount())
@@ -65,16 +72,16 @@ export const GuestNumberField: FC<Props> = ({
 
   const handleChangeData = (value: number) => {
     setGuestAdultsInputValue(value)
-    // If guests are less than rooms, increase rooms to match
-    if (value < roomsInputValue) {
+    // For stays: If guests are less than rooms, increase rooms to match
+    if (category !== 'experience' && value < roomsInputValue) {
       setRoomsInputValue(value)
     }
   }
   
   const handleChangeRooms = (value: number) => {
     setRoomsInputValue(value)
-    // If rooms exceed guests, increase guests to match (min 1 guest per room)
-    if (value > guestAdultsInputValue) {
+    // For stays: If rooms exceed guests, increase guests to match (min 1 guest per room)
+    if (category !== 'experience' && value > guestAdultsInputValue) {
       setGuestAdultsInputValue(value)
     }
   }
@@ -94,10 +101,16 @@ export const GuestNumberField: FC<Props> = ({
 
             <div className="grow">
               <span className={clsx('block font-semibold', styles.mainText[fieldStyle])}>
-                {roomsInputValue} Room{roomsInputValue !== 1 ? 's' : ''}, {totalGuests} Guest{totalGuests !== 1 ? 's' : ''}
+                {category === 'experience' 
+                  ? `${roomsInputValue}km, ${totalGuests} Guest${totalGuests !== 1 ? 's' : ''}`
+                  : `${roomsInputValue} Room${roomsInputValue !== 1 ? 's' : ''}, ${totalGuests} Guest${totalGuests !== 1 ? 's' : ''}`
+                }
               </span>
               <span className="mt-1 block text-sm leading-none font-light text-neutral-400">
-                {roomsInputValue} room{roomsInputValue !== 1 ? 's' : ''}, {totalGuests} guest{totalGuests !== 1 ? 's' : ''}
+                {category === 'experience'
+                  ? `${roomsInputValue}km radius, ${totalGuests} guest${totalGuests !== 1 ? 's' : ''}`
+                  : `${roomsInputValue} room${roomsInputValue !== 1 ? 's' : ''}, ${totalGuests} guest${totalGuests !== 1 ? 's' : ''}`
+                }
               </span>
             </div>
           </PopoverButton>
@@ -115,25 +128,23 @@ export const GuestNumberField: FC<Props> = ({
               className="w-full"
               defaultValue={roomsInputValue}
               onChange={(value) => handleChangeRooms(value)}
-              max={8} // Maximum 8 rooms
-              min={1} // Minimum 1 room required
-              label="Rooms"
-              description=""
-              inputName="rooms"
+              max={category === 'experience' ? 8 : 8} // Max 8km radius or 8 rooms
+              min={1}
+              label={category === 'experience' ? 'Search Radius' : 'Rooms'}
+              description={category === 'experience' ? 'Kilometers from city center' : ''}
+              inputName={category === 'experience' ? 'radius' : 'rooms'}
             />
             
             <NcInputNumber
               className="w-full"
               defaultValue={guestAdultsInputValue}
               onChange={(value) => handleChangeData(value)}
-              max={roomsInputValue * 4} // Max 4 guests per room
-              min={roomsInputValue} // Min 1 guest per room
+              max={category === 'experience' ? 20 : roomsInputValue * 4} // Max 20 guests for experience
+              min={1}
               label="Guests"
-              description="" // Remove age description
-              inputName="adults" // Changed from 'guestAdults' to 'adults' to match API
+              description={category === 'experience' ? 'Number of participants' : ''}
+              inputName="adults"
             />
-            
-            {/* Removed Children and Infants sections */}
           </PopoverPanel>
         </>
       )}

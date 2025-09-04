@@ -60,6 +60,7 @@ export const ExperiencesSearchForm = ({ className, formStyle = 'default' }: Prop
         className="hero-search-form__field-before flex-4/12"
         clearDataButtonClassName={clsx(formStyle === 'small' && 'sm:end-18', formStyle === 'default' && 'sm:end-22')}
         fieldStyle={formStyle}
+        category="experience"
       />
 
       <ButtonSubmit fieldStyle={formStyle} className="z-10" />
