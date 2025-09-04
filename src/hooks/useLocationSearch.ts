@@ -22,6 +22,7 @@ interface UseLocationSearchResult {
   loading: boolean
   error: string | null
   searchLocations: (query: string, locationType?: 'ALL' | 'CITY' | 'AIRPORT') => void
+  searchCityLocations: (keyword: string, countryCode?: string) => void
   clearSuggestions: () => void
 }
 
@@ -135,11 +136,87 @@ export const useLocationSearch = (): UseLocationSearchResult => {
     }
   }, [abortController])
 
+  const searchCityLocations = useCallback((keyword: string, countryCode?: string) => {
+    // Cancel previous debounced call
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+    }
+
+    // Don't search if keyword is too short
+    if (!keyword || keyword.length < 2) {
+      setSuggestions([])
+      setError(null)
+      return
+    }
+
+    // Debounce the search
+    debounceTimeoutRef.current = setTimeout(async () => {
+      // Check cache first
+      const cacheKey = `city_${keyword.toLowerCase().trim()}_${countryCode || ''}`
+      const cached = cache.get(cacheKey)
+      const now = Date.now()
+
+      if (cached && (now - cached.timestamp) < CACHE_TTL) {
+        setSuggestions(cached.data)
+        setError(null)
+        return
+      }
+
+      // Cancel previous request if exists
+      if (abortController) {
+        abortController.abort()
+      }
+
+      const controller = new AbortController()
+      setAbortController(controller)
+      setLoading(true)
+      setError(null)
+
+      try {
+        let url = `/api/city-search?keyword=${encodeURIComponent(keyword)}`
+        if (countryCode) {
+          url += `&countryCode=${countryCode}`
+        }
+        
+        const response = await fetch(url, {
+          signal: controller.signal,
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to search cities')
+        }
+
+        const data = await response.json()
+        
+        if (data.success && data.data) {
+          // Cache the results
+          cache.set(cacheKey, { data: data.data, timestamp: now })
+          setSuggestions(data.data)
+        } else {
+          setSuggestions([])
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') {
+          // Request was cancelled, ignore
+          return
+        }
+        
+        setError(err instanceof Error ? err.message : 'An error occurred while searching cities')
+        setSuggestions([])
+      } finally {
+        setLoading(false)
+        setAbortController(null)
+      }
+    }, 300) // 300ms debounce
+  }, [abortController])
+
   return {
     suggestions,
     loading,
     error,
     searchLocations,
+    searchCityLocations,
     clearSuggestions,
   }
 }

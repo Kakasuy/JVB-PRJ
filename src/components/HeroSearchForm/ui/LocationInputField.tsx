@@ -203,7 +203,7 @@ export const LocationInputField: FC<Props> = ({
   
   
   // Hook for Amadeus location search
-  const { suggestions, loading, error, searchLocations, clearSuggestions } = useLocationSearch()
+  const { suggestions, loading, error, searchLocations, searchCityLocations, clearSuggestions } = useLocationSearch()
   
   // Update location when URL parameters change
   useEffect(() => {
@@ -277,8 +277,27 @@ export const LocationInputField: FC<Props> = ({
     
     if (value.length >= 2) {
       setIsSearching(true)
-      const locationType = getLocationType()
-      searchLocations(value, locationType)
+      
+      // For experience category, use city search with comma parsing
+      if (category === 'experience') {
+        // Parse input for countryCode (e.g., "Paris, FR" → keyword="Paris", countryCode="FR")
+        let keyword = value
+        let countryCode = ''
+        
+        if (value.includes(',')) {
+          const parts = value.split(',').map(p => p.trim())
+          keyword = parts[0]
+          countryCode = parts[1]?.toUpperCase() || ''
+        }
+        
+        // Call city search API
+        searchCityLocations(keyword, countryCode)
+      } else {
+        // Use original location search for other categories
+        const locationType = getLocationType()
+        searchLocations(value, locationType)
+      }
+      
       setSelected({
         id: Date.now().toString(),
         name: value,
@@ -293,7 +312,7 @@ export const LocationInputField: FC<Props> = ({
         })
       }
     }
-  }, [searchLocations, clearSuggestions, getLocationType])
+  }, [searchLocations, searchCityLocations, clearSuggestions, getLocationType, category])
 
   // Determine what suggestions to show
   const isShowInitSuggests = !selected?.id || (!isSearching && suggestions.length === 0)
