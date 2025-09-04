@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import React, { useState, useEffect } from 'react'
 import TransferTrip from './TransferTrip'
 import PayWith from './PayWith'
+import { useAuth } from '@/contexts/AuthContext'
 
 interface TransferCheckoutData {
   offer: {
@@ -58,6 +59,7 @@ interface TransferCheckoutData {
 const Page = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { currentUser } = useAuth()
   
   // State for checkout data
   const [checkoutData, setCheckoutData] = useState<TransferCheckoutData | null>(null)
@@ -263,6 +265,22 @@ const Page = () => {
       
       if (result.success) {
         console.log('✅ Transfer booking successful:', result.data)
+        
+        // Save transfer booking to our database on frontend
+        try {
+          const { BookingService } = await import('@/services/BookingService')
+          
+          const transferToSave = BookingService.transformTransferToBooking(
+            { data: result.data },
+            bookingPayload,
+            currentUser.uid
+          )
+          
+          await BookingService.saveTransferBooking(transferToSave)
+          console.log('✅ Transfer booking saved to database:', transferToSave.id)
+        } catch (saveError) {
+          console.error('⚠️ Failed to save transfer booking to database:', saveError)
+        }
         
         // Redirect to transfer success page with booking details
         const successUrl = new URL('/car-pay-done', window.location.origin)

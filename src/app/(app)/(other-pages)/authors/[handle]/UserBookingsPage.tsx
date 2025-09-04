@@ -34,7 +34,7 @@ const UserBookingsPage: React.FC<UserBookingsPageProps> = ({ handle, displayName
           <div>
             <h2 className="text-2xl font-semibold">My Bookings</h2>
             <span className="mt-2 block text-neutral-500 dark:text-neutral-400">
-              View and manage your hotel booking history
+              View and manage your booking history across all categories
             </span>
           </div>
           <Divider className="w-14!" />

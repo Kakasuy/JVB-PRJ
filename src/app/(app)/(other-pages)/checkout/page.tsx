@@ -322,7 +322,22 @@ const Page = () => {
         // Hotel Information for saving
         hotelName: checkoutData.hotel.name,
         hotelAddress: checkoutData.hotel.address,
-        hotelImages: [checkoutData.hotel.featuredImage],
+        hotelImages: checkoutData.hotel.galleryImgs || (() => {
+          const hotelImages = [
+            'https://images.pexels.com/photos/6129967/pexels-photo-6129967.jpeg?auto=compress&cs=tinysrgb&dpr=3&h=750&w=1260',
+            'https://images.pexels.com/photos/261394/pexels-photo-261394.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+            'https://images.pexels.com/photos/2861361/pexels-photo-2861361.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+            'https://images.pexels.com/photos/6969831/pexels-photo-6969831.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+            'https://images.pexels.com/photos/6527036/pexels-photo-6527036.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+            'https://images.pexels.com/photos/1320686/pexels-photo-1320686.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+            'https://images.pexels.com/photos/7163619/pexels-photo-7163619.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260',
+            'https://images.pexels.com/photos/6438752/pexels-photo-6438752.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=750&w=1260'
+          ]
+          const randomStart = Math.floor(Math.random() * hotelImages.length)
+          return Array.from({ length: 4 }, (_, i) => 
+            hotelImages[(randomStart + i) % hotelImages.length]
+          )
+        })(),
         totalPrice: parseFloat(checkoutData.offer.price.total),
         currency: checkoutData.offer.price.currency,
         

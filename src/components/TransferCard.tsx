@@ -1,28 +1,25 @@
 import { FC } from 'react'
-import { HotelBooking } from '@/services/BookingService'
+import { TransferBooking } from '@/services/BookingService'
 import BtnLikeIcon from './BtnLikeIcon'
-import GallerySlider from './GallerySlider'
-import StartRating from './StartRating'
 import { Badge } from '@/shared/Badge'
 import Link from 'next/link'
+import Image from 'next/image'
 
-export interface BookingCardProps {
+export interface TransferCardProps {
   className?: string
-  booking: HotelBooking
+  booking: TransferBooking
   size?: 'default' | 'small'
 }
 
-const BookingCard: FC<BookingCardProps> = ({ 
+const TransferCard: FC<TransferCardProps> = ({ 
   className = '', 
   booking,
   size = 'default'
 }) => {
   const {
     id,
-    hotel,
-    checkInDate,
-    checkOutDate,
-    nights,
+    transfer,
+    passenger,
     totalPrice,
     currency,
     status,
@@ -30,29 +27,25 @@ const BookingCard: FC<BookingCardProps> = ({
     bookedAt
   } = booking
 
-  // Validate essential data - don't render if critical data is missing
-  if (!hotel || !checkInDate || !checkOutDate) {
-    return null
-  }
-
-  // Format dates for display
-  const formatDate = (dateString: string) => {
+  // Format pickup date for display
+  const formatPickupDate = (dateString: string) => {
     const date = new Date(dateString)
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
-      day: 'numeric' 
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
     })
   }
 
-  const checkInFormatted = formatDate(checkInDate)
-  const checkOutFormatted = formatDate(checkOutDate)
+  const pickupFormatted = formatPickupDate(transfer.pickupDateTime)
 
   // Status styling
-  const getStatusConfig = (status: HotelBooking['status']) => {
+  const getStatusConfig = (status: TransferBooking['status']) => {
     switch (status) {
       case 'upcoming':
         return { 
-          text: '📅 Upcoming', 
+          text: '🚗 Upcoming', 
           color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' 
         }
       case 'completed':
@@ -78,12 +71,15 @@ const BookingCard: FC<BookingCardProps> = ({
   const renderSliderGallery = () => {
     return (
       <div className="relative w-full">
-        <GallerySlider
-          uniqueID={`BookingCard_${id}`}
-          ratioClass="aspect-w-4 aspect-h-3 "
-          galleryImgs={hotel?.images || ['/placeholder-hotel.jpg']}
-          href={`/bookings/${id}`}
-        />
+        <div className="aspect-w-4 aspect-h-3 overflow-hidden rounded-2xl">
+          <Image
+            alt={transfer.vehicleDescription}
+            fill
+            sizes="200px"
+            src={transfer.vehicleImage || '/default-car.png'}
+            className="object-cover"
+          />
+        </div>
         <BtnLikeIcon isLiked={false} className="absolute right-3 top-3 z-[1]" />
         
         {/* Status Badge */}
@@ -99,37 +95,37 @@ const BookingCard: FC<BookingCardProps> = ({
   }
 
   return (
-    <div className={`nc-StayCard2 group relative border border-neutral-200 rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white dark:bg-neutral-900 dark:border-neutral-700 ${className}`}>
+    <div className={`nc-TransferCard2 group relative border border-neutral-200 rounded-3xl shadow-lg hover:shadow-xl transition-shadow duration-300 bg-white dark:bg-neutral-900 dark:border-neutral-700 ${className}`}>
       {renderSliderGallery()}
-      <Link href={`/bookings/${id}`}>
+      <Link href={`/transfers/${id}`}>
         <div className="space-y-3 p-4">
-          {/* Hotel Info */}
+          {/* Transfer Info */}
           <div className="space-y-2">
             <div className="flex items-center space-x-2">
               <h2 className="nc-card-title block font-medium capitalize text-neutral-900 dark:text-white">
-                <span className="line-clamp-2">{hotel?.name || 'Hotel Booking'}</span>
+                <span className="line-clamp-2">{transfer.vehicleDescription}</span>
               </h2>
             </div>
             
             <div className="flex items-center space-x-2 text-sm text-neutral-500 dark:text-neutral-400">
-              <span className="line-clamp-1">{hotel?.address || 'Address not available'}</span>
+              <span className="line-clamp-1">{transfer.pickupLocation} → {transfer.dropoffLocation}</span>
             </div>
           </div>
 
-          {/* Booking Dates */}
+          {/* Transfer Details */}
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center space-x-2 text-neutral-600 dark:text-neutral-300">
-              <span className="font-medium">{checkInFormatted} - {checkOutFormatted}</span>
+              <span className="font-medium">{pickupFormatted}</span>
               <span>•</span>
-              <span>{nights} {nights === 1 ? 'night' : 'nights'}</span>
+              <span>{transfer.passengers} passenger{transfer.passengers > 1 ? 's' : ''}</span>
             </div>
           </div>
 
-          {/* Price & Confirmation */}
+          {/* Price & Service Provider */}
           <div className="flex items-center justify-between">
             <div className="flex flex-col">
               <span className="text-base font-semibold text-neutral-900 dark:text-neutral-200">
-                {currency} ${totalPrice}
+                {currency} {totalPrice}
                 <span className="text-sm font-normal text-neutral-500"> total</span>
               </span>
               {confirmationNumber && confirmationNumber !== 'N/A' && (
@@ -139,9 +135,14 @@ const BookingCard: FC<BookingCardProps> = ({
               )}
             </div>
             
-            {/* Booking Date */}
-            <div className="text-xs text-neutral-500 dark:text-neutral-400">
-              Booked: {bookedAt && new Date(bookedAt.seconds * 1000).toLocaleDateString()}
+            {/* Service Provider & Booking Date */}
+            <div className="text-right">
+              <div className="text-xs font-medium text-neutral-600 dark:text-neutral-300">
+                {transfer.serviceProvider}
+              </div>
+              <div className="text-xs text-neutral-500 dark:text-neutral-400">
+                Booked: {bookedAt && new Date(bookedAt.seconds * 1000).toLocaleDateString()}
+              </div>
             </div>
           </div>
         </div>
@@ -150,4 +151,4 @@ const BookingCard: FC<BookingCardProps> = ({
   )
 }
 
-export default BookingCard
+export default TransferCard
