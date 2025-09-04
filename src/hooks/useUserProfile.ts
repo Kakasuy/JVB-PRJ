@@ -34,7 +34,18 @@ export const useUserProfile = () => {
         userProfile = await UserService.getUserProfile(currentUser.uid)
       }
       
-      setProfile(userProfile)
+      // If profile exists but doesn't have a handle, generate one
+      if (userProfile && !userProfile.handle) {
+        const baseName = userProfile.displayName || currentUser.email?.split('@')[0] || 'user'
+        const uniqueHandle = await UserService.generateUniqueHandle(baseName)
+        
+        // Update profile with new handle
+        const updatedProfile = { ...userProfile, handle: uniqueHandle }
+        await UserService.updateUserProfile(currentUser.uid, { handle: uniqueHandle })
+        setProfile(updatedProfile)
+      } else {
+        setProfile(userProfile)
+      }
     } catch (err: any) {
       console.error('Error loading profile:', err)
       

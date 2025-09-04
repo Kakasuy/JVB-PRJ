@@ -162,6 +162,46 @@ export async function getAuthors() {
 }
 
 export async function getAuthorByHandle(handle: string) {
+  // Kiểm tra xem có phải current user không bằng cách check với các handle đặc biệt
+  // hoặc nếu handle match với user hiện tại trong Firebase
+  if (handle === 'my-profile' || handle === 'current-user') {
+    // Import UserService để lấy thông tin user thật
+    const { UserService } = await import('@/services/UserService')
+    const { auth } = await import('@/lib/firebase')
+    
+    try {
+      const currentUser = auth.currentUser
+      if (currentUser) {
+        const userProfile = await UserService.getUserProfile(currentUser.uid)
+        if (userProfile) {
+          return {
+            id: userProfile.uid,
+            displayName: userProfile.displayName || 'User',
+            handle: userProfile.handle || 'current-user',
+            avatarUrl: userProfile.photoURL || '/placeholder-avatar.jpg',
+            starRating: 4.8, // Có thể tính từ reviews thật
+            count: 0, // Số listings của user
+            jobName: 'Host',
+            bgImage: '/placeholder-bg.jpg',
+            description: userProfile.bio || 'Providing lake views, The Symphony 9 Tam Coc in Ninh Binh provides accommodation, an outdoor.',
+            address: userProfile.address || 'Ha Noi, Viet Nam',
+            phone: userProfile.phone || '+84 123 456 789',
+            languages: userProfile.languages?.join(', ') || 'English, Vietnamese',
+            joinedDate: userProfile.createdAt ? 
+              new Date(userProfile.createdAt.seconds * 1000).toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'long' 
+              }) : 'March 2016',
+            reviewsCount: 0, // Reviews của user này
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching current user profile for author page:', error)
+    }
+  }
+
+  // Nếu không phải current user hoặc có lỗi, fallback về mock data
   const authors = await getAuthors()
   let author = authors.find((author) => author.handle === handle)
   if (!author?.id) {
