@@ -43,7 +43,12 @@ const ExperiencesCard: FC<Props> = ({
     
     return (
       <div className="relative w-full overflow-hidden rounded-2xl">
-        <GallerySlider ratioClass={ratioClass} galleryImgs={validGalleryImgs} href={listingHref} />
+        <GallerySlider
+          ratioClass={ratioClass}
+          galleryImgs={validGalleryImgs}
+          href={listingHref}
+          imageClass="rounded-xl object-contain bg-neutral-100 dark:bg-neutral-800"
+       />
         <BtnLikeIcon isLiked={like} className="absolute top-3 right-3" />
         {saleOff && <SaleOffBadge className="absolute top-3 left-3" />}
       </div>
