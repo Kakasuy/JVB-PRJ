@@ -35,7 +35,24 @@ const ExperiencesCard: FC<Props> = ({
     id,
   } = data
 
-  const listingHref = `/experience-listings/${listingHandle}`
+  // Check if this is Amadeus data based on the handle prefix or explicit flag
+  const isAmadeusData = (data as any).isAmadeusData || listingHandle.startsWith('amadeus-')
+  const listingHref = isAmadeusData 
+    ? `/experience-listings/amadeus/${id}` 
+    : `/experience-listings/${listingHandle}`
+
+  // Debug logging
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`🔍 ExperienceCard routing:`, {
+      title: title.substring(0, 20),
+      id,
+      handle: listingHandle,
+      isAmadeusFlag: (data as any).isAmadeusData,
+      startsWithAmadeus: listingHandle.startsWith('amadeus-'),
+      finalIsAmadeus: isAmadeusData,
+      href: listingHref
+    })
+  }
 
   const renderSliderGallery = () => {
     // Ensure we have valid gallery images

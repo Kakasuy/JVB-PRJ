@@ -30,6 +30,7 @@ interface ExperienceOffer {
   saleOff: any
   isAds: any
   map: { lat: number; lng: number }
+  isAmadeusData?: boolean
 }
 
 interface ExperienceSearchResultsProps {
@@ -69,9 +70,9 @@ export const ExperienceSearchResults: React.FC<ExperienceSearchResultsProps> = (
       const transformedOffers: ExperienceOffer[] = data.data
         .filter((offer: any) => offer.pictures && offer.pictures.length > 0 && offer.pictures[0])
         .map((offer: any) => ({
-          id: offer.id,
+          id: offer.id, // This is the Amadeus activityId
           title: offer.name,
-          handle: `${offer.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${offer.id}`,
+          handle: `amadeus-${offer.id}`, // Mark this as Amadeus data
           host: {
             displayName: 'Experience Provider',
             avatarUrl: '/default-avatar.jpg',
@@ -96,6 +97,8 @@ export const ExperienceSearchResults: React.FC<ExperienceSearchResultsProps> = (
             lat: offer.geoCode?.latitude || lat, 
             lng: offer.geoCode?.longitude || lng 
           },
+          // Add flag to identify Amadeus data
+          isAmadeusData: true,
         }))
       
       setAllOffers(transformedOffers)
