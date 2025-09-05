@@ -74,12 +74,10 @@ const ExperiencesCard: FC<Props> = ({
               </>
             )}
           </div>
-          {durationTime ? (
+          {durationTime && (
             <span className="text-sm font-medium text-neutral-600 dark:text-neutral-400">
               {durationTime}
             </span>
-          ) : (
-            <StartRating reviewCount={reviewCount} point={reviewStart} />
           )}
         </div>
       </div>
