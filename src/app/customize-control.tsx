@@ -110,17 +110,6 @@ const CustomizeControl = () => {
                   {renderSwitchDarkMode()}
                   {renderRadioDir()}
                 </div>
-                <div className="rounded-b-2xl bg-gray-50 p-5 dark:bg-white/5">
-                  <a
-                    className="flex w-full items-center justify-center rounded-xl! bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
-                    href={'https://themeforest.net/item/chisfis-online-booking-nextjs-template/43399526'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <ShoppingCartIcon className="h-4 w-4" />
-                    <span className="ms-2">Buy this template</span>
-                  </a>
-                </div>
               </PopoverPanel>
             </>
           )}
