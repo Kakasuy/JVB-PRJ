@@ -8,14 +8,7 @@ export const Link = forwardRef(function Link(
   props: LinkProps & React.ComponentPropsWithoutRef<'a'>,
   ref: React.ForwardedRef<HTMLAnchorElement>
 ) {
-  // Safely try to get the close function - it may not exist if not inside a HeadlessUI context
-  let closeHeadless: (() => void) | null = null
-  try {
-    closeHeadless = Headless.useClose()
-  } catch (error) {
-    // useClose is not available in this context
-    closeHeadless = null
-  }
+  const closeHeadless = Headless.useClose()
 
   return (
     <Headless.DataInteractive>
@@ -36,9 +29,7 @@ export const Link = forwardRef(function Link(
           }
 
           // Close the headlessui menu and aside (if available)
-          if (closeHeadless) {
-            closeHeadless()
-          }
+          closeHeadless()
         }}
       />
     </Headless.DataInteractive>

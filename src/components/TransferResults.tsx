@@ -503,7 +503,7 @@ const TransferResults: React.FC<TransferResultsProps> = ({ className = '' }) => 
                 No Transfers Found
               </h3>
               <p className="text-neutral-600 dark:text-neutral-400 mb-4">
-                We couldn't find any transfer options for your search criteria. Try adjusting your dates or locations.
+                We couldn&apos;t find any transfer options for your search criteria. Try adjusting your dates or locations.
               </p>
             </div>
           </div>

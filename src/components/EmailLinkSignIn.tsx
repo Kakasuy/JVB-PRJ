@@ -72,7 +72,7 @@ export default function EmailLinkSignIn({ className = '' }: Props) {
             Sign in with Magic Link
           </h3>
           <p className="text-sm text-neutral-600 dark:text-neutral-400">
-            No password required. We'll send you a secure link.
+            No password required. We&apos;ll send you a secure link.
           </p>
         </div>
 

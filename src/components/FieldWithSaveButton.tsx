@@ -73,7 +73,7 @@ export default function FieldWithSaveButton({
             </button>
             
             <span className="text-sm text-blue-700">
-              You have unsaved changes. Click "Save Changes" to update.
+              You have unsaved changes. Click &quot;Save Changes&quot; to update.
             </span>
           </div>
         )}
