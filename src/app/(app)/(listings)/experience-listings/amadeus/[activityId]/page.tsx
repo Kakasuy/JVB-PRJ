@@ -272,8 +272,7 @@ const Page = async ({
         >
           <DatesRangeInputPopover 
             className="z-11 flex-1" 
-            defaultCheckIn={checkIn} 
-            defaultCheckOut={checkOut}
+            defaultDates={{ startDate: checkIn, endDate: checkOut }}
           />
           <div className="w-full border-b border-neutral-200 dark:border-neutral-700"></div>
           <GuestsInputPopover 
