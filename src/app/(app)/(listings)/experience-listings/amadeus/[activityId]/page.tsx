@@ -277,8 +277,10 @@ const Page = async ({
           <div className="w-full border-b border-neutral-200 dark:border-neutral-700"></div>
           <GuestsInputPopover 
             className="flex-1" 
-            defaultGuests={parseInt(guests)}
-            defaultRooms={parseInt(rooms)}
+            defaultGuests={{
+              adults: parseInt(guests),
+              rooms: parseInt(rooms)
+            }}
           />
         </Form>
 
